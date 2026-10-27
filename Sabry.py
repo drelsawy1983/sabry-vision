@@ -1,23 +1,21 @@
 # ==============================================================================
-# SABRY VISION - Ultimate Dual-Password Admin Shield & IP Protection
+# SABRY VISION - Ultimate Dual-Password Admin Shield & IP Protection (Fixed)
 # ==============================================================================
 
 import streamlit as st
 from datetime import datetime, timedelta
 import streamlit.components.v1 as components
 
-# --- 1. إعدادات كلمات المرور وصلاحيات النظام ---
-# كلمة المرور العامة لأي مستخدم يفتح اللينك
-USER_ACCESS_PASSWORD = "ms1983"
+# --- 1. تهيئة جلسة الأمان والمتغيرات الافتراضية في الـ Session State ---
+if "user_access_password" not in st.session_state:
+    st.session_state["user_access_password"] = "ms1983"  # الباسورد العامة للمستخدمين
 
-# كلمة المرور السرية الخاصة بك وحدك (كمدير) لتغيير الإعدادات والتحكم
-ADMIN_SECRET_PASSWORD = "sabry_admin_2026"
+if "admin_secret_password" not in st.session_state:
+    st.session_state["admin_secret_password"] = "sabry_admin_2026"  # باسورد المدير السرية
 
-# تاريخ انتهاء صلاحية اللينك للمستخدمين (صالحة 50 سنة أو حسب رغبتك)
 if "system_expiry_date" not in st.session_state:
     st.session_state["system_expiry_date"] = datetime.now().date() + timedelta(days=365 * 50)
 
-# حالة الجلسة
 if "user_authenticated" not in st.session_state:
     st.session_state["user_authenticated"] = False
 
@@ -43,9 +41,9 @@ if not st.session_state["user_authenticated"]:
         entered_pass = st.text_input("أدخل كلمة المرور للوصول للنظام:", type="password", placeholder="كلمة المرور...")
         
         if st.button("🔓 دخول", use_container_width=True):
-            if entered_pass == USER_ACCESS_PASSWORD or entered_pass == ADMIN_SECRET_PASSWORD:
+            if entered_pass == st.session_state["user_access_password"] or entered_pass == st.session_state["admin_secret_password"]:
                 st.session_state["user_authenticated"] = True
-                if entered_pass == ADMIN_SECRET_PASSWORD:
+                if entered_pass == st.session_state["admin_secret_password"]:
                     st.session_state["admin_mode_unlocked"] = True
                 st.rerun()
             else:
@@ -73,23 +71,19 @@ def protect_ip():
 
 protect_ip()
 
-# --- 5. لوحة تحكم المدير المخفية (تظهر لك وحدك في الشريط الجانبي) ---
-# لن تظهر هذه القائمة إلا إذا سجلت دخولك بكلمة مرور المدير السرية (ADMIN_SECRET_PASSWORD)
+# --- 5. لوحة تحكم المدير المخفية في الشريط الجانبي ---
 if st.session_state["admin_mode_unlocked"]:
     with st.sidebar:
         st.markdown("---")
         st.markdown("👑 **لوحة تحكم المدير الخاص (Admin Control)**")
         with st.expander("🛠️ إعدادات التحكم عن بعد"):
-            new_user_pass = st.text_input("تغيير كلمة مرور المستخدمين:", value=USER_ACCESS_PASSWORD)
+            new_user_pass = st.text_input("تغيير كلمة مرور المستخدمين:", value=st.session_state["user_access_password"])
             new_expiry = st.date_input("تمديد/تعديل تاريخ صلاحية اللينك:", value=st.session_state["system_expiry_date"])
             
             if st.button("💾 حفظ وتطبيق التحديثات فوراً"):
-                global USER_ACCESS_PASSWORD
-                USER_ACCESS_PASSWORD = new_user_pass
+                st.session_state["user_access_password"] = new_user_pass
                 st.session_state["system_expiry_date"] = new_expiry
-                st.success("✅ تم التحديث بنجاح! ستسري كلمة المرور الجديدة على أي مستخدم يفتح اللينك فوراً.")
-
-
+                st.success("✅ تم التحديث بنجاح! ستسري كلمة المرور الجديدة على الفور.")
 
 # ==========================================
 # الخطوة الأولى: مكتبات النظام العالمي الشامل (Libraries Setup)
