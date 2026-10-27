@@ -208,11 +208,12 @@ working_mode = st.sidebar.selectbox(
 if working_mode == "بحث مخصص (Custom Search)":
     custom_search_input = st.sidebar.text_input("أدخل اسم (سوق، مؤشر، سهم، معدن، عملة، أو زوج عملات):", value="AAPL / 9405.SR / EURUSD")
 
-# --- قائمة المناطق والتصنيفات العالمية (Regions & Asset Classes) ---
+# --- قائمة المناطق والتصنيفات العالمية وفصل الأسواق بدقة ---
 st.sidebar.subheader("3️⃣ المناطق والتصنيفات العالمية (Regions)")
 region_choice = st.sidebar.selectbox(
     "اختر المنطقة أو التصنيف العالمي:",
     [
+        
         "أمريكا الشمالية والجنوبية",
         "أسواق أوروبا",
         "أسواق آسيا",
@@ -222,8 +223,19 @@ region_choice = st.sidebar.selectbox(
         "العملات الرقمية (Crypto)",
         "السلع والمعادن (Commodities)",
         "الصناديق الاستثمارية (Funds)"
+        "الكل (Global)"
     ]
 )
+
+# تحديد الأصول النشطة تلقائياً حسب اختيارك للسوق
+if region_choice == "أمريكا الشمالية والجنوبية":
+    active_watchlist = ["AAPL", "NVDA", "MSFT", "GOOGL"]
+elif region_choice == "أسواق الشرق الأوسط والخليج العربي":
+    active_watchlist = ["2222.SR", "9405.SR"]
+elif region_choice == "السلع والمعادن (Commodities)":
+    active_watchlist = ["GC=F", "SI=F"]
+else:
+    active_watchlist = ["AAPL", "NVDA", "2222.SR", "GC=F"]
 
 # --- قائمة الأسواق التابعة الديناميكية (Sub-Markets) ---
 st.sidebar.subheader("4️⃣ الأسواق التابعة الديناميكية (Sub-Markets)")
@@ -618,7 +630,8 @@ STOP_FLAG_FILE = "sabry_background_stop.flag"
 
 # الشريط الجانبي للإعدادات والتليجرام
 st.sidebar.header("⚙️ إعدادات غرفة العمليات والتليجرام")
-telegram_token_input = st.sidebar.text_input("Telegram Bot Token", value="8810439179:AAGMWrf_pTE0Aa6PrJ-pAIwFHts8xsTWLDg")
+telegram_token_input = st.sidebar.text_input("Telegram Bot Token", value="8810439179:AAGMWrf_pTE0Aa6PrJ-pAIwFHts8xsTWLDg", key="bg_telegram_token")
+
 telegram_chat_input = st.sidebar.text_input("Telegram Chat ID", value="1207434469")
 
 TELEGRAM_BOT_TOKEN = telegram_token_input
