@@ -618,7 +618,7 @@ STOP_FLAG_FILE = "sabry_background_stop.flag"
 
 # الشريط الجانبي للإعدادات والتليجرام
 st.sidebar.header("⚙️ إعدادات غرفة العمليات والتليجرام")
-telegram_token_input = st.sidebar.text_input("Telegram Bot Token", value="1207434469")
+telegram_token_input = st.sidebar.text_input("Telegram Bot Token", value="8810439179:AAGMWrf_pTE0Aa6PrJ-pAIwFHts8xsTWLDg")
 telegram_chat_input = st.sidebar.text_input("Telegram Chat ID", value="1207434469")
 
 TELEGRAM_BOT_TOKEN = telegram_token_input
