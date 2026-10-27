@@ -1,3 +1,96 @@
+# ==============================================================================
+# SABRY VISION - Ultimate Dual-Password Admin Shield & IP Protection
+# ==============================================================================
+
+import streamlit as st
+from datetime import datetime, timedelta
+import streamlit.components.v1 as components
+
+# --- 1. إعدادات كلمات المرور وصلاحيات النظام ---
+# كلمة المرور العامة لأي مستخدم يفتح اللينك
+USER_ACCESS_PASSWORD = "ms1983"
+
+# كلمة المرور السرية الخاصة بك وحدك (كمدير) لتغيير الإعدادات والتحكم
+ADMIN_SECRET_PASSWORD = "sabry_admin_2026"
+
+# تاريخ انتهاء صلاحية اللينك للمستخدمين (صالحة 50 سنة أو حسب رغبتك)
+if "system_expiry_date" not in st.session_state:
+    st.session_state["system_expiry_date"] = datetime.now().date() + timedelta(days=365 * 50)
+
+# حالة الجلسة
+if "user_authenticated" not in st.session_state:
+    st.session_state["user_authenticated"] = False
+
+if "admin_mode_unlocked" not in st.session_state:
+    st.session_state["admin_mode_unlocked"] = False
+
+# --- 2. التحقق من صلاحية تاريخ النظام ---
+if datetime.now().date() > st.session_state["system_expiry_date"]:
+    st.set_page_config(page_title="SABRY VISION - Expired", layout="centered")
+    st.error("⚠️ انتهت صلاحية ترخيص هذا التطبيق. يرجى التواصل مع مطور النظام (د. محمد صبري).")
+    st.stop()
+
+# --- 3. شاشة تسجيل الدخول الإجبارية للمستخدمين ---
+if not st.session_state["user_authenticated"]:
+    st.set_page_config(page_title="SABRY VISION - Secure Login", layout="centered")
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("<h2 style='text-align: center;'>🔐 SABRY VISION</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: gray;'>منظومة التحليل الذكي المؤسسية</p>", unsafe_allow_html=True)
+        st.markdown("---")
+        
+        entered_pass = st.text_input("أدخل كلمة المرور للوصول للنظام:", type="password", placeholder="كلمة المرور...")
+        
+        if st.button("🔓 دخول", use_container_width=True):
+            if entered_pass == USER_ACCESS_PASSWORD or entered_pass == ADMIN_SECRET_PASSWORD:
+                st.session_state["user_authenticated"] = True
+                if entered_pass == ADMIN_SECRET_PASSWORD:
+                    st.session_state["admin_mode_unlocked"] = True
+                st.rerun()
+            else:
+                st.error("❌ كلمة المرور غير صحيحة!")
+    st.stop()
+
+# --- 4. حماية حقوق الملكية الفكرية (تعطيل الزر الأيمن والفحص F12) ---
+def protect_ip():
+    script = """
+    <script>
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        alert('⚠️ هذا النظام محمي بموجب حقوق الملكية الفكرية لصبري فيجن (SABRY VISION).');
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73) || (e.ctrlKey && e.keyCode == 85)) {
+            e.preventDefault();
+            alert('⚠️ غير مسموح بعرض كود المصدر - حقوق الملكية محفوظة.');
+            return false;
+        }
+    });
+    </script>
+    """
+    components.html(script, height=0, width=0)
+
+protect_ip()
+
+# --- 5. لوحة تحكم المدير المخفية (تظهر لك وحدك في الشريط الجانبي) ---
+# لن تظهر هذه القائمة إلا إذا سجلت دخولك بكلمة مرور المدير السرية (ADMIN_SECRET_PASSWORD)
+if st.session_state["admin_mode_unlocked"]:
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown("👑 **لوحة تحكم المدير الخاص (Admin Control)**")
+        with st.expander("🛠️ إعدادات التحكم عن بعد"):
+            new_user_pass = st.text_input("تغيير كلمة مرور المستخدمين:", value=USER_ACCESS_PASSWORD)
+            new_expiry = st.date_input("تمديد/تعديل تاريخ صلاحية اللينك:", value=st.session_state["system_expiry_date"])
+            
+            if st.button("💾 حفظ وتطبيق التحديثات فوراً"):
+                global USER_ACCESS_PASSWORD
+                USER_ACCESS_PASSWORD = new_user_pass
+                st.session_state["system_expiry_date"] = new_expiry
+                st.success("✅ تم التحديث بنجاح! ستسري كلمة المرور الجديدة على أي مستخدم يفتح اللينك فوراً.")
+
+
+
 # ==========================================
 # الخطوة الأولى: مكتبات النظام العالمي الشامل (Libraries Setup)
 # ==========================================
