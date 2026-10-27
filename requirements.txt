@@ -3,4 +3,8 @@ pandas
 numpy
 requests
 yfinance
-pyarrow
+tradingview-ta
+ta
+pandas-ta
+apscheduler
+pytz
