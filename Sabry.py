@@ -286,11 +286,11 @@ st.sidebar.subheader("8️⃣ شروط الإشارات المتقدمة (Condit
 
 # أ) شروط إشارة إعادة الاختبار (Retest Conditions)
 with st.sidebar.expander("إعدادات وشروط إشارة (Retest)"):
-    retest_sources = st.sidebar.multiselect(
-        "اختر شروط إعادة الاختبار (سيتم تفعيل أي منها يتحقق):",
-        ["EMA 20", "EMA 50", "EMA 100", "EMA 200", "POC (Point of Control)", "VWAP"],
-        default=["EMA 200", "POC", "VWAP"]
-    )
+retest_sources = st.sidebar.multiselect(
+    "اختر شروط إعادة الاختبار (سيتم تفعيل أي منها يتحقق):",
+    ["EMA 20", "EMA 50", "EMA 100", "EMA 200", "POC (Point of Control)", "VWAP"],
+    default=["EMA 200", "POC (Point of Control)", "VWAP"]
+)
 
 # ب) شروط إشارة انعكاس القاع (Bottom Reversal Conditions)
 with st.sidebar.expander("إعدادات وشروط إشارة (Bottom Reversal)"):
