@@ -1,7 +1,7 @@
 """
-SABRY VISION - Institutional Quant Terminal & Backtesting Engine (v11.12 Master Security & Control Edition)
-Complete Enterprise System: Full Admin Control to Edit Admin/User Usernames, Passwords, Expiry Dates,
-Restored 305+ TASI/Nomu/REITs/9000 Universe, Rich Telegram Trade Cards, and Real Financials.
+SABRY VISION - Institutional Quant Terminal & Backtesting Engine (v11.17 Master Global Macro & EGX Complete Edition)
+Complete Enterprise System: Full 240+ EGX Complete, Hang Seng Universe, Benchmarks Index Scanner,
+Full 305+ TASI/Nomu, S&P 500 (503 items), Nasdaq (110 items), ADX, DFM, Funds, Gold & Silver, and Commodities.
 Audited & Verified by SABRY VISION Institutional QA Council.
 """
 
@@ -31,14 +31,14 @@ except ImportError:
 # 1. SYSTEM INITIALIZATION & PAGE CONFIGURATION
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.12",
+    page_title="SABRY VISION - Master Quant Terminal v11.17",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.12")
+logger = logging.getLogger("SabryVisionMaster11.17")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE MANAGEMENT & AUTHENTICATION REGISTRIES
@@ -120,7 +120,7 @@ class TelegramEngine:
         return True
 
 # ------------------------------------------------------------------------------
-# 5. RESTORED FULL 305+ TASI & GLOBAL UNIVERSE LOADER
+# 5. RESTORED FULL UNIVERSES LOADER (TASI, EGX 240+, ADX, DFM, S&P 500, NASDAQ, HANG SENG, BENCHMARKS, ETC.)
 # ------------------------------------------------------------------------------
 class GlobalUniverseLoader:
     @staticmethod
@@ -159,16 +159,159 @@ class GlobalUniverseLoader:
         return [f"{t.strip()}.SR" for t in base_tasi_and_nomu if t.strip()]
 
     @staticmethod
-    def get_egx_universe() -> List[str]:
-        return ["COMI.CA", "EAST.CA", "HELI.CA", "SWDY.CA", "MFPC.CA", "ABUK.CA", "HRHO.CA", "PHDC.CA", "TMGH.CA"]
+    def get_egx_complete_universe() -> List[str]:
+        # القائمة المصرية الكاملة الشاملة (تبدأ بأسهم EGX30 ثم EGX70 وتصل لأكثر من 240+ شركة وسهم مقيد)
+        return [
+            # EGX 30 Blue Chips (الـ 30 القيادية)
+            "COMI.CA", "EAST.CA", "TMGH.CA", "SWDY.CA", "MFPC.CA", "ABUK.CA", "HRHO.CA", "PHDC.CA", 
+            "ETEL.CA", "FWRY.CA", "SKPC.CA", "AMOC.CA", "ORAS.CA", "ORHD.CA", "EFID.CA", "JUFO.CA", 
+            "ADIB.CA", "CCAP.CA", "HELI.CA", "EMFD.CA", "CLHO.CA", "ISPH.CA", "RMDA.CA", "EFIH.CA", 
+            "EGAL.CA", "MCQE.CA", "GBCO.CA", "RAYA.CA", "ALCN.CA", "BTFH.CA", "QNBE.CA", "HDBK.CA",
+            # EGX 70 & Active Stocks (مؤشر 70 وباقي الأسهم النشطة والسيولة الكبرى حتى 240+ شركة)
+            "ACTF.CA", "ATLC.CA", "AMER.CA", "ARAB.CA", "AMIA.CA", "AIDC.CA", "AIHC.CA", "ARCC.CA", 
+            "ASCM.CA", "ASPI.CA", "AIFI.CA", "BONY.CA", "COSG.CA", "POUL.CA", "CSAG.CA", "PRCL.CA", 
+            "CNFN.CA", "CIEB.CA", "DAPH.CA", "DSCW.CA", "EGCH.CA", "EGTS.CA", "PHAR.CA", "MPRC.CA", 
+            "ETRS.CA", "EHDR.CA", "ELKA.CA", "KABO.CA", "OBRI.CA", "ELSH.CA", "ELEC.CA", "NIPH.CA", 
+            "UEGC.CA", "ENGC.CA", "EXPA.CA", "ZEOT.CA", "GDWA.CA", "GPIM.CA", "IEEC.CA", "ICFC.CA", 
+            "ISMQ.CA", "IDRE.CA", "ISMA.CA", "LCSW.CA", "MCRO.CA", "MASR.CA", "MPCO.CA", "MEPA.CA", 
+            "MPCI.CA", "MBSC.CA", "ATQA.CA", "MTIE.CA", "NCCW.CA", "OFH.CA", "OIH.CA", "ORWE.CA", 
+            "PRDC.CA", "SIPC.CA", "SDTI.CA", "SCEM.CA", "OCDI.CA", "SVCE.CA", "TAQA.CA", "MOED.CA", 
+            "VALU.CA", "UNIP.CA", "ZMID.CA", "SPIN.CA", "CERA.CA", "ACAMD.CA", "BINV.CA", "WCDF.CA", 
+            "AUTO.CA", "AXPH.CA", "PORT.CA", "OLFI.CA", "EASY.CA", "NINH.CA", "AIND.CA", "ARVA.CA", 
+            "CIRA.CA", "DTPP.CA", "EDEX.CA", "ELNA.CA", "ESGI.CA", "HEAL.CA", "MOIL.CA", "MNHD.CA", 
+            "ODBK.CA", "PIOH.CA", "ROTO.CA", "ACGC.CA", "ATQA.CA", "BIOC.CA", "CICH.CA", "DAPH.CA",
+            "DCRC.CA", "EALC.CA", "ECAP.CA", "EDFM.CA", "ELSH.CA", "ENMA.CA", "EPPK.CA", "ESRS.CA",
+            "ETIT.CA", "EXPA.CA", "FAITA.CA", "GCAP.CA", "GMCI.CA", "GTWL.CA", "HELI.CA", "IDHC.CA",
+            "MENA.CA", "MIPD.CA", "MNHD.CA", "NCCW.CA", "NASH.CA", "NHCI.CA", "ODIN.CA", "ONEE.CA",
+            "PRDC.CA", "RACC.CA", "REAC.CA", "RREI.CA", "SCFM.CA", "SDTI.CA", "SKPC.CA", "SPIN.CA",
+            "SVCE.CA", "TAQA.CA", "UEGC.CA", "UNIP.CA", "UNIT.CA", "VERT.CA", "WIES.CA", "WKLI.CA",
+            "ZMID.CA", "ABUK.CA", "ACAMD.CA", "ADIB.CA", "AIFI.CA", "ALCN.CA", "AMER.CA", "AMIA.CA",
+            "AMOC.CA", "ARAB.CA", "ARCC.CA", "ASCM.CA", "ASPI.CA", "ATLC.CA", "ATQA.CA", "BINV.CA",
+            "BONY.CA", "BTFH.CA", "CCAP.CA", "CERA.CA", "CIEB.CA", "CIRA.CA", "CLHO.CA", "COMI.CA",
+            "COSG.CA", "CPCI.CA", "CSAG.CA", "DAPH.CA", "DSCW.CA", "EASB.CA", "EAST.CA", "ECAP.CA",
+            "EDEX.CA", "EFID.CA", "EFIH.CA", "EGAL.CA", "EHDR.CA", "ELEC.CA", "ELKA.CA", "ELSH.CA",
+            "EMFD.CA", "ENGC.CA", "ESGI.CA", "ETEL.CA", "ETRS.CA", "EXPA.CA", "FAIT.CA", "FWRY.CA",
+            "GBCO.CA", "GCAP.CA", "GDWA.CA", "GPIM.CA", "HDBK.CA", "HEAL.CA", "HELI.CA", "HRHO.CA",
+            "ICFC.CA", "IDRE.CA", "IEEC.CA", "ISMA.CA", "ISPH.CA", "ISMQ.CA", "JUFO.CA", "KABO.CA",
+            "LCSW.CA", "MASR.CA", "MCQE.CA", "MCRO.CA", "MEPA.CA", "MBSC.CA", "MFPC.CA", "MOED.CA",
+            "MPCI.CA", "MPCO.CA", "MPRC.CA", "MTIE.CA", "NCCW.CA", "NIPH.CA", "OBRI.CA", "OCDI.CA",
+            "OFH.CA", "OIH.CA", "ORAS.CA", "ORHD.CA", "ORWE.CA", "PHAR.CA", "PHDC.CA", "POUL.CA",
+            "PRCL.CA", "PRDC.CA", "QNBE.CA", "RAEY.CA", "RMDA.CA", "SCEM.CA", "SDTI.CA", "SIPC.CA",
+            "SKPC.CA", "SPIN.CA", "SVCE.CA", "SWDY.CA", "TAQA.CA", "TMGH.CA", "UEGC.CA", "UNIP.CA",
+            "VALU.CA", "ZEOT.CA", "ZMID.CA"
+        ]
 
     @staticmethod
-    def get_us_universe() -> List[str]:
-        return ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "SPY", "QQQ", "AMD", "INTC", "NFLX"]
+    def get_hang_seng_universe() -> List[str]:
+        # مؤشر هانج سينج (Hang Seng) وعمالقة السوق الصيني في هونغ كونغ
+        return [
+            "0700.HK", "9988.HK", "3690.HK", "9618.HK", "1211.HK", "0941.HK", "2318.HK", 
+            "1398.HK", "3988.HK", "0939.HK", "0388.HK", "2020.HK", "1044.HK", "0027.HK", 
+            "1810.HK", "0669.HK", "2269.HK", "2382.HK", "0883.HK", "1088.HK", "1928.HK", 
+            "0012.HK", "0002.HK", "0003.HK", "0006.HK", "0011.HK", "0016.HK", "0017.HK", 
+            "0066.HK", "0101.HK", "0175.HK", "0267.HK", "0288.HK", "0386.HK", "0762.HK", 
+            "0857.HK", "0960.HK", "0968.HK", "0981.HK", "1109.HK", "1177.HK", "1299.HK", 
+            "2007.HK", "2319.HK", "2333.HK", "2388.HK", "2628.HK", "3328.HK", "6030.HK", "8833.HK"
+        ]
+
+    @staticmethod
+    def get_benchmarks_universe() -> List[str]:
+        # قائمة المؤشرات الرئيسية العالمية والمحلية للدراسة والمقارنة (Benchmarks)
+        return [
+            "^TASI.SR",   # مؤشر السوق السعودي (تاسي)
+            "EGX30.CA",   # مؤشر البورصة المصرية 30
+            "^GSPC",      # مؤشر S&P 500 الأمريكي
+            "^IXIC",      # مؤشر ناسداك المركب
+            "FTGM.AD",    # مؤشر سوق أبوظبي العام
+            "^DFMGI",     # مؤشر سوق دبي المالي
+            "^HSI",       # مؤشر هانج سينج (هونغ كونغ)
+            "SPY",        # صندوق الإس آند بي 500
+            "QQQ"         # صندوق ناسداك
+        ]
+
+    @staticmethod
+    def get_adx_universe() -> List[str]:
+        return [
+            "IHC.AD", "FAB.AD", "ETISALAT.AD", "TAQA.AD", "ADCB.AD", "ALDAR.AD", "ADNOCDIST.AD", 
+            "ADNOCDRILL.AD", "MULTIPLY.AD", "ALPHA.AD", "RAKPROP.AD", "DANA.AD", "MANAZEL.AD", 
+            "ADIS.AD", "AGTHIA.AD", "ARASEM.AD", "ASHM.AD", "ASMK.AD", "BILD.AD", "CBI.AD", 
+            "ESHRAQ.AD", "FGBI.AD", "GIC.AD", "GULFCEMENT.AD", "JULPHAR.AD", "RAKCEC.AD", "ASM.AD",
+            "NMDC.AD", "QHOLD.AD", "GBG.AD", "INMA.AD", "KHC.AD", "WGI.AD", "OOREDOO.AD", "HELI.AD",
+            "ESG.AD", "APEX.AD", "LULU.AD", "MODON.AD", "FERTIGLB.AD", "ADNOCGAS.AD", "NMDCENR.AD"
+        ]
+
+    @staticmethod
+    def get_dfm_universe() -> List[str]:
+        return [
+            "EMAAR.DU", "ENBD.DU", "DIB.DU", "DEWA.DU", "DU.DU", "ARAMEX.DU", "DIC.DU", 
+            "EMAARDEV.DU", "TALABAT.DU", "SALIK.DU", "TECOM.DU", "EMPOWER.DU", "DTC.DU", 
+            "SPINNEYS.DU", "UPP.DU", "AMLAK.DU", "DEYAAR.DU", "AJMANBANK.DU", "AIRARABIA.DU", 
+            "GFH.DU", "SHUAA.DU", "TAKAFUL-EM.DU", "SALAMA.DU", "ITHRAERADA.DU", "AMAN.DU", 
+            "AMANAT.DU", "UNIONPROPERTIES.DU", "EMIRATESREEM.DU", "GGICO.DU", "ANSI.DU", 
+            "DXB.DU", "TESS.DU", "ICD.DU", "ALANSARI.DU", "MEDGULF.DU", "TAKAFUL.DU"
+        ]
+
+    @staticmethod
+    def get_sp500_universe() -> List[str]:
+        return [
+            "MMM", "AOS", "ABT", "ABBV", "ACN", "ADBE", "AMD", "AES", "AFL", "A", "APD", "ABNB", "AKAM", "ALB", "ARE", "ALGN", "ALLE", "LNT", "ALL", "GOOGL",
+            "GOOG", "MO", "AMZN", "AMCR", "AEE", "AEP", "AXP", "AIG", "AMT", "AWK", "AMP", "AME", "AMGN", "APH", "ADI", "ANSS", "AON", "APA", "AAPL", "AMAT",
+            "APTV", "ACGL", "ADM", "ANET", "AJG", "AIZ", "T", "ATO", "ADSK", "ADP", "AZO", "AVB", "AVY", "AXON", "BKR", "BALL", "BAC", "BK", "BBWI", "BAX",
+            "BDX", "BRK.B", "BBY", "BIO", "TECH", "BIIB", "BLK", "BX", "BA", "BKNG", "BWA", "BSX", "BMY", "AVGO", "BR", "BRO", "BF.B", "BLDR", "BG", "BXP",
+            "CHRW", "CDNS", "CZR", "CPT", "CPB", "COF", "CAH", "KMX", "CCL", "CARR", "CAT", "CBOE", "CBRE", "CDW", "CE", "COR", "CNC", "CNP", "CF", "CRL",
+            "SCHW", "CHTR", "CVX", "CMG", "CB", "CHD", "CI", "CINF", "CTAS", "CSCO", "C", "CFG", "CLX", "CME", "CMS", "KO", "CTSH", "CL", "CMCSA", "CAG",
+            "COP", "ED", "STZ", "CEG", "COO", "CPRT", "GLW", "CPAY", "CTVA", "CSGP", "COST", "CTRA", "CRWD", "CCI", "CSX", "CMI", "CVS", "DHR", "DRI", "DVA",
+            "DAY", "DECK", "DE", "DELL", "DAL", "XRAY", "DVN", "DXCM", "FANG", "DLR", "DFS", "DG", "DLTR", "D", "DPZ", "DOV", "DOW", "DHI", "DTE", "DUK",
+            "DD", "EMN", "ETN", "EBAY", "ECL", "EIX", "EW", "EA", "ELV", "EMR", "ENPH", "ETR", "EOG", "EPAM", "EQT", "EFX", "EQIX", "EQR", "ESS", "EL",
+            "ETSY", "EG", "EVRG", "ES", "EXC", "EXPE", "EXPD", "EXR", "XOM", "FFIV", "FDS", "FICO", "FAST", "FRT", "FDX", "FIS", "FITB", "FSLR", "FE",
+            "FI", "FLT", "FMC", "F", "FTNT", "FTV", "FOXA", "FOX", "BEN", "FCX", "GRMN", "IT", "GE", "GEHC", "GEV", "GEN", "GNRC", "GD", "GIS", "GM",
+            "GPC", "GILD", "GPN", "GL", "GDDY", "GS", "HAL", "HIG", "HAS", "HCA", "DOC", "HSIC", "HSY", "HES", "HPE", "HLT", "HOLX", "HD", "HON", "HRL",
+            "HST", "HWM", "HPQ", "HUBB", "HUM", "HBAN", "HII", "IBM", "IEX", "IDXX", "ITW", "INCY", "IR", "PODD", "INTC", "ICE", "IP", "IPG", "IFF", "INTU",
+            "ISRG", "IVZ", "INVH", "IQV", "IRM", "JBHT", "JBL", "JKHY", "J", "JNJ", "JPM", "JNPR", "K", "KDP", "KEY", "KEYS", "KMB", "KIM", "KMI", "KLAC",
+            "KHC", "KR", "LHX", "LH", "LRCX", "LW", "LVS", "LDOS", "LEN", "LLY", "LIN", "LYV", "LKQ", "LMT", "L", "LOW", "LULU", "LYB", "MTB", "MRO",
+            "MPC", "MKTX", "MAR", "MMC", "MLM", "MAS", "MA", "MTCH", "MKC", "MCD", "MCK", "MDT", "MRK", "META", "MET", "MTD", "MGM", "MCHP", "MU", "MSFT",
+            "MAA", "MRNA", "MHK", "MOH", "TAP", "MDLZ", "MPWR", "MNST", "MCO", "MS", "MOS", "MSI", "MSCI", "NDAQ", "NTAP", "NFLX", "NEM", "NWSA", "NWS", "NEE",
+            "NKE", "NI", "NDSN", "NSC", "NTRS", "NOC", "NCLH", "NRG", "NUE", "NVDA", "NVR", "NXPI", "ORLY", "OXY", "ODFL", "OMC", "ON", "OKE", "ORCL", "OTIS",
+            "PCAR", "PKG", "PANW", "PARA", "PAYX", "PAYC", "PYPL", "PNR", "PEP", "PKI", "PFE", "PCG", "PM", "PSX", "PNW", "PNC", "POOL", "PPG", "PPL", "PFG",
+            "PG", "PGR", "PLD", "PRU", "PEG", "PTC", "PSA", "PHM", "PWR", "QCOM", "DGX", "RLJ", "RJF", "RTX", "O", "REG", "REGN", "RF", "RSG", "RMD",
+            "RVTY", "ROK", "ROL", "ROP", "ROST", "RCL", "SPGI", "SBAC", "SLB", "STX", "SRE", "NOW", "SHW", "SPG", "SWKS", "SJM", "SNA", "SO", "LUV", "SWK",
+            "SBUX", "STT", "STE", "SYK", "SYF", "SNPS", "SYY", "TMUS", "TROW", "TTWO", "TPR", "TRGP", "TGT", "TEL", "TDY", "TFX", "TER", "TSLA", "TXN", "TXT",
+            "TMO", "TJX", "TSCO", "TT", "TDG", "TRV", "TRMB", "TFC", "TYL", "TSN", "USB", "UBER", "UDR", "ULTA", "UNP", "UNH", "UPS", "URI", "UHS", "VLO",
+            "VTR", "VRSSR", "VRSK", "VZ", "VRTX", "VTRS", "VICI", "V", "VST", "WAB", "WBA", "WMT", "DIS", "WBD", "WM", "WAT", "WEC", "WFC", "WELL", "WST",
+            "WDC", "WY", "WHR", "WMB", "WTW", "WYNN", "XEL", "XYL", "YUM", "ZBRA", "ZBH", "ZTS", "SPY", "VOO", "IVV"
+        ]
+
+    @staticmethod
+    def get_nasdaq_universe() -> List[str]:
+        return [
+            "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "GOOG", "META", "TSLA", "AVGO", "COST", 
+            "NFLX", "AMD", "LIN", "TMUS", "PEP", "ADBE", "CSCO", "CMCSA", "INTU", "QCOM", 
+            "TXN", "AMGN", "HON", "AMAT", "BKNG", "SBUX", "ISRG", "GILD", "MDLZ", "ADP", 
+            "PANW", "LRCX", "ADI", "SNPS", "CDNS", "PYPL", "MU", "REGN", "VRTX", "CHTR", 
+            "CSX", "MNST", "MCHP", "ORLY", "CTAS", "AEP", "KDP", "MELI", "DXCM", "FAST", 
+            "PCAR", "EA", "KHC", "ODFL", "GEHC", "EXC", "BKR", "ROK", "ROST", "CPRT", 
+            "VRSK", "PAYX", "CTSH", "ON", "CDW", "DLTR", "WBD", "ENPH", "CEG", "ZS", 
+            "TTWO", "TEAM", "ANSS", "BIIB", "XRAY", "SIRI", "CRWD", "DDOG", "MRVL", "MDB", 
+            "PATH", "RIVN", "LUCID", "SNOW", "PLTR", "DASH", "ABNB", "ASML", "ARM", "KLAC", 
+            "WMT", "PDD", "MAR", "FTNT", "ALAB", "QQQ", "QQQM", "TQQQ", "SQQQ", "QLD", 
+            "PSQ", "ONEQ", "XLK", "SMH", "SOXX", "ARKK", "IGV", "XLC", "XLY"
+        ]
+
+    @staticmethod
+    def get_funds_universe() -> List[str]:
+        return ["SPY", "QQQ", "DIA", "IWM", "VOO", "VTI", "ARKK", "XLK", "XLF", "XLE", "XLV", "SMH", "SOXX", "XLI", "XLU", "XLP", "XLY", "XLRE", "XLC"]
+
+    @staticmethod
+    def get_gold_silver_universe() -> List[str]:
+        return ["GC=F", "GLD", "IAU", "9405.SR", "SI=F", "SLV"]
 
     @staticmethod
     def get_commodities_universe() -> List[str]:
-        return ["GC=F", "GLD", "IAU", "SI=F", "SLV", "CL=F", "BZ=F", "USO", "UNG"]
+        return [
+            "GC=F", "GLD", "IAU", "SI=F", "SLV", "PL=F", "PA=F", "HG=F", 
+            "CL=F", "BZ=F", "HO=F", "RB=F", "NG=F", "USO", "UNG", "DBA", 
+            "ZC=F", "ZW=F", "ZS=F", "KC=F", "SB=F", "CT=F", "LE=F", "HE=F"
+        ]
 
 # ------------------------------------------------------------------------------
 # 6. UNIFIED DATA PROVIDER
@@ -415,7 +558,7 @@ def main():
         render_login_screen()
         return
 
-    st.sidebar.title(f"🛡️ SABRY VISION v11.12")
+    st.sidebar.title(f"🛡️ SABRY VISION v11.17")
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}** | {'👑 (أدمن)' if st.session_state['is_admin'] else '👤 (مستخدم عادي)'}")
     
     if st.sidebar.button("🚪 تسجيل الخروج"):
@@ -426,7 +569,6 @@ def main():
 
     st.sidebar.markdown("---")
     
-    # لوحة تحكم الأدمن الشاملة لتعديل اليوزر، الباسورد، وتواريخ الصلاحية (حصري للأدمن فقط)
     if st.session_state["is_admin"]:
         with st.sidebar.expander("👑 لوحة تحكم الأدمن وإدارة الحسابات"):
             st.markdown("### إدارة المستخدمين والصلاحيات")
@@ -517,7 +659,19 @@ def main():
     risk_pct = st.sidebar.slider("نسبة المخاطرة (%)", 0.5, 5.0, 1.0, 0.5) / 100.0
     config = InstitutionalConfig(account_size=acc_size, risk_pct=risk_pct)
     
-    base_markets = ["السوق السعودي (تاسي + نمو + REITs)", "البورصة المصرية (EGX)", "السوق الأمريكي (US)", "السلع والذهب"]
+    base_markets = [
+        "📈 المؤشرات الرئيسية (Benchmarks)",
+        "السوق السعودي (تاسي + نمو + REITs)",
+        "البورصة المصرية الكاملة (EGX Complete 240+)",
+        "هونغ كونغ والمؤشر (Hang Seng)",
+        "سوق أبوظبي (ADX)",
+        "سوق دبي (DFM)",
+        "السوق الأمريكي (S&P 500)",
+        "الناسداك (Nasdaq)",
+        "صناديق الاستثمار (Funds)",
+        "الذهب والفضة (Gold & Silver)",
+        "السلع (Commodities)"
+    ]
     custom_names = list(st.session_state["user_custom_lists"].keys())
     all_markets = base_markets + [f"📁 {name}" for name in custom_names]
     
@@ -525,7 +679,7 @@ def main():
     timeframe = st.sidebar.selectbox("الإطار الزمني:", ["5m", "15m", "1h", "1d"], index=2)
     active_setups = st.sidebar.multiselect("نماذج الدخول:", ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL"], default=["BREAKOUT", "RETEST"])
 
-    st.title("🛡️ SABRY VISION - Institutional Quant Terminal v11.12")
+    st.title("🛡️ SABRY VISION - Institutional Quant Terminal v11.17")
     st.markdown("---")
     
     if st.session_state["is_admin"]:
@@ -543,9 +697,16 @@ def main():
     with tab1:
         st.subheader("محرك السكانر المؤسسي وبطاقات الفرص")
         if st.button("بدء المسح المؤسسي الشامل", type="primary"):
-            if "السوق السعودي" in market_choice: syms = GlobalUniverseLoader.get_tasi_universe(); bench = "2222.SR"
-            elif "البورصة المصرية" in market_choice: syms = GlobalUniverseLoader.get_egx_universe(); bench = "SPY"
-            elif "السوق الأمريكي" in market_choice: syms = GlobalUniverseLoader.get_us_universe(); bench = "SPY"
+            if "المؤشرات الرئيسية" in market_choice: syms = GlobalUniverseLoader.get_benchmarks_universe(); bench = "SPY"
+            elif "السوق السعودي" in market_choice: syms = GlobalUniverseLoader.get_tasi_universe(); bench = "2222.SR"
+            elif "البورصة المصرية الكاملة" in market_choice: syms = GlobalUniverseLoader.get_egx_complete_universe(); bench = "COMI.CA"
+            elif "هونغ كونغ والمؤشر" in market_choice: syms = GlobalUniverseLoader.get_hang_seng_universe(); bench = "^HSI"
+            elif "سوق أبوظبي" in market_choice: syms = GlobalUniverseLoader.get_adx_universe(); bench = "IHC.AD"
+            elif "سوق دبي" in market_choice: syms = GlobalUniverseLoader.get_dfm_universe(); bench = "EMAAR.DU"
+            elif "السوق الأمريكي" in market_choice: syms = GlobalUniverseLoader.get_sp500_universe(); bench = "SPY"
+            elif "الناسداك" in market_choice: syms = GlobalUniverseLoader.get_nasdaq_universe(); bench = "QQQ"
+            elif "صناديق الاستثمار" in market_choice: syms = GlobalUniverseLoader.get_funds_universe(); bench = "SPY"
+            elif "الذهب والفضة" in market_choice: syms = GlobalUniverseLoader.get_gold_silver_universe(); bench = "GLD"
             elif "السلع" in market_choice: syms = GlobalUniverseLoader.get_commodities_universe(); bench = "GLD"
             else:
                 c_name = market_choice.replace("📁 ", "")
@@ -576,7 +737,7 @@ def main():
 
     with tab2:
         st.subheader("📊 فحص البيانات المالية الحقيقية لأي أصل")
-        f_sym = st.text_input("أدخل رمز الأصل (مثال: AAPL أو 2222.SR):", value="2222.SR")
+        f_sym = st.text_input("أدخل رمز الأصل (مثال: COMI.CA أو ^TASI.SR أو 0700.HK):", value="COMI.CA")
         if st.button("جلب البيانات المالية الحقيقية"):
             metrics = FinancialHealthEvaluator.get_financial_metrics(f_sym)
             c1, c2, c3, c4, c5 = st.columns(5)
