@@ -1,7 +1,7 @@
 """
-SABRY VISION - Ultimate Institutional Quant Terminal (v6.0 Dynamic Control Edition)
-Fund Management Grade: Fully controllable parameters via UI, Dynamic Filtering,
-Position Sizing, Parallel Multi-Threading, and Real-time Strategy Tuning.
+SABRY VISION - Ultimate Institutional Quant Terminal (v6.1 Live Execution Edition)
+Fund Management Grade: Real-time Live Data (No Caching), Dynamic UI Controls,
+Position Sizing, Parallel Multi-Threading, and Interactive Parameter Tuning.
 """
 
 import os
@@ -27,7 +27,7 @@ st.set_page_config(
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger("SabryVisionDynamicInstitutional")
+logger = logging.getLogger("SabryVisionLiveInstitutional")
 
 # تهيئة القائمة المخصصة الافتراضية
 if "custom_watchlist" not in st.session_state:
@@ -94,8 +94,8 @@ class GlobalUniverseLoader:
 
 class UnifiedDataProvider:
     @staticmethod
-    @st.cache_data(ttl=3600, show_spinner=False)
-    def fetch_raw_ohlcv_cached(symbol: str, period: str = "3mo", interval: str = "1d") -> pd.DataFrame:
+    def fetch_raw_ohlcv(symbol: str, period: str = "3mo", interval: str = "1d") -> pd.DataFrame:
+        """جلب البيانات اللحظية المباشرة دون أي تخزين مؤقت لضمان التطابق التام مع الكولاب"""
         try:
             df = yf.download(symbol, period=period, interval=interval, progress=False, auto_adjust=True)
             if df.empty:
@@ -116,7 +116,7 @@ class DynamicSabryScanner:
         self.active_setups = active_setups
 
     def analyze_asset(self, symbol: str, period: str, interval: str) -> Optional[Dict[str, Any]]:
-        df = UnifiedDataProvider.fetch_raw_ohlcv_cached(symbol, period, interval)
+        df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, period, interval)
         if df.empty or len(df) < 40:
             return None
             
@@ -141,7 +141,6 @@ class DynamicSabryScanner:
         f["pivot_20"] = f["high"].rolling(20).max().shift(1)
         f["low_20"] = f["low"].rolling(20).min().shift(1)
         
-        # قراءة معايير الحساسية الممررة ديناميكياً من الواجهة
         min_rvol = self.settings["min_rvol"]
         
         is_breakout = (f["close"] > f["pivot_20"]) & (f["rvol"] >= min_rvol) & (f["close"] > f["open"])
@@ -154,7 +153,6 @@ class DynamicSabryScanner:
         f["sig_retest"] = is_retest if "RETEST" in self.active_setups else False
         f["sig_bottom_reversal"] = is_bottom if "BOTTOM_REVERSAL" in self.active_setups else False
         
-        # تفعيل أو إلغاء شرط الـ VWAP بناءً على خيار الواجهة
         if self.settings["require_vwap"]:
             vwap_mask = f["close"] >= f["vwap"]
             f["sig_breakout"] &= vwap_mask
@@ -170,7 +168,6 @@ class DynamicSabryScanner:
         if latest["signal_type"] == "NONE":
             return None
             
-        # حساب السكور المؤسسي الديناميكي
         rs_s = latest["rs_momentum"] * 30.0 if pd.notna(latest["rs_momentum"]) else 0
         rvol_s = min(latest["rvol"], 3.0) / 3.0 * 40.0
         score = round(max(0, min(100, 50.0 + rs_s + rvol_s)), 1)
@@ -186,7 +183,6 @@ class DynamicSabryScanner:
         if risk_per_share <= 0:
             return None
             
-        # إدارة المخاطر وتحديد حجم المركز آلياً
         total_risk_dollar = self.settings["account_size"] * self.settings["risk_pct"]
         shares_to_buy = int(total_risk_dollar / risk_per_share)
         position_value = shares_to_buy * close_p
@@ -205,7 +201,7 @@ class DynamicSabryScanner:
         }
 
 # --- STREAMLIT DYNAMIC UI COMMAND CENTER ---
-st.title("🛡️ SABRY VISION - Dynamic Enterprise Quant Terminal (v6.0)")
+st.title("🛡️ SABRY VISION - Dynamic Enterprise Quant Terminal (v6.1)")
 
 st.sidebar.header("🎛️ لوحة التحكم الديناميكية الفورية")
 
@@ -232,7 +228,7 @@ st.sidebar.markdown("---")
 st.sidebar.subheader("⚙️ إعدادات الحساسية والفلترة (تعديل مباشر)")
 min_score_input = st.sidebar.slider("الحد الأدنى للسكور:", 40.0, 90.0, 60.0, 5.0)
 min_rvol_input = st.sidebar.slider("أدنى معدل حجم تداول (RVOL):", 1.0, 3.0, 1.2, 0.1)
-require_vwap_input = st.sidebar.checkbox("تفعيل شرط الـ VWAP الإلزامي", value=False) # جعلناه افتراضياً غير قسري لمنع انعدام النتائج
+require_vwap_input = st.sidebar.checkbox("تفعيل شرط الـ VWAP الإلزامي", value=False)
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("💰 محرك إدارة المخاطر الرأسمالية")
@@ -241,7 +237,6 @@ risk_pct = st.sidebar.slider("نسبة المخاطرة لكل صفقة (%)", 0.
 atr_mult = st.sidebar.slider("مضاعف وقف الـ ATR", 1.0, 4.0, 2.0, 0.5)
 reward_mult = st.sidebar.slider("مضاعف الهدف (Risk/Reward Multiplier)", 1.5, 5.0, 2.5, 0.5)
 
-# تجميع الإعدادات في قاموس ديناميكي يتم تحديثه لحظياً من الواجهة
 current_settings = {
     "min_score": min_score_input,
     "min_rvol": min_rvol_input,
@@ -255,13 +250,13 @@ current_settings = {
 tab1, tab2 = st.tabs(["🚀 السكانر الديناميكي الفوري", "📋 إدارة القائمة المخصصة"])
 
 with tab1:
-    st.header("🔍 المسح الذكي المتزامن وفق إعداداتك الحالية")
+    st.header("🔍 المسح الذكي المتزامن (بيانات حية مباشرة)")
     
     if st.button("🚀 بدء المسح الديناميكي الفوري"):
         if not selected_setups:
             st.error("⚠️ يرجى اختيار نموذج تداول واحد على الأقل.")
         else:
-            with st.spinner("جاري جلب البيانات، تطبيق المعايير الديناميكية، ومعالجة الصفقات..."):
+            with st.spinner("جاري سحب البيانات الحية المباشرة وتطبيق المعايير الديناميكية..."):
                 scanner = DynamicSabryScanner(current_settings, selected_setups)
                 
                 if "القائمة المخصصة" in market_mode:
@@ -302,10 +297,10 @@ with tab1:
                 
                 if results:
                     res_df = pd.DataFrame(results).sort_values(by="السكور", ascending=False)
-                    st.success(f"🎉 تم مسح الأصول بنجاح ورصد {len(res_df)} فرصة متوافقة مع الإعدادات الحالية:")
+                    st.success(f"🎉 تم مسح الأصول الحية بنجاح ورصد {len(res_df)} فرصة متوافقة تماماً مع إعداداتك:")
                     st.dataframe(res_df, use_container_width=True)
                 else:
-                    st.warning("⚠️ لم يتم رصد إشارات مطابقة لشروط الفلترة الحالية. جرب خفض معيار السكور قليلاً أو إلغاء تفعيل شرط الـ VWAP من الشريط الجانبي.")
+                    st.warning("⚠️ لم يتم رصد إشارات مطابقة لشروط الفلترة الحالية في البيانات الحية.")
 
 with tab2:
     st.header("📋 إدارة القائمة المخصصة للأصول والصناديق")
