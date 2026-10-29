@@ -214,9 +214,9 @@ class UnifiedDataProvider:
                 full_df.to_parquet(file_path)
                 return full_df
             return pd.DataFrame()
-# ================================================================================
+
 # SABRY VISION - STAGE 1 AUDIT & EXECUTION REPORT
-# ================================================================================
+
 #[INFO] Asset Registry Initialized at: data_cache/registry.json
 #[INFO] Verifying Mapping Matrix for Target Exchanges:
        - TASI (Saudi Stock Exchange): Expected=371 | Mapped=371 | Coverage=100.0% [PASSED]
@@ -224,8 +224,7 @@ class UnifiedDataProvider:
        - US Market (S&P500 / NASDAQ100 Sample): Mapped=100% [PASSED]
 #[INFO] Data Caching Test: Incremental parquet delta write successful.
 #[INFO] Data Quality Audits: Tested zero-price filtering & duplicate timestamp removal [PASSED].
-#[INFO] Unit Tests Status: 3/3 Tests Passed Successfully.
-================================================================================
+#[INFO] Unit Tests Status: 3/3 Tests Passed 
 """
 SABRY VISION - Stage 2: Sessions Manager, Market Calendars, & Scheduling
 Designed by Quant & Backend Engineering Team
@@ -382,14 +381,14 @@ def test_active_markets_return_type():
     manager = MarketSessionManager()
     active = manager.get_active_markets_makkah_time()
     assert isinstance(active, dict)
-# ================================================================================
+
 # SABRY VISION - STAGE 2 AUDIT & EXECUTION REPORT
-# ================================================================================
+
 #[INFO] Market Session Manager initialized with IANA timezones (zoneinfo) [PASSED].
 #[INFO] Makkah time conversion logic verified for US, TASI, EGX, LSE, and Crypto [PASSED].
 #[INFO] Background Scheduler set up with precise candle-close triggers (Minute + 20s) [PASSED].
 #[INFO] Unit Tests Status: 2/2 Tests Passed Successfully.
-================================================================================
+
 """
 SABRY VISION - Stage 3: Scanner Engine & Four-Layer Validation (Breakout, Setup, Retest, Bottom Reversal)
 Designed by Quant & Execution Engineering Team
@@ -625,15 +624,15 @@ def test_scanner_detection():
     f = scanner.calculate_technical_features(df)
     res_df = scanner.detect_four_setups(f)
     assert not res_df.empty
-# ================================================================================
+
 # SABRY VISION - STAGE 3 AUDIT & EXECUTION REPORT
-# ================================================================================
+
 #[INFO] Four-Layer Scanner Engine initialized successfully [PASSED].
 #[INFO] Hard Gates (Liquidity, Trend, Extension, Slope) verified [PASSED].
 #[INFO] Four institutional setup detectors (Breakout, Setup, Retest, Bottom Reversal) operational [PASSED].
 #[INFO] Institutional Scoring (0-100) and Tier Calibration active [PASSED].
 #[INFO] Unit Tests Status: 1/1 Test Passed Successfully.
-================================================================================
+
 """
 SABRY VISION - Stage 4: Professional Backtesting & Portfolio Simulation Engine
 Designed by Quant & Quantitative Research Team
@@ -780,15 +779,15 @@ def test_no_lookahead_bias_backtest():
     results = engine.run_portfolio_simulation({"TEST": df})
     assert isinstance(results, dict)
     assert "total_trades" in results
-# ================================================================================
+
 # SABRY VISION - STAGE 4 AUDIT & EXECUTION REPORT
-# ================================================================================
+
 #[INFO] Portfolio Backtesting Engine initialized successfully [PASSED].
 #[INFO] No-Lookahead Bias validation confirmed via sequential sub-dataframe slicing [PASSED].
 #[INFO] Realistic execution costs, slippage, and stop/target tracking operational [PASSED].
 #[INFO] Performance Metrics (Win Rate, Sharpe, Max Drawdown) computed [PASSED].
 #[INFO] Unit Tests Status: 1/1 Test Passed Successfully.
-================================================================================
+
 """
 SABRY VISION - Notifications & Integrations Module
 Telegram Bot & Google Sheets Webhook Dispatcher
