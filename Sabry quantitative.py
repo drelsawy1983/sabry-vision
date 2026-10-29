@@ -46,12 +46,13 @@ class Config:
         "TASI": MarketConfig("TASI", ".SR", "^TASI.SR", "Asia/Riyadh", "10:00", "15:00", [0, 1, 2, 3, 4], 2000000.0, 10.0),
     })
 
-    @classmethod
-    from_secrets(cls, secrets_dict: dict) -> "Config":
+       @classmethod
+    def from_secrets(cls, secrets_dict: dict) -> "Config":
         cfg = cls()
         cfg.telegram_bot_token = secrets_dict.get("TELEGRAM_BOT_TOKEN", cfg.telegram_bot_token)
         cfg.telegram_chat_id = secrets_dict.get("TELEGRAM_CHAT_ID", cfg.telegram_chat_id)
         return cfg
+ 
 
 # ==========================================
 # 2. طبقة البيانات والكاش التدريجي (Data Layer)
