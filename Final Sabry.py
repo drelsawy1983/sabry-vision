@@ -1,9 +1,10 @@
 """
-SABRY VISION - Apex Institutional Quant Terminal & Backtesting Engine (v11.6 Ultimate Apex Edition)
-Complete Enterprise System: Massive Hardcoded Registries, 5-Layer Engine with VWAP Slope & Dynamic RVOL,
-Adaptive Market Regime, Multithreaded Scanner with Live Progress Bar, Single Asset Deep Backtester with ROC%,
-Advanced Multi-List Custom Watchlist Manager, Telegram Direct Connection & Test, Google Colab Integration,
-and Financial Health Score & Fair Value Evaluator.
+SABRY VISION - Apex Institutional Quant Terminal & Backtesting Engine (v11.7.1 Apex Elite Edition)
+Complete Enterprise System: Massive Hardcoded Registries (TASI, EGX 30/70, US, Hang Seng, Commodities),
+5-Layer Engine with VWAP Slope, Multi-Select Tagged Setup UI, Adaptive Market Regime,
+Advanced Position Sizing (Kelly Criterion & Signal Weight), Fair Value Analyst Target & Financial Health (InvestingPro),
+Multithreaded Scanner with Live Progress, Telegram HTML Engine, Dynamic Custom Watchlist Manager,
+and Chandler ATR Trailing Stop with 1R Breakeven Backtesting Engine.
 Audited & Verified by SABRY VISION Institutional QA Council & Global Quant Experts.
 """
 
@@ -34,14 +35,14 @@ except ImportError:
 # 1. SYSTEM INITIALIZATION & PAGE CONFIGURATION
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.6",
+    page_title="SABRY VISION - Master Quant Terminal v11.7.1",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.6")
+logger = logging.getLogger("SabryVisionMaster11.7.1")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE MANAGEMENT & ADVANCED MULTI-LIST WATCHLIST MANAGER
@@ -55,7 +56,8 @@ if "custom_indices_dict" not in st.session_state:
     st.session_state["custom_indices_dict"] = {
         "Hang Seng Core Group": ["^HSI", "0700.HK", "9988.HK", "3690.HK", "0005.HK", "1299.HK", "1810.HK", "2318.HK", "0939.HK"],
         "Albilad Flagship ETFs": ["9405.SR", "9406.SR", "9407.SR", "9410.SR", "9411.SR"],
-        "Saudi Blue Chips": ["2222.SR", "1120.SR", "2010.SR", "1180.SR", "7010.SR"]
+        "Saudi Blue Chips": ["2222.SR", "1120.SR", "2010.SR", "1180.SR", "7010.SR"],
+        "EGX 30 Blue Chips (مصر)": ["COMI.CA", "EAST.CA", "HELI.CA", "SWDY.CA", "MFPC.CA", "ABUK.CA", "HRHO.CA"]
     }
 
 if "last_scan_results" not in st.session_state:
@@ -78,7 +80,7 @@ class InstitutionalConfig:
     require_daily_shield: bool = True
 
 # ------------------------------------------------------------------------------
-# 4. TELEGRAM NOTIFICATION ENGINE (WITH STRIP & TEST CONNECTION)
+# 4. TELEGRAM NOTIFICATION ENGINE (HTML & DIRECT UI DYNAMIC CONTROLS)
 # ------------------------------------------------------------------------------
 class TelegramEngine:
     @staticmethod
@@ -102,7 +104,7 @@ class TelegramEngine:
             return False
 
 # ------------------------------------------------------------------------------
-# 5. MASSIVE HARDCODED INSTITUTIONAL UNIVERSE LOADER
+# 5. MASSIVE HARDCODED INSTITUTIONAL UNIVERSE LOADER (TASI, EGX, US, HANG SENG)
 # ------------------------------------------------------------------------------
 class GlobalUniverseLoader:
     @staticmethod
@@ -134,6 +136,11 @@ class GlobalUniverseLoader:
         return [f"{t.strip()}.SR" for t in base_tasi_and_nomu if t.strip()]
 
     @staticmethod
+    def get_egx_universe() -> List[str]:
+        """مؤشرات البورصة المصرية EGX 30 & EGX 70"""
+        return ["COMI.CA", "EAST.CA", "HELI.CA", "SWDY.CA", "MFPC.CA", "ABUK.CA", "HRHO.CA", "ETRS.CA", "PHDC.CA", "TMGH.CA"]
+
+    @staticmethod
     def get_commodities_and_etfs_universe() -> List[str]:
         return [
             "GC=F", "GLD", "IAU", "SI=F", "SLV", "PL=F", "PA=F", "HG=F", "REMX", "9405.SR",
@@ -150,7 +157,7 @@ class GlobalUniverseLoader:
         ]
 
 # ------------------------------------------------------------------------------
-# 6. UNIFIED DATA PROVIDER (ROBUST TIMEOUT & TIMEFRAME ADAPTATION)
+# 6. UNIFIED DATA PROVIDER
 # ------------------------------------------------------------------------------
 class UnifiedDataProvider:
     @staticmethod
@@ -173,7 +180,6 @@ class UnifiedDataProvider:
             if df.empty or len(df) < 15:
                 return pd.DataFrame()
                 
-            # Live Tick Injection
             try:
                 ticker_obj = yf.Ticker(symbol)
                 fast_info = getattr(ticker_obj, 'fast_info', None)
@@ -191,12 +197,9 @@ class UnifiedDataProvider:
             return pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 7. FINANCIAL HEALTH & FAIR VALUE EVALUATOR (InvestingPro Style)
+# 7. FINANCIAL HEALTH & FAIR VALUE ANALYST TARGET EVALUATOR (InvestingPro Style)
 # ------------------------------------------------------------------------------
 class FinancialHealthEvaluator:
-    """
-    مُقيّم الصحة المالية والتقييم العادل (Fair Value & Financial Health Score) لكل أصل.
-    """
     @staticmethod
     def get_financial_health_summary(symbol: str) -> Dict[str, Any]:
         try:
@@ -206,24 +209,30 @@ class FinancialHealthEvaluator:
             roe = info.get("returnOnEquity", 0)
             debt_to_equity = info.get("debtToEquity", 0)
             profit_margins = info.get("profitMargins", 0)
+            current_price = info.get("currentPrice", info.get("regularMarketPrice", 0))
+            target_mean = info.get("targetMeanPrice", 0)
             
-            # حساب تقييم الصحة المالية كنسبة مئوية
-            health_score = 70.0 # افتراضي مؤسسي
+            health_score = 70.0
             if roe and roe > 0.15: health_score += 15.0
             if profit_margins and profit_margins > 0.10: health_score += 10.0
             if debt_to_equity and debt_to_equity < 100: health_score += 5.0
-            
             health_score = min(100.0, max(30.0, health_score))
             status = "ممتازة (Strong)" if health_score >= 80 else ("جيدة (Stable)" if health_score >= 65 else "تحت المراقبة (Watch)")
             
+            upside = 0.0
+            if target_mean and current_price and current_price > 0:
+                upside = ((target_mean - current_price) / current_price) * 100.0
+                
             return {
                 "Health Score": f"{round(health_score, 1)}%",
                 "Financial Status": status,
                 "P/E Ratio": round(pe, 2) if pe else "N/A",
-                "ROE": f"{round(roe * 100, 1)}%" if roe else "N/A"
+                "ROE": f"{round(roe * 100, 1)}%" if roe else "N/A",
+                "Fair Value Target": round(target_mean, 2) if target_mean else "N/A",
+                "Upside Potential (%)": f"{round(upside, 1)}%" if target_mean else "N/A"
             }
         except Exception:
-            return {"Health Score": "N/A", "Financial Status": "غير متاح حالياً", "P/E Ratio": "N/A", "ROE": "N/A"}
+            return {"Health Score": "N/A", "Financial Status": "غير متاح", "P/E Ratio": "N/A", "ROE": "N/A", "Fair Value Target": "N/A", "Upside Potential (%)": "N/A"}
 
 # ------------------------------------------------------------------------------
 # 8. ADAPTIVE MARKET REGIME CONTROLLER
@@ -244,7 +253,7 @@ class AdaptiveMarketRegimeController:
             return True, 1.0
 
 # ------------------------------------------------------------------------------
-# 9. SABRY VISION 5-LAYER INSTITUTIONAL QUANT ENGINE (DISTINCT SETUPS)
+# 9. SABRY VISION 5-LAYER INSTITUTIONAL QUANT ENGINE (TAGGED SETUPS)
 # ------------------------------------------------------------------------------
 class SabryVision5LayerEngine:
     def __init__(self, settings: InstitutionalConfig, active_setups: List[str], timeframe: str):
@@ -282,7 +291,6 @@ class SabryVision5LayerEngine:
         upper_wick = f["high"] - np.maximum(f["close"], f["open"])
         clean_wick = ((upper_wick / (f["high"] - f["low"]).replace(0, np.nan)) <= 0.35) | (f["close"] > f["open"])
         
-        # النماذج المستقلة تماماً
         is_breakout = (f["close"] > f["pivot_20"]) & (f["rvol"] >= dynamic_rvol) & clean_wick & (f["vwap_slope_deg"] > 5.0)
         is_retest = (f["close"].shift(1) > f["pivot_20"]) & (f["low"] <= f["poc"] * 1.03) & (f["close"] > f["poc"])
         is_setup = (f["close"] <= f["pivot_20"]) & (f["close"] >= f["pivot_20"] * 0.95) & (f["rvol"] < 1.3)
@@ -307,7 +315,7 @@ class SabryVision5LayerEngine:
         return f
 
 # ------------------------------------------------------------------------------
-# 10. MULTITHREADED MASTER SCANNER WITH LIVE PROGRESS BAR
+# 10. MULTITHREADED MASTER SCANNER WITH LIVE PROGRESS BAR & POSITION SIZING
 # ------------------------------------------------------------------------------
 class SabryVisionMasterScanner:
     def __init__(self, config: InstitutionalConfig, active_setups: List[str], timeframe: str, market_booster: float = 1.0):
@@ -340,7 +348,15 @@ class SabryVisionMasterScanner:
         if calc_score < req_score:
             return None
 
-        # إضافة التقييم المالي السريع
+        # حساب إدارة المخاطر المتقدم (Position Sizing & Kelly Style)
+        risk_dollar_allowed = self.config.account_size * self.config.risk_pct
+        stop_loss_price = close_p - (atr * self.config.atr_mult)
+        risk_per_share = max(0.01, close_p - stop_loss_price)
+        
+        setup_multiplier = 1.2 if sig_type == "BREAKOUT" else (1.0 if sig_type == "RETEST" else (0.8 if sig_type == "SETUP" else 0.7))
+        shares_qty = int((risk_dollar_allowed / risk_per_share) * setup_multiplier)
+        total_position_cost = shares_qty * close_p
+
         fin_info = FinancialHealthEvaluator.get_financial_health_summary(symbol)
 
         return {
@@ -348,12 +364,14 @@ class SabryVisionMasterScanner:
             "Timeframe": self.timeframe,
             "Signal": sig_type,
             "Close": round(close_p, 2),
-            "RVOL": round(rvol, 2),
+            "Shares Qty": shares_qty,
+            "Position Cost ($)": round(total_position_cost, 2),
             "Score": round(calc_score, 1),
-            "Financial Health": fin_info["Health Score"],
-            "Stop Loss": round(close_p - (atr * self.config.atr_mult), 2),
-            "Take Profit": round(close_p + (atr * self.config.atr_mult * self.config.reward_mult), 2),
-            "Timestamp": str(processed.index[-1])
+            "Health": fin_info["Health Score"],
+            "Fair Target": fin_info["Fair Value Target"],
+            "Upside (%)": fin_info["Upside Potential (%)"],
+            "Stop Loss": round(stop_loss_price, 2),
+            "Take Profit": round(close_p + (risk_per_share * self.config.reward_mult), 2)
         }
 
     def run_scan_with_progress(self, symbols: List[str]) -> pd.DataFrame:
@@ -364,31 +382,27 @@ class SabryVisionMasterScanner:
             
         progress_bar = st.progress(0)
         status_text = st.empty()
-        
-        max_workers = min(16, os.cpu_count() * 2 or 4)
         completed = 0
         
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        with ThreadPoolExecutor(max_workers=16) as executor:
             future_to_sym = {executor.submit(self.scan_symbol, sym): sym for sym in symbols}
             for future in as_completed(future_to_sym):
                 completed += 1
                 pct = int((completed / total) * 100)
                 progress_bar.progress(pct)
-                status_text.markdown(f"⏳ **جاري الفحص المتقدم للأصول... المكتمل: {completed} / {total} ({pct}%)**")
-                
+                status_text.markdown(f"⏳ **جاري الفحص المؤسسي... المكتمل: {completed} / {total} ({pct}%)**")
                 res = future.result()
                 if res:
                     results.append(res)
                     
         progress_bar.empty()
         status_text.empty()
-        
         if not results:
             return pd.DataFrame()
         return pd.DataFrame(results).sort_values(by="Score", ascending=False).reset_index(drop=True)
 
 # ------------------------------------------------------------------------------
-# 11. VECTORIZED BACKTESTER WITH RETURN ON CAPITAL (ROC %)
+# 11. VECTORIZED BACKTESTER WITH 1R BREAKEVEN & CHANDLER ATR TRAILING STOP
 # ------------------------------------------------------------------------------
 class SabryVectorizedBacktester:
     @staticmethod
@@ -402,6 +416,8 @@ class SabryVectorizedBacktester:
         entry_price = 0.0
         stop_loss = 0.0
         take_profit = 0.0
+        initial_risk = 0.0
+        breakeven_activated = False
         entry_time = None
         sig_name = ""
         
@@ -419,16 +435,37 @@ class SabryVectorizedBacktester:
                 sig_name = signals[i]
                 entry_time = times[i]
                 atr = atrs[i] if not np.isnan(atrs[i]) else entry_price * 0.02
-                stop_loss = entry_price - (atr * config.atr_mult)
-                take_profit = entry_price + ((entry_price - stop_loss) * config.reward_mult)
+                
+                initial_risk = atr * config.atr_mult
+                stop_loss = entry_price - initial_risk
+                take_profit = entry_price + (initial_risk * config.reward_mult)
+                breakeven_activated = False
+                
             elif in_trade:
-                if lows[i] <= stop_loss:
+                curr_high = highs[i]
+                curr_low = lows[i]
+                current_atr = atrs[i] if not np.isnan(atrs[i]) else entry_price * 0.02
+                
+                # 1. قاعدة نقل الوقف لسعر الدخول عند تحقيق 1R مكسب (Breakeven Rule)
+                if not breakeven_activated and (curr_high >= entry_price + initial_risk):
+                    stop_loss = max(stop_loss, entry_price)
+                    breakeven_activated = True
+                
+                # 2. نظام تشاندلر ATR المتحرك (Chandler ATR Trailing Stop) بعد تفعيل التعادل
+                if breakeven_activated:
+                    chandler_stop = curr_high - (current_atr * 1.5)
+                    if chandler_stop > stop_loss:
+                        stop_loss = chandler_stop
+                
+                # التحقق من ضرب وقف الخسارة أو الهدف
+                if curr_low <= stop_loss:
                     pnl = stop_loss - entry_price
                     pct_ret = (pnl / entry_price) * 100.0
                     trades.append(pnl)
-                    trade_details.append({"Entry Time": str(entry_time), "Exit Time": str(times[i]), "Signal": sig_name, "Entry": round(entry_price, 2), "Exit": round(stop_loss, 2), "Return (%)": round(pct_ret, 2), "Outcome": "Loss"})
+                    outcome = "Win (Trailing)" if pnl > 0 else ("Breakeven" if pnl == 0 else "Loss")
+                    trade_details.append({"Entry Time": str(entry_time), "Exit Time": str(times[i]), "Signal": sig_name, "Entry": round(entry_price, 2), "Exit": round(stop_loss, 2), "Return (%)": round(pct_ret, 2), "Outcome": outcome})
                     in_trade = False
-                elif highs[i] >= take_profit:
+                elif curr_high >= take_profit:
                     pnl = take_profit - entry_price
                     pct_ret = (pnl / entry_price) * 100.0
                     trades.append(pnl)
@@ -488,29 +525,26 @@ class GoogleSheetsEngine:
 # 13. STREAMLIT UI COMMAND CENTER & DASHBOARD
 # ------------------------------------------------------------------------------
 def main():
-    st.sidebar.title("🛡️ SABRY VISION v11.6")
+    st.sidebar.title("🛡️ SABRY VISION v11.7.1")
     st.sidebar.markdown("---")
     
-    # ربط Google Colab
-    st.sidebar.markdown("### 🔗 Google Colab & Cloud Integration")
-    colab_url_input = st.sidebar.text_input("Google Colab Notebook URL", value=st.session_state["colab_url"], placeholder="https://colab.research.google.com/...")
+    st.sidebar.markdown("### 🔗 Google Colab Integration")
+    colab_url_input = st.sidebar.text_input("Google Colab URL", value=st.session_state["colab_url"])
     if colab_url_input:
         st.session_state["colab_url"] = colab_url_input
-        st.sidebar.success("تم تسجيل رابط Colab بنجاح!")
         
     st.sidebar.markdown("---")
     st.sidebar.markdown("### ⚙️ إعدادات تليجرام الفورية")
-    ui_telegram_token = st.sidebar.text_input("Telegram Bot Token", value="", type="password", placeholder="أدخل توكن البوت...")
-    ui_telegram_chat_id = st.sidebar.text_input("Telegram Chat ID", value="", placeholder="أدخل رقم الشات آي دي...")
+    ui_telegram_token = st.sidebar.text_input("Telegram Bot Token", value="", type="password")
+    ui_telegram_chat_id = st.sidebar.text_input("Telegram Chat ID", value="")
     
-    # زر اختبار اتصال تليجرام المباشر
     if st.sidebar.button("🔌 اختبار اتصال تليجرام"):
         if ui_telegram_token and ui_telegram_chat_id:
-            test_msg = "<b>🛡️ SABRY VISION BOT TEST</b>\nتم بنجاح الاتصال المباشر بنظام صبري فيجن المؤسسي!"
+            test_msg = "<b>🛡️ SABRY VISION BOT TEST</b>\nتم بنجاح الاتصال المباشر بنظام صبري فيجن مع تشاندلر ATR!"
             if TelegramEngine.send_html_alert(ui_telegram_token, ui_telegram_chat_id, test_msg):
-                st.sidebar.success("نجح الاتصال! تم إرسال رسالة تجريبية لتليجرام.")
+                st.sidebar.success("نجح الاتصال وتم إرسال الرسالة!")
             else:
-                st.sidebar.error("فشل الاتصال. تأكد من صحة التوكن والشات.")
+                st.sidebar.error("فشل الاتصال.")
         else:
             st.sidebar.warning("أدخل التوكن والشات أولاً.")
 
@@ -519,42 +553,45 @@ def main():
     risk_pct = st.sidebar.slider("نسبة المخاطرة لكل صفقة (%)", 0.5, 5.0, 1.0, 0.5) / 100.0
     config = InstitutionalConfig(account_size=acc_size, risk_pct=risk_pct)
     
-    market_choice = st.sidebar.selectbox(
-        "اختر السوق المستهدف:",
-        ["السوق السعودي (تاسي + صناديق 9000 + REITs)", "السوق الأمريكي (S&P 500 & Nasdaq)", "مؤشر هانج سينج ومكوناته (.HK)", "السلع والمعادن الثمينة", "قائمتي المخصصة"]
-    )
+    base_market_options = [
+        "السوق السعودي (تاسي + صناديق 9000 + REITs)", 
+        "البورصة المصرية (EGX 30 & EGX 70)",
+        "السوق الأمريكي (S&P 500 & Nasdaq)", 
+        "مؤشر هانج سينج (.HK)", 
+        "السلع والمعادن الثمينة"
+    ]
+    custom_list_names = list(st.session_state["user_custom_lists"].keys())
+    all_market_options = base_market_options + [f"📁 {name}" for name in custom_list_names]
     
+    market_choice = st.sidebar.selectbox("اختر السوق المستهدف:", all_market_options)
     timeframe = st.sidebar.selectbox("الإطار الزمني للفحص:", ["5m", "15m", "1h", "1d", "1W"], index=2)
     
-    # فك قفل الخانات للنماذج بشكل كامل
-    st.sidebar.markdown("### 🎯 النماذج النشطة (حر ومستقل بالكامل)")
-    use_breakout = st.sidebar.checkbox("Breakout (اختراق محوري)", value=True)
-    use_retest = st.sidebar.checkbox("Retest (إعادة اختبار POC)", value=True)
-    use_setup = st.sidebar.checkbox("Setup (تأسيس عرضي)", value=True)
-    use_bottom = st.sidebar.checkbox("Bottom Reversal (مصيدة قاع)", value=True)
-    
-    active_setups = []
-    if use_breakout: active_setups.append("BREAKOUT")
-    if use_retest: active_setups.append("RETEST")
-    if use_setup: active_setups.append("SETUP")
-    if use_bottom: active_setups.append("BOTTOM_REVERSAL")
+    st.sidebar.markdown("### 🎯 النماذج النشطة (تاجات إلغاء تفاعلية)")
+    active_setups = st.sidebar.multiselect(
+        "اختر أو أزل نماذج الدخول:",
+        ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL"],
+        default=["BREAKOUT", "RETEST"]
+    )
 
-    st.title("🛡️ SABRY VISION - Institutional Quant Terminal v11.6")
+    st.title("🛡️ SABRY VISION - Institutional Quant Terminal v11.7.1")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4 = st.tabs([
         "🚀 السكانر الشامل ومركز التصدير", 
-        "📈 الباك تست التاريخي لأصل معين", 
-        "📊 تقييم الصحة المالية", 
-        "⚙️ إدارة القوائم المتعددة"
+        "📈 الباك تست التاريخي (مع تشاندلر وتوقيت 1R)", 
+        "📊 تقييم الصحة المالية والقيمة العادلة", 
+        "⚙️ إدارة القوائم المتعددة وتعديلها"
     ])
     
     with tab1:
-        st.subheader("محرك السكانر المؤسسي للفرص الحية مع شريط التقدم الاحترافي")
+        st.subheader("محرك السكانر المؤسسي الحقيقي مع حساب حجم الصفقة (Position Sizing)")
         if st.button("بدء المسح المؤسسي الشامل", type="primary"):
             if "السوق السعودي" in market_choice:
                 symbols_to_scan = GlobalUniverseLoader.get_tasi_universe()
                 bench = "2222.SR"
+            elif "البورصة المصرية" in market_choice:
+                symbols_to_scan = GlobalUniverseLoader.get_egx_universe()
+                bench = "SPY"
             elif "السوق الأمريكي" in market_choice:
                 symbols_to_scan = GlobalUniverseLoader.get_us_and_global_indices_universe()
                 bench = "SPY"
@@ -565,14 +602,13 @@ def main():
                 symbols_to_scan = GlobalUniverseLoader.get_commodities_and_etfs_universe()
                 bench = "GLD"
             else:
-                # أخذ أول قائمة مخصصة متاحة
-                first_key = list(st.session_state["user_custom_lists"].keys())[0]
-                symbols_to_scan = st.session_state["user_custom_lists"][first_key]
+                selected_custom_name = market_choice.replace("📁 ", "")
+                symbols_to_scan = st.session_state["user_custom_lists"].get(selected_custom_name, [])
                 bench = "SPY"
                 
             is_bull, booster = AdaptiveMarketRegimeController.evaluate_market_regime(bench)
             if not is_bull:
-                st.warning(f"⚠️ وضع الحماية التكيفية نشط: أداء السوق العام ضعيف، تم رفع شرط السكور المطلوب بنسبة {int((booster-1.0)*100)}%.")
+                st.warning(f"⚠️ وضع الحماية التكيفية نشط: أداء السوق ضعيف، تم رفع شرط السكور بنسبة {int((booster-1.0)*100)}%.")
                 
             master_scanner = SabryVisionMasterScanner(config, active_setups, timeframe, market_booster=booster)
             results_df = master_scanner.run_scan_with_progress(symbols_to_scan)
@@ -583,7 +619,7 @@ def main():
                 st.dataframe(results_df, use_container_width=True)
                 
                 st.markdown("---")
-                st.subheader("🌐 مركز التصدير والمشاركة السحابية")
+                st.subheader("🌐 مركز التصدير والإرسال الفوري لتليجرام")
                 col_a, col_b, col_c = st.columns(3)
                 
                 sheet_link = None
@@ -592,46 +628,45 @@ def main():
                         sheet_link = GoogleSheetsEngine.sync_to_google_sheet(results_df)
                         if sheet_link:
                             st.success("تمت المزامنة بنجاح!")
-                            st.markdown(f"🔗 **[رابط Google Sheet المباشر]({sheet_link})**", unsafe_allow_html=True)
+                            st.markdown(f"🔗 **[رابط Google Sheet]({sheet_link})**", unsafe_allow_html=True)
                         else:
                             st.warning("تعذر الاتصال بـ Google Sheets.")
                 with col_b:
-                    if st.button("إرسال التقرير لتليجرام"):
+                    if st.button("إرسال التقرير لتليجرام الآن"):
                         if ui_telegram_token and ui_telegram_chat_id:
-                            msg = f"<b>🚨 SABRY VISION - MASTER SCAN REPORT</b>\nعدد الفرص: <b>{len(results_df)}</b>\nالفريم: {timeframe}"
+                            msg = f"<b>🚨 SABRY VISION v11.7.1 REPORT</b>\nعدد الفرص المرصودة: <b>{len(results_df)}</b>\nالإطار الزمني: {timeframe}"
                             if sheet_link: msg += f"\n🔗 <a href='{sheet_link}'>رابط Google Sheets</a>"
                             if TelegramEngine.send_html_alert(ui_telegram_token, ui_telegram_chat_id, msg):
                                 st.success("تم إرسال التقرير لتليجرام بنجاح!")
                             else:
-                                st.error("فشل الإرسال. تأكد من التوكن والشات.")
+                                st.error("فشل إرسال تليجرام.")
                         else:
-                            st.warning("يرجى إدخال التوكن والشات أولاً.")
+                            st.warning("أدخل توكن وشات تليجرام أولاً.")
                 with col_c:
-                    # زر نسخ الجدول كصيغة نصية للتابلت والصناديق الداخلية
                     csv_text = results_df.to_csv(index=False)
                     st.download_button("📥 تحميل النتائج (CSV للتابلت)", csv_text, "scan_results.csv", "text/csv")
             else:
-                st.warning("لم يتم العثور على فرص مطابقة للشروط الصارمة في هذا المسح.")
+                st.warning("لم يتم العثور على فرص مطابقة للشروط في هذا المسح.")
 
     with tab2:
-        st.subheader("📈 محاكاة الباك تست التاريخي لأصل معين مع نسبة العائد على رأس المال (ROC %)")
+        st.subheader("📈 الباك تست التاريخي المطور (مع قاعدة 1R Breakeven ونظام تشاندلر ATR)")
         col_bt1, col_bt2, col_bt3 = st.columns(3)
         with col_bt1:
-            single_symbol = st.text_input("رمز الأصل المراد فحصه:", value="2222.SR")
+            single_symbol = st.text_input("رمز الأصل للفحص:", value="2222.SR")
         with col_bt2:
             bt_timeframe = st.selectbox("فريم الباك تست:", ["15m", "1h", "1d", "1W"], index=2, key="bt_tf")
         with col_bt3:
-            bt_lookback = st.selectbox("المدى التاريخي للباك تست:", ["1mo", "3mo", "6mo", "1y", "2y", "max"], index=3)
+            bt_lookback = st.selectbox("المدى التاريخي:", ["1mo", "3mo", "6mo", "1y", "2y", "max"], index=3)
             
-        if st.button("🚀 تشغيل الباك تست المتجهي"):
-            with st.spinner(f"جاري إجراء المحاكاة التاريخية للرمز {single_symbol}..."):
+        if st.button("🚀 تشغيل الباك تست مع تشاندلر"):
+            with st.spinner(f"جاري المحاكاة للرمز {single_symbol}..."):
                 df_single = UnifiedDataProvider.fetch_raw_ohlcv(single_symbol, interval=bt_timeframe, period_override=bt_lookback)
                 if not df_single.empty:
                     engine = SabryVision5LayerEngine(config, active_setups, bt_timeframe)
                     processed_single = engine.process_data(df_single)
                     metrics = SabryVectorizedBacktester.run_backtest(processed_single, config)
                     
-                    st.markdown("### 📊 إحصائيات الأداء المالي واستراتيجية رأس المال")
+                    st.markdown("### 📊 إحصائيات الأداء المالي (بإدارة المخاطر الديناميكية)")
                     m1, m2, m3, m4, m5 = st.columns(5)
                     m1.metric("إجمالي الصفقات", metrics["Total Trades"])
                     m2.metric("نسبة النجاح (%)", f"{metrics['Win Rate (%)']}%")
@@ -639,41 +674,39 @@ def main():
                     m4.metric("صافي الربح ($)", f"${metrics['Net PnL ($)']}")
                     m5.metric("العائد على رأس المال", f"{metrics['Return on Capital (%)']}%")
                     
-                    st.line_chart(processed_single[["close", "ema200", "vwap"]])
+                    st.line_chart(processed_single[["close", "ema200", "vwap"]], height=450)
                     
                     if metrics["Trades List"]:
-                        st.markdown("### 📝 سجل تفاصيل الصفقات المحاكاة (لتاريخ ومطابقة TradingView)")
+                        st.markdown("### 📝 سجل تفاصيل صفقات الباك تست (تشمل تعادل وTrailing)")
                         st.dataframe(pd.DataFrame(metrics["Trades List"]), use_container_width=True)
                 else:
-                    st.error("تعذر جلب البيانات لهذا الأصل.")
+                    st.error("تعذر جلب البيانات.")
 
     with tab3:
-        st.subheader("📊 تحليل الصحة المالية والتقييم العادل (InvestingPro Style)")
-        health_sym = st.text_input("أدخل رمز الأصل لتقييم صحته المالية:", value="2222.SR")
-        if st.button("تقييم الصحة المالية"):
+        st.subheader("📊 تحليل الصحة المالية والتقييم العادل (InvestingPro Style & Target)")
+        health_sym = st.text_input("أدخل رمز الأصل:", value="2222.SR")
+        if st.button("تقييم الصحة والقيمة العادلة"):
             res_h = FinancialHealthEvaluator.get_financial_health_summary(health_sym)
-            c1, c2, c3, c4 = st.columns(4)
+            c1, c2, c3, c4, c5 = st.columns(5)
             c1.metric("مؤشر الصحة المالية", res_h["Health Score"])
             c2.metric("الحالة التقييمية", res_h["Financial Status"])
             c3.metric("مكرر الربحية (P/E)", res_h["P/E Ratio"])
-            c4.metric("العائد على حقوق الملكية (ROE)", res_h["ROE"])
+            c4.metric("السعر المستهدف (Fair Target)", res_h["Fair Value Target"])
+            c5.metric("نسبة الصعود المتوقعة", res_h["Upside Potential (%)"])
 
     with tab4:
-        st.subheader("⚙️ إدارة القوائم المخصصة المتعددة (Multi-List Watchlist Manager)")
-        list_name = st.text_input("اسم القائمة الجديدة (مثال: صناديق تاسي المفضلة):", value="قائمتي الخاصة")
-        new_symbol_input = st.text_input("أضف رمز جديد للقائمة (مثال: 1120.SR):")
+        st.subheader("⚙️ إدارة القوائم المخصصة وتعديلها مباشرة")
+        sel_list = st.selectbox("اختر القائمة للتعديل:", list(st.session_state["user_custom_lists"].keys()))
+        current_syms = st.session_state["user_custom_lists"][sel_list]
         
-        if st.button("إنشاء أو تحديث القائمة"):
-            if list_name and new_symbol_input:
-                if list_name not in st.session_state["user_custom_lists"]:
-                    st.session_state["user_custom_lists"][list_name] = []
-                if new_symbol_input.strip() not in st.session_state["user_custom_lists"][list_name]:
-                    st.session_state["user_custom_lists"][list_name].append(new_symbol_input.strip())
-                    st.success(f"تمت إضافة {new_symbol_input} إلى القائمة '{list_name}' بنجاح!")
-                    
-        st.markdown("### 📋 قوائمك الحالية المسجلة:")
-        for l_name, syms in st.session_state["user_custom_lists"].items():
-            st.write(f"**{l_name}**: {syms}")
+        st.write(f"**العناصر الحالية في القائمة ({len(current_syms)}):**", current_syms)
+        
+        new_add = st.text_input("أضف رمْزاً جديداً لهذه القائمة:")
+        if st.button("إضافة الرمز للقائمة"):
+            if new_add and new_add.strip() not in current_syms:
+                st.session_state["user_custom_lists"][sel_list].append(new_add.strip())
+                st.success(f"تمت إضافة {new_add} بنجاح!")
+                st.rerun()
 
 if __name__ == "__main__":
     main()
