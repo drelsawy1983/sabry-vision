@@ -1,7 +1,7 @@
 """
-SABRY VISION - Institutional Quant Terminal & Backtesting Engine (v11.11 Secure Role-Based Edition)
-Complete Enterprise System: Strict Role Separation (Admin Watchlist & User Execution Only),
-Admin User Expiry Management, Restored 305+ TASI/Nomu/REITs/9000 Universe, and Rich Telegram Cards.
+SABRY VISION - Institutional Quant Terminal & Backtesting Engine (v11.12 Master Security & Control Edition)
+Complete Enterprise System: Full Admin Control to Edit Admin/User Usernames, Passwords, Expiry Dates,
+Restored 305+ TASI/Nomu/REITs/9000 Universe, Rich Telegram Trade Cards, and Real Financials.
 Audited & Verified by SABRY VISION Institutional QA Council.
 """
 
@@ -31,14 +31,14 @@ except ImportError:
 # 1. SYSTEM INITIALIZATION & PAGE CONFIGURATION
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.11",
+    page_title="SABRY VISION - Master Quant Terminal v11.12",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.11")
+logger = logging.getLogger("SabryVisionMaster11.12")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE MANAGEMENT & AUTHENTICATION REGISTRIES
@@ -415,7 +415,7 @@ def main():
         render_login_screen()
         return
 
-    st.sidebar.title(f"🛡️ SABRY VISION v11.11")
+    st.sidebar.title(f"🛡️ SABRY VISION v11.12")
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}** | {'👑 (أدمن)' if st.session_state['is_admin'] else '👤 (مستخدم عادي)'}")
     
     if st.sidebar.button("🚪 تسجيل الخروج"):
@@ -426,28 +426,78 @@ def main():
 
     st.sidebar.markdown("---")
     
-    # لوحة تحكم الأدمن الخاصة بإدارة المستخدمين وتواريخ الصلاحية (حصري للأدمن فقط)
+    # لوحة تحكم الأدمن الشاملة لتعديل اليوزر، الباسورد، وتواريخ الصلاحية (حصري للأدمن فقط)
     if st.session_state["is_admin"]:
-        with st.sidebar.expander("👑 لوحة تحكم الأدمن والصلاحيات"):
-            st.markdown("### إدارة المستخدمين")
-            new_u = st.text_input("اسم المستخدم الجديد")
-            new_p = st.text_input("كلمة المرور الجديدة", type="password")
-            new_exp = st.date_input("تاريخ انتهاء الصلاحية", value=date.today() + timedelta(days=30))
+        with st.sidebar.expander("👑 لوحة تحكم الأدمن وإدارة الحسابات"):
+            st.markdown("### إدارة المستخدمين والصلاحيات")
             
-            if st.button("➕ إضافة/تحديث مستخدم"):
-                if new_u and new_p:
-                    st.session_state["users_db"][new_u] = {
-                        "password": new_p,
-                        "expiry": new_exp.strftime("%Y-%m-%d"),
-                        "role": "user"
-                    }
-                    st.success(f"تم حفظ المستخدم {new_u} بنجاح!")
+            action_mode = st.selectbox("الإجراء المطلوب:", ["تعديل حساب حالي (أو الأدمن)", "إضافة مستخدم جديد"])
+            
+            if action_mode == "إضافة مستخدم جديد":
+                new_u = st.text_input("اسم المستخدم الجديد")
+                new_p = st.text_input("كلمة المرور", type="password")
+                new_exp = st.date_input("تاريخ انتهاء الصلاحية", value=date.today() + timedelta(days=30))
+                
+                if st.button("➕ حفظ مستخدم جديد"):
+                    if new_u and new_p:
+                        if new_u in st.session_state["users_db"]:
+                            st.error("اسم المستخدم موجود مسبقاً!")
+                        else:
+                            st.session_state["users_db"][new_u] = {
+                                "password": new_p,
+                                "expiry": new_exp.strftime("%Y-%m-%d"),
+                                "role": "user"
+                            }
+                            st.success(f"تمت إضافة المستخدم {new_u} بنجاح!")
+                            st.rerun()
+            else:
+                target_user = st.selectbox("اختر الحساب للتعديل:", list(st.session_state["users_db"].keys()))
+                curr_info = st.session_state["users_db"][target_user]
+                
+                edit_username = st.text_input("تعديل اسم المستخدم:", value=target_user)
+                edit_password = st.text_input("تعديل كلمة المرور:", value=curr_info["password"], type="password")
+                
+                try:
+                    curr_date = datetime.strptime(curr_info["expiry"], "%Y-%m-%d").date()
+                except:
+                    curr_date = date.today() + timedelta(days=30)
+                    
+                edit_expiry = st.date_input("تعديل تاريخ انتهاء الصلاحية:", value=curr_date)
+                
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    if st.button("💾 حفظ التعديلات"):
+                        if edit_username:
+                            if edit_username != target_user:
+                                if edit_username in st.session_state["users_db"]:
+                                    st.error("اسم المستخدم الجديد مستخدم بالفعل!")
+                                else:
+                                    st.session_state["users_db"][edit_username] = {
+                                        "password": edit_password,
+                                        "expiry": edit_expiry.strftime("%Y-%m-%d"),
+                                        "role": curr_info["role"]
+                                    }
+                                    del st.session_state["users_db"][target_user]
+                                    st.success("تم تحديث اسم المستخدم والبيانات!")
+                                    st.rerun()
+                            else:
+                                st.session_state["users_db"][target_user]["password"] = edit_password
+                                st.session_state["users_db"][target_user]["expiry"] = edit_expiry.strftime("%Y-%m-%d")
+                                st.success("تم تحديث بيانات الحساب بنجاح!")
+                                st.rerun()
+                with col_btn2:
+                    if target_user != "admin":
+                        if st.button("🗑️ حذف الحساب"):
+                            del st.session_state["users_db"][target_user]
+                            st.success("تم حذف الحساب بنجاح!")
+                            st.rerun()
+                    else:
+                        st.info("لا يمكن حذف حساب المسؤول الرئيسي.")
             
             st.markdown("---")
-            st.write("المستخدمون الحاليون:")
+            st.write("قائمة الحسابات النشطة:")
             for u, info in st.session_state["users_db"].items():
-                st.write(f"- **{u}** (ينتهي: {info['expiry']})")
-            st.markdown("---")
+                st.write(f"- **{u}** ({info['role']}) ➔ ينتهي في: {info['expiry']}")
 
     st.sidebar.markdown("### ⚙️ إعدادات تليجرام الفورية")
     ui_token = st.sidebar.text_input("Telegram Bot Token", value="", type="password")
@@ -475,10 +525,9 @@ def main():
     timeframe = st.sidebar.selectbox("الإطار الزمني:", ["5m", "15m", "1h", "1d"], index=2)
     active_setups = st.sidebar.multiselect("نماذج الدخول:", ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL"], default=["BREAKOUT", "RETEST"])
 
-    st.title("🛡️ SABRY VISION - Institutional Quant Terminal v11.11")
+    st.title("🛡️ SABRY VISION - Institutional Quant Terminal v11.12")
     st.markdown("---")
     
-    # فصل التبويبات بناءً على الصلاحية: الأدمن يرى التبويبات الثلاثة، بينما المستخدم العادي يرى السكانر والمالية فقط دون إمكانية التعديل في القوائم
     if st.session_state["is_admin"]:
         tab1, tab2, tab3 = st.tabs([
             "🚀 السكانر الشامل وتليجرام", 
@@ -537,7 +586,6 @@ def main():
             c4.metric("السعر المستهدف", metrics["Fair Target"])
             c5.metric("نسبة الصعود", metrics["Upside (%)"])
 
-    # تبويب هندسة القوائم يظهر فقط للأدمن (Admin Only)
     if st.session_state["is_admin"]:
         with tab3:
             st.subheader("⚙️ هندسة القوائم المخصصة (لوحة تحكم الأدمن)")
