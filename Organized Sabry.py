@@ -1,8 +1,7 @@
 """
-SABRY VISION - Ultimate Enterprise Global Universe & Quant Terminal (v4.0 Final Edition)
-Featuring Dynamic Expansion, Full TASI, Full US Markets, Commodities & Dedicated ETFs,
-Separated Setup Toggles, Dynamic Scoring, Advanced Stop-Loss Types (ATR, Chandelier, Trailing),
-5-Minute Timeframe, Mandatory/Optional VWAP, Stop Hunts, and Telegram Integration.
+SABRY VISION - Ultimate Institutional Quant Terminal (v6.0 Dynamic Control Edition)
+Fund Management Grade: Fully controllable parameters via UI, Dynamic Filtering,
+Position Sizing, Parallel Multi-Threading, and Real-time Strategy Tuning.
 """
 
 import os
@@ -14,6 +13,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
 import zoneinfo
 from typing import Dict, List, Optional, Tuple, Any
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
 import pandas as pd
@@ -21,37 +21,22 @@ import yfinance as yf
 import streamlit as st
 
 st.set_page_config(
-    page_title="SABRY VISION - Ultimate Enterprise Quant Terminal",
+    page_title="SABRY VISION - Dynamic Institutional Terminal",
     page_icon="🛡️",
     layout="wide"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger("SabryVisionFinalEnterprise")
+logger = logging.getLogger("SabryVisionDynamicInstitutional")
 
-@dataclass
-class SabryConfig:
-    account_size: float = 100000.0
-    max_extension_atr: float = 4.0
-    atr_multiplier: float = 2.0
-    stop_type: str = "ATR Multiplier"
-    enable_scoring: bool = True
-    require_vwap_alignment: bool = False
-    min_liquidity: float = 100000.0
-    min_price: float = 1.0
-
+# تهيئة القائمة المخصصة الافتراضية
 if "custom_watchlist" not in st.session_state:
     st.session_state["custom_watchlist"] = [
         "AAPL", "MSFT", "2222.SR", "1120.SR", 
-        "GLD", "SLV", "QQQ", "SPY", "XLK", 
-        "BTC-USD"
+        "GLD", "SLV", "QQQ", "SPY", "BTC-USD"
     ]
 
-# ------------------------------------------------------------------------------
-# GLOBAL UNIVERSE LOADER (Full TASI, Full US, Commodities, ETFs & Dynamic Expansion)
-# ------------------------------------------------------------------------------
 class GlobalUniverseLoader:
-    
     @staticmethod
     def get_tasi_universe() -> List[str]:
         tasi_raw = [
@@ -77,23 +62,17 @@ class GlobalUniverseLoader:
 
     @staticmethod
     def get_commodities_and_etfs_universe() -> List[str]:
-        return [
-            "GC=F", "GLD", "IAU", "SGOL", 
-            "SI=F", "SLV", "SIVR", 
-            "CL=F", "BZ=F", "USO", "UNG",
-            "QQQ", "XLK", "SOXX", "ARKK", "SPY", "VOO", "IVV",
-            "HG=F", "PL=F", "PA=F", "CPER"
-        ]
+        return ["GC=F", "GLD", "IAU", "SI=F", "SLV", "CL=F", "USO", "QQQ", "XLK", "SPY"]
 
     @staticmethod
     def get_crypto_universe() -> List[str]:
-        return ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD"]
+        return ["BTC-USD", "ETH-USD", "SOL-USD"]
 
     @staticmethod
     def fetch_sp500_tickers() -> List[str]:
         try:
             url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-            res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+            res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=8)
             df = pd.read_html(io.StringIO(res.text))[0]
             return df["Symbol"].str.replace(".", "-", regex=False).tolist()
         except Exception:
@@ -103,7 +82,7 @@ class GlobalUniverseLoader:
     def fetch_nasdaq100_tickers() -> List[str]:
         try:
             url = "https://en.wikipedia.org/wiki/NASDAQ-100"
-            res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+            res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=8)
             df = pd.read_html(io.StringIO(res.text))[3]
             return df["Ticker"].str.replace(".", "-", regex=False).tolist()
         except Exception:
@@ -114,7 +93,9 @@ class GlobalUniverseLoader:
         return sorted(list(set(cls.fetch_sp500_tickers() + cls.fetch_nasdaq100_tickers())))
 
 class UnifiedDataProvider:
-    def fetch_raw_ohlcv(self, symbol: str, period: str = "6mo", interval: str = "1d") -> pd.DataFrame:
+    @staticmethod
+    @st.cache_data(ttl=3600, show_spinner=False)
+    def fetch_raw_ohlcv_cached(symbol: str, period: str = "3mo", interval: str = "1d") -> pd.DataFrame:
         try:
             df = yf.download(symbol, period=period, interval=interval, progress=False, auto_adjust=True)
             if df.empty:
@@ -129,18 +110,18 @@ class UnifiedDataProvider:
         except Exception:
             return pd.DataFrame()
 
-# ------------------------------------------------------------------------------
-# ADVANCED SCANNER ENGINE (Separated Setups, Stop Losses, VWAP, Volume Profile)
-# ------------------------------------------------------------------------------
-class SabryVisionScanner:
-    def __init__(self, cfg: SabryConfig, active_setups: List[str]):
-        self.config = cfg
+class DynamicSabryScanner:
+    def __init__(self, settings: Dict[str, Any], active_setups: List[str]):
+        self.settings = settings
         self.active_setups = active_setups
 
-    def calculate_technical_features(self, df: pd.DataFrame) -> pd.DataFrame:
+    def analyze_asset(self, symbol: str, period: str, interval: str) -> Optional[Dict[str, Any]]:
+        df = UnifiedDataProvider.fetch_raw_ohlcv_cached(symbol, period, interval)
+        if df.empty or len(df) < 40:
+            return None
+            
         f = df.copy()
         f["sma50"] = f["close"].rolling(50).mean()
-        f["sma200"] = f["close"].rolling(200).mean()
         f["ema20"] = f["close"].ewm(span=20, adjust=False).mean()
         
         tp = (f["high"] + f["low"] + f["close"]) / 3.0
@@ -151,48 +132,30 @@ class SabryVisionScanner:
             np.maximum((f["high"] - f["close"].shift(1)).abs(), (f["low"] - f["close"].shift(1)).abs())
         )
         f["atr14"] = tr.rolling(14).mean()
-        f["atr50"] = tr.rolling(50).mean()
-        
-        # Chandelier Exit Stop Calculation
-        f["chandelier_long"] = f["high"].rolling(22).max() - (f["atr14"] * 3.0)
-        
-        diff = f["ema20"] - f["ema20"].shift(3)
-        f["ema20_slope"] = (diff / (3 * f["atr14"].replace(0, np.nan))).fillna(0.0)
         
         f["volume_ma20"] = f["volume"].rolling(20).mean()
         f["rvol"] = (f["volume"] / f["volume_ma20"].replace(0, np.nan)).fillna(1.0)
         f["poc"] = tp.rolling(50).mean()
         f["rs_momentum"] = f["close"].pct_change(63)
-        return f
-
-    def calculate_stop_loss(self, row: pd.Series) -> float:
-        close = row["close"]
-        atr = row["atr14"]
-        st_type = self.config.stop_type
         
-        if st_type == "Chandelier Exit":
-            return round(row.get("chandelier_long", close - (2.5 * atr)), 2)
-        elif st_type == "Trailing Stop":
-            return round(close - (1.5 * atr), 2)
-        else:
-            return round(close - (self.config.atr_multiplier * atr), 2)
-
-    def detect_setups(self, df: pd.DataFrame) -> pd.DataFrame:
-        f = df.copy()
         f["pivot_20"] = f["high"].rolling(20).max().shift(1)
         f["low_20"] = f["low"].rolling(20).min().shift(1)
         
-        is_breakout = (f["close"] > f["pivot_20"]) & (f["rvol"] >= 1.2) & (f["close"] > f["open"])
-        is_setup = (f["close"] <= f["pivot_20"]) & (f["close"] >= f["pivot_20"] * 0.95)
+        # قراءة معايير الحساسية الممررة ديناميكياً من الواجهة
+        min_rvol = self.settings["min_rvol"]
+        
+        is_breakout = (f["close"] > f["pivot_20"]) & (f["rvol"] >= min_rvol) & (f["close"] > f["open"])
+        is_setup = (f["close"] <= f["pivot_20"]) & (f["close"] >= f["pivot_20"] * 0.96)
         is_retest = (f["close"].shift(1) > f["pivot_20"]) & (f["low"] <= f["poc"] * 1.02) & (f["close"] > f["poc"])
-        is_bottom = (f["low"] < f["low_20"]) & (f["close"] > f["low_20"]) & (f["rvol"] >= 1.3)
+        is_bottom = (f["low"] < f["low_20"]) & (f["close"] > f["low_20"]) & (f["rvol"] >= (min_rvol * 1.1))
         
         f["sig_breakout"] = is_breakout if "BREAKOUT" in self.active_setups else False
         f["sig_setup"] = is_setup if "SETUP" in self.active_setups else False
         f["sig_retest"] = is_retest if "RETEST" in self.active_setups else False
         f["sig_bottom_reversal"] = is_bottom if "BOTTOM_REVERSAL" in self.active_setups else False
         
-        if self.config.require_vwap_alignment:
+        # تفعيل أو إلغاء شرط الـ VWAP بناءً على خيار الواجهة
+        if self.settings["require_vwap"]:
             vwap_mask = f["close"] >= f["vwap"]
             f["sig_breakout"] &= vwap_mask
             f["sig_setup"] &= vwap_mask
@@ -202,83 +165,104 @@ class SabryVisionScanner:
         conditions = [f["sig_breakout"], f["sig_retest"], f["sig_setup"], f["sig_bottom_reversal"]]
         choices = ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL"]
         f["signal_type"] = np.select(conditions, choices, default="NONE")
-        return f
-
-    def calculate_score(self, df: pd.DataFrame) -> pd.Series:
-        if not self.config.enable_scoring:
-            return pd.Series(75.0, index=df.index)
         
-        rs_s = df["rs_momentum"].rank(pct=True).fillna(0.5) * 30.0
-        slope_s = df["ema20_slope"].clip(0, 3) / 3.0 * 30.0
-        rvol_s = df["rvol"].clip(0, 3) / 3.0 * 40.0
-        return (rs_s + slope_s + rvol_s).clip(0, 100).round(1)
+        latest = f.iloc[-1]
+        if latest["signal_type"] == "NONE":
+            return None
+            
+        # حساب السكور المؤسسي الديناميكي
+        rs_s = latest["rs_momentum"] * 30.0 if pd.notna(latest["rs_momentum"]) else 0
+        rvol_s = min(latest["rvol"], 3.0) / 3.0 * 40.0
+        score = round(max(0, min(100, 50.0 + rs_s + rvol_s)), 1)
+        
+        if score < self.settings["min_score"]:
+            return None
+            
+        close_p = latest["close"]
+        atr = latest["atr14"]
+        stop_price = round(close_p - (self.settings["atr_mult"] * atr), 2)
+        risk_per_share = close_p - stop_price
+        
+        if risk_per_share <= 0:
+            return None
+            
+        # إدارة المخاطر وتحديد حجم المركز آلياً
+        total_risk_dollar = self.settings["account_size"] * self.settings["risk_pct"]
+        shares_to_buy = int(total_risk_dollar / risk_per_share)
+        position_value = shares_to_buy * close_p
+        target_price = round(close_p + (self.settings["reward_mult"] * risk_per_share), 2)
+        
+        return {
+            "الرمز / الصندوق": symbol,
+            "النموذج": latest["signal_type"],
+            "السكور": score,
+            "الإغلاق": round(close_p, 2),
+            "وقف الخسارة": stop_price,
+            "الهدف المقترح": target_price,
+            "حجم الأسهم": shares_to_buy,
+            "قيمة المركز ($)": round(position_value, 2),
+            "RVOL": round(latest["rvol"], 2)
+        }
 
-# ------------------------------------------------------------------------------
-# STREAMLIT UI - ADVANCED COMMAND CENTER
-# ------------------------------------------------------------------------------
-st.title("🛡️ SABRY VISION - Enterprise Global Quant Terminal (v4.0)")
+# --- STREAMLIT DYNAMIC UI COMMAND CENTER ---
+st.title("🛡️ SABRY VISION - Dynamic Enterprise Quant Terminal (v6.0)")
 
-st.sidebar.header("🎛️ لوحة التحكم الشاملة والمتقدمة")
+st.sidebar.header("🎛️ لوحة التحكم الديناميكية الفورية")
 
 market_mode = st.sidebar.selectbox(
-    "اختر نطاق الفحص الرئيسي:",
+    "اختر نطاق السوق المستهدف:",
     [
-        "القائمة المخصصة (Custom Watchlist - قابلة لإضافة أي صندوق/سهم)", 
-        "السوق السعودي (تاسي الكامل - TASI)", 
+        "القائمة المخصصة (Custom Watchlist)", 
+        "السوق السعودي (تاسي - TASI)", 
         "السوق الأمريكي (S&P 500 & Nasdaq 100)", 
-        "السلع العالمية وصناديق الذهب والتقنية والـ ETFs", 
+        "السلع العالمية وصناديق الذهب (Commodities & ETFs)", 
         "العملات الرقمية (Crypto)"
     ]
 )
 
-timeframe = st.sidebar.selectbox("الإطار الزمني للفحص:", ["5m", "15m", "1h", "1d"])
-period_choice = st.sidebar.selectbox("المدى التاريخي للبيانات:", ["1mo", "3mo", "6mo", "1y"])
+timeframe = st.sidebar.selectbox("الإطار الزمني للفحص:", ["15m", "1h", "1d"])
+period_choice = st.sidebar.selectbox("العمق التاريخي:", ["1mo", "3mo", "6mo"])
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("🎯 تخصيص أنواع الفرص (Setup Kinds)")
+st.sidebar.subheader("🎯 النماذج الاستراتيجية المفعلة")
 setup_options = ["BREAKOUT", "SETUP", "RETEST", "BOTTOM_REVERSAL"]
-selected_setups = st.sidebar.multiselect(
-    "اختر الفرص المراد رصدها:",
-    setup_options,
-    default=["BREAKOUT", "SETUP", "RETEST", "BOTTOM_REVERSAL"]
-)
+selected_setups = st.sidebar.multiselect("اختر النماذج:", setup_options, default=["BREAKOUT", "RETEST"])
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("⚙️ إعدادات الشروط والوقف (Stop-Loss & Rules)")
-stop_type = st.sidebar.selectbox(
-    "نوع حساب وقف الخسارة:",
-    ["ATR Multiplier", "Chandelier Exit", "Trailing Stop"]
-)
-atr_mult_val = st.sidebar.slider("معامل مضاعف الـ ATR:", 1.0, 4.0, 2.0, 0.5)
+st.sidebar.subheader("⚙️ إعدادات الحساسية والفلترة (تعديل مباشر)")
+min_score_input = st.sidebar.slider("الحد الأدنى للسكور:", 40.0, 90.0, 60.0, 5.0)
+min_rvol_input = st.sidebar.slider("أدنى معدل حجم تداول (RVOL):", 1.0, 3.0, 1.2, 0.1)
+require_vwap_input = st.sidebar.checkbox("تفعيل شرط الـ VWAP الإلزامي", value=False) # جعلناه افتراضياً غير قسري لمنع انعدام النتائج
 
-enable_scoring = st.sidebar.checkbox("تفعيل السكور المؤسسي (Scoring Engine)", value=True)
-require_vwap = st.sidebar.checkbox("الـ VWAP شرط إلزامي قاطع", value=False)
+st.sidebar.markdown("---")
+st.sidebar.subheader("💰 محرك إدارة المخاطر الرأسمالية")
+account_cap = st.sidebar.number_input("إجمالي رأس المال ($)", value=100000.0, step=10000.0)
+risk_pct = st.sidebar.slider("نسبة المخاطرة لكل صفقة (%)", 0.5, 3.0, 1.0, 0.5) / 100.0
+atr_mult = st.sidebar.slider("مضاعف وقف الـ ATR", 1.0, 4.0, 2.0, 0.5)
+reward_mult = st.sidebar.slider("مضاعف الهدف (Risk/Reward Multiplier)", 1.5, 5.0, 2.5, 0.5)
 
-config = SabryConfig(
-    atr_multiplier=atr_mult_val,
-    stop_type=stop_type,
-    enable_scoring=enable_scoring,
-    require_vwap_alignment=require_vwap
-)
+# تجميع الإعدادات في قاموس ديناميكي يتم تحديثه لحظياً من الواجهة
+current_settings = {
+    "min_score": min_score_input,
+    "min_rvol": min_rvol_input,
+    "require_vwap": require_vwap_input,
+    "account_size": account_cap,
+    "risk_pct": risk_pct,
+    "atr_mult": atr_mult,
+    "reward_mult": reward_mult
+}
 
-# --- TABS ---
-tab1, tab2, tab3 = st.tabs([
-    "🚀 السكانر الذكي المتسع", 
-    "📋 إدارة القوائم وإضافة أي صندوق حر", 
-    "⚙️ إشعارات التليجرام"
-])
+tab1, tab2 = st.tabs(["🚀 السكانر الديناميكي الفوري", "📋 إدارة القائمة المخصصة"])
 
 with tab1:
-    st.header("🔍 المسح الفوري المتقدم وفق إعداداتك المخصصة")
-    st.write(f"النطاق النشط: **{market_mode}** | الإطار: **{timeframe}** | الفرص المفعلة: **{selected_setups}**")
+    st.header("🔍 المسح الذكي المتزامن وفق إعداداتك الحالية")
     
-    if st.button("🚀 بدء المسح والتحليل المتقدم"):
+    if st.button("🚀 بدء المسح الديناميكي الفوري"):
         if not selected_setups:
-            st.error("⚠️ يرجى اختيار نوع فرصة واحد على الأقل من القائمة الجانبية لتشغيل السكانر.")
+            st.error("⚠️ يرجى اختيار نموذج تداول واحد على الأقل.")
         else:
-            with st.spinner("جاري جلب البيانات، تطبيق معايير صبري فيجن، وحساب المستهدفات والأوقف بدقة..."):
-                provider = UnifiedDataProvider()
-                scanner = SabryVisionScanner(config, selected_setups)
+            with st.spinner("جاري جلب البيانات، تطبيق المعايير الديناميكية، ومعالجة الصفقات..."):
+                scanner = DynamicSabryScanner(current_settings, selected_setups)
                 
                 if "القائمة المخصصة" in market_mode:
                     tickers = st.session_state["custom_watchlist"]
@@ -292,71 +276,43 @@ with tab1:
                     tickers = GlobalUniverseLoader.get_crypto_universe()
                     
                 results = []
-                progress = st.progress(0)
-                total = len(tickers)
+                max_workers = 12
                 
-                for i, t in enumerate(tickers):
-                    df = provider.fetch_raw_ohlcv(t, period=period_choice, interval=timeframe)
-                    if not df.empty and len(df) >= 30:
-                        f = scanner.calculate_technical_features(df)
-                        f = scanner.detect_setups(f)
-                        latest = f.iloc[-1]
-                        if latest["signal_type"] != "NONE":
-                            score = scanner.calculate_score(f).iloc[-1]
-                            stop_price = scanner.calculate_stop_loss(latest)
-                            close_p = latest["close"]
-                            risk_pct = round((close_p - stop_price) / close_p * 100, 2)
-                            target_price = round(close_p * (1 + (risk_pct * 2 / 100)), 2)
-                            
-                            results.append({
-                                "الرمز / الصندوق": t,
-                                "النموذج": latest["signal_type"],
-                                "السكور": score,
-                                "الإغلاق": round(close_p, 2),
-                                "وقف الخسارة": stop_price,
-                                "نسبة المخاطرة %": risk_pct,
-                                "الهدف المقترح": target_price,
-                                "RVOL": round(latest["rvol"], 2)
-                            })
-                    progress.progress((i + 1) / total)
+                prog_bar = st.progress(0)
+                completed_tasks = 0
+                total_tickers = len(tickers)
+                
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    future_to_ticker = {
+                        executor.submit(scanner.analyze_asset, t, period_choice, timeframe): t 
+                        for t in tickers
+                    }
                     
+                    for future in as_completed(future_to_ticker):
+                        completed_tasks += 1
+                        prog_bar.progress(completed_tasks / total_tickers)
+                        try:
+                            res = future.result()
+                            if res:
+                                results.append(res)
+                        except Exception:
+                            pass
+                            
+                prog_bar.empty()
+                
                 if results:
                     res_df = pd.DataFrame(results).sort_values(by="السكور", ascending=False)
-                    st.success(f"🎉 تم رصد {len(res_df)} فرصة استثمارية مطابقة لمعاييرك بدقة:")
+                    st.success(f"🎉 تم مسح الأصول بنجاح ورصد {len(res_df)} فرصة متوافقة مع الإعدادات الحالية:")
                     st.dataframe(res_df, use_container_width=True)
                 else:
-                    st.warning("⚠️ لم يتم رصد إشارات في هذه العينة. جرب توسيع القائمة المخصصة أو تعديل فريم الزمن أو تفعيل فرص إضافية من القائمة الجانبية.")
+                    st.warning("⚠️ لم يتم رصد إشارات مطابقة لشروط الفلترة الحالية. جرب خفض معيار السكور قليلاً أو إلغاء تفعيل شرط الـ VWAP من الشريط الجانبي.")
 
 with tab2:
-    st.header("📋 إدارة القائمة المخصصة وإضافة أي صندوق حر")
-    st.write("أضف أي صندوق استثماري محلي (صناديق الذهب، التقنية، البلاد، الراجحي) أو سهم عالمي لفحصه فوراً:")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        user_input_ticker = st.text_input("أدخل رمز السهم أو الصندوق بدقة (مثال: GLD, QQQ, أو رمز في تاسي):")
-        if st.button("➕ إضافة وتوسيع القائمة"):
-            if user_input_ticker and user_input_ticker.upper() not in st.session_state["custom_watchlist"]:
-                st.session_state["custom_watchlist"].append(user_input_ticker.upper())
-                st.success(f"تم توسيع القائمة وإضافة '{user_input_ticker.upper()}' بنجاح!")
-                st.rerun()
-    with col2:
-        st.subheader("قائمتك الموسعة الحالية:")
-        st.write(st.session_state["custom_watchlist"])
-        if st.button("🗑️ إعادة تعيين القائمة"):
-            st.session_state["custom_watchlist"] = ["AAPL", "MSFT", "2222.SR", "GLD", "SLV", "QQQ"]
+    st.header("📋 إدارة القائمة المخصصة للأصول والصناديق")
+    user_input_ticker = st.text_input("أضف رمز سهم أو صندوق (مثال: GLD, QQQ, AAPL أو صندوق محلي):")
+    if st.button("➕ إضافة الرمز للقائمة"):
+        if user_input_ticker and user_input_ticker.upper() not in st.session_state["custom_watchlist"]:
+            st.session_state["custom_watchlist"].append(user_input_ticker.upper())
+            st.success(f"تم إضافة {user_input_ticker.upper()} بنجاح لتنفيذ السكانر عليه فوراً!")
             st.rerun()
-
-with tab3:
-    st.header("⚙️ إعدادات التليجرام والتنبيهات الآلية")
-    tg_token = st.text_input("Telegram Bot Token", type="password")
-    tg_chat = st.text_input("Telegram Chat ID")
-    if st.button("إرسال رسالة اختبار"):
-        url = f"https://api.telegram.org/bot{tg_token}/sendMessage"
-        try:
-            res = requests.post(url, json={"chat_id": tg_chat, "text": "<b>SABRY VISION v4.0:</b> تم تفعيل الإشعارات بنجاح!", "parse_mode": "HTML"}, timeout=5)
-            if res.status_code == 200:
-                st.success("تم إرسال تنبيه التجربة بنجاح!")
-            else:
-                st.error("فشل الاتصال، تحقق من صحة البيانات.")
-        except Exception as e:
-            st.error(f"خطأ في الاتصال: {e}")
+    st.write(st.session_state["custom_watchlist"])
