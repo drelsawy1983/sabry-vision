@@ -1,7 +1,7 @@
 """
-SABRY VISION - Ultimate Institutional Quant Terminal (v6.1 Live Execution Edition)
-Fund Management Grade: Real-time Live Data (No Caching), Dynamic UI Controls,
-Position Sizing, Parallel Multi-Threading, and Interactive Parameter Tuning.
+SABRY VISION - Ultimate Institutional Quant Terminal (v6.2 Live Tick Engine Edition)
+Fund Management Grade: Real-time Live Tick Integration, Dynamic UI Controls,
+Position Sizing, Parallel Multi-Threading, and Real-time Strategy Tuning.
 """
 
 import os
@@ -27,7 +27,7 @@ st.set_page_config(
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger("SabryVisionLiveInstitutional")
+logger = logging.getLogger("SabryVisionLiveTickInstitutional")
 
 # تهيئة القائمة المخصصة الافتراضية
 if "custom_watchlist" not in st.session_state:
@@ -95,7 +95,7 @@ class GlobalUniverseLoader:
 class UnifiedDataProvider:
     @staticmethod
     def fetch_raw_ohlcv(symbol: str, period: str = "3mo", interval: str = "1d") -> pd.DataFrame:
-        """جلب البيانات اللحظية المباشرة دون أي تخزين مؤقت لضمان التطابق التام مع الكولاب"""
+        """جلب البيانات التاريخية مع دمج التكة السعرية الحية (Live Tick Price) فوراً"""
         try:
             df = yf.download(symbol, period=period, interval=interval, progress=False, auto_adjust=True)
             if df.empty:
@@ -104,6 +104,20 @@ class UnifiedDataProvider:
                 df.columns = df.columns.get_level_values(0)
             df = df.rename(columns={"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"})
             df = df[["open", "high", "low", "close", "volume"]].dropna()
+            
+            # حقن السعر الحى اللحظي (Live Tick Price) في آخر شمعة لتحديث المؤشرات لحظياً دون انتظار الإغلاق
+            try:
+                ticker_obj = yf.Ticker(symbol)
+                live_price = ticker_obj.fast_info.get('last_price', None)
+                if live_price and live_price > 0 and not df.empty:
+                    df.iloc[-1, df.columns.get_loc('close')] = live_price
+                    if live_price > df.iloc[-1]['high']:
+                        df.iloc[-1, df.columns.get_loc('high')] = live_price
+                    if live_price < df.iloc[-1]['low']:
+                        df.iloc[-1, df.columns.get_loc('low')] = live_price
+            except Exception:
+                pass
+
             if df.index.tz is not None:
                 df.index = df.index.tz_convert("UTC").tz_localize(None)
             return df
@@ -201,9 +215,9 @@ class DynamicSabryScanner:
         }
 
 # --- STREAMLIT DYNAMIC UI COMMAND CENTER ---
-st.title("🛡️ SABRY VISION - Dynamic Enterprise Quant Terminal (v6.1)")
+st.title("🛡️ SABRY VISION - Dynamic Enterprise Quant Terminal (v6.2 Live)")
 
-st.sidebar.header("🎛️ لوحة التحكم الديناميكية الفورية")
+st.sidebar.header("🎛️ لوحة التحكم الديناميكية الحية")
 
 market_mode = st.sidebar.selectbox(
     "اختر نطاق السوق المستهدف:",
@@ -225,7 +239,7 @@ setup_options = ["BREAKOUT", "SETUP", "RETEST", "BOTTOM_REVERSAL"]
 selected_setups = st.sidebar.multiselect("اختر النماذج:", setup_options, default=["BREAKOUT", "RETEST"])
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("⚙️ إعدادات الحساسية والفلترة (تعديل مباشر)")
+st.sidebar.subheader("⚙️ إعدادات الحساسية والفلترة اللحظية")
 min_score_input = st.sidebar.slider("الحد الأدنى للسكور:", 40.0, 90.0, 60.0, 5.0)
 min_rvol_input = st.sidebar.slider("أدنى معدل حجم تداول (RVOL):", 1.0, 3.0, 1.2, 0.1)
 require_vwap_input = st.sidebar.checkbox("تفعيل شرط الـ VWAP الإلزامي", value=False)
@@ -247,16 +261,16 @@ current_settings = {
     "reward_mult": reward_mult
 }
 
-tab1, tab2 = st.tabs(["🚀 السكانر الديناميكي الفوري", "📋 إدارة القائمة المخصصة"])
+tab1, tab2 = st.tabs(["🚀 السكانر اللحظي الحي", "📋 إدارة القائمة المخصصة"])
 
 with tab1:
-    st.header("🔍 المسح الذكي المتزامن (بيانات حية مباشرة)")
+    st.header("🔍 المسح الذكي المتزامن (مع ملاحقة الأسعار الحية Tick-by-Tick)")
     
-    if st.button("🚀 بدء المسح الديناميكي الفوري"):
+    if st.button("🚀 بدء المسح الحي اللحظي"):
         if not selected_setups:
             st.error("⚠️ يرجى اختيار نموذج تداول واحد على الأقل.")
         else:
-            with st.spinner("جاري سحب البيانات الحية المباشرة وتطبيق المعايير الديناميكية..."):
+            with st.spinner("جاري سحب التكات السعرية الحية اللحظية، وتطبيق المعايير الديناميكية..."):
                 scanner = DynamicSabryScanner(current_settings, selected_setups)
                 
                 if "القائمة المخصصة" in market_mode:
@@ -297,17 +311,5 @@ with tab1:
                 
                 if results:
                     res_df = pd.DataFrame(results).sort_values(by="السكور", ascending=False)
-                    st.success(f"🎉 تم مسح الأصول الحية بنجاح ورصد {len(res_df)} فرصة متوافقة تماماً مع إعداداتك:")
-                    st.dataframe(res_df, use_container_width=True)
-                else:
-                    st.warning("⚠️ لم يتم رصد إشارات مطابقة لشروط الفلترة الحالية في البيانات الحية.")
-
-with tab2:
-    st.header("📋 إدارة القائمة المخصصة للأصول والصناديق")
-    user_input_ticker = st.text_input("أضف رمز سهم أو صندوق (مثال: GLD, QQQ, AAPL أو صندوق محلي):")
-    if st.button("➕ إضافة الرمز للقائمة"):
-        if user_input_ticker and user_input_ticker.upper() not in st.session_state["custom_watchlist"]:
-            st.session_state["custom_watchlist"].append(user_input_ticker.upper())
-            st.success(f"تم إضافة {user_input_ticker.upper()} بنجاح لتنفيذ السكانر عليه فوراً!")
-            st.rerun()
-    st.write(st.session_state["custom_watchlist"])
+                    st.success(f"🎉 تم مسح الأسواق بالأسعار الحية بنجاح ورصد {len(res_df)} فرصة متوافقة تماماً مع إعداداتك:")
+                    st.dataframe(res_df, use_container_width=True
