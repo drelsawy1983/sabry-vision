@@ -212,16 +212,7 @@ st.markdown("""
 * **📊 السكانر اللحظي (Scanner):** فحص الأسواق واستخراج الإشارات الأربع مع السكور والدروع.
 * **📈 الباك تست (Backtest):** تشغيل المحاكاة التاريخية وتقييم الأداء بالـ Sharpe وDrawdown.
 * **⚙️ الإعدادات (Settings):** ضبط إدارة المخاطر ومعايير التصفية.
-""")
-streamlit>=1.32.0
-pandas>=2.1.0
-numpy>=1.26.0
-yfinance>=0.2.36
-requests>=2.31.0
-pytz>=2024.1
-apscheduler>=3.10.4
-bcrypt>=4.1.2
-pytest>=8.0.0
+
 name: SABRY VISION Automated Scanner
 
 on:
