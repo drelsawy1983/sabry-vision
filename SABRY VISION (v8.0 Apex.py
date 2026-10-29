@@ -52,7 +52,7 @@ if "is_admin" not in st.session_state:
 
 if "users_db" not in st.session_state:
     st.session_state["users_db"] = {
-        "admin": {"password": "admin", "expiry": "2030-12-31", "role": "admin"},
+        "admin": {"password": "admin", "expiry": "2090-12-31", "role": "admin"},
         "user1": {"password": "user", "expiry": (date.today() + timedelta(days=30)).strftime("%Y-%m-%d"), "role": "user"}
     }
 
