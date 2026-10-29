@@ -214,9 +214,9 @@ class UnifiedDataProvider:
                 full_df.to_parquet(file_path)
                 return full_df
             return pd.DataFrame()
-================================================================================
-SABRY VISION - STAGE 1 AUDIT & EXECUTION REPORT
-================================================================================
+# ================================================================================
+# SABRY VISION - STAGE 1 AUDIT & EXECUTION REPORT
+# ================================================================================
 #[INFO] Asset Registry Initialized at: data_cache/registry.json
 #[INFO] Verifying Mapping Matrix for Target Exchanges:
        - TASI (Saudi Stock Exchange): Expected=371 | Mapped=371 | Coverage=100.0% [PASSED]
@@ -382,9 +382,9 @@ def test_active_markets_return_type():
     manager = MarketSessionManager()
     active = manager.get_active_markets_makkah_time()
     assert isinstance(active, dict)
-================================================================================
-SABRY VISION - STAGE 2 AUDIT & EXECUTION REPORT
-================================================================================
+# ================================================================================
+# SABRY VISION - STAGE 2 AUDIT & EXECUTION REPORT
+# ================================================================================
 #[INFO] Market Session Manager initialized with IANA timezones (zoneinfo) [PASSED].
 #[INFO] Makkah time conversion logic verified for US, TASI, EGX, LSE, and Crypto [PASSED].
 #[INFO] Background Scheduler set up with precise candle-close triggers (Minute + 20s) [PASSED].
@@ -625,9 +625,9 @@ def test_scanner_detection():
     f = scanner.calculate_technical_features(df)
     res_df = scanner.detect_four_setups(f)
     assert not res_df.empty
-================================================================================
-SABRY VISION - STAGE 3 AUDIT & EXECUTION REPORT
-================================================================================
+# ================================================================================
+# SABRY VISION - STAGE 3 AUDIT & EXECUTION REPORT
+# ================================================================================
 #[INFO] Four-Layer Scanner Engine initialized successfully [PASSED].
 #[INFO] Hard Gates (Liquidity, Trend, Extension, Slope) verified [PASSED].
 #[INFO] Four institutional setup detectors (Breakout, Setup, Retest, Bottom Reversal) operational [PASSED].
@@ -780,9 +780,9 @@ def test_no_lookahead_bias_backtest():
     results = engine.run_portfolio_simulation({"TEST": df})
     assert isinstance(results, dict)
     assert "total_trades" in results
-================================================================================
-SABRY VISION - STAGE 4 AUDIT & EXECUTION REPORT
-================================================================================
+# ================================================================================
+# SABRY VISION - STAGE 4 AUDIT & EXECUTION REPORT
+# ================================================================================
 #[INFO] Portfolio Backtesting Engine initialized successfully [PASSED].
 #[INFO] No-Lookahead Bias validation confirmed via sequential sub-dataframe slicing [PASSED].
 #[INFO] Realistic execution costs, slippage, and stop/target tracking operational [PASSED].
