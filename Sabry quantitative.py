@@ -252,7 +252,7 @@ jobs:
           python -c "from core_engine import Config; print('SABRY VISION Automation Engine Loaded Successfully.')"
 # 🌐 SABRY VISION - Institutional Quantitative System
 
-نظومة تحليل كمي مؤسسية متكاملة لأسواق المال (أسهم أمريكية، سعودية، مصرية، وسلع).
+نظومة تحليل كمي مؤسسية متكاملة لأسواق المال (أسهم أمريكية, سعودية, مصرية, وسلع).
 
 ## 🚀 طريقة التشغيل المحلي (Local Deployment)
 1. تثبيت الاعتمادات:
