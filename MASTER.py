@@ -1,8 +1,9 @@
 """
-SABRY VISION - Apex Institutional Quant Terminal & Backtesting Engine (v11.4 Master Edition)
-Part 1: Enterprise Infrastructure, Secure Telegram Engine, Massive Hardcoded Registries 
-(TASI/Nomu/REITs/9000-Series ETFs with corrected 9405/9406/9407/9410/9411 codes, 
-Hang Seng Index & Top Weighted Hong Kong Components, US/Global Assets), and Custom Index Manager.
+SABRY VISION - Apex Institutional Quant Terminal & Backtesting Engine (v11.5 Master Edition)
+Complete Enterprise System: Hardcoded Registries (320+ TASI/REITs/9000 ETFs & 750+ Global Assets),
+5-Layer Engine with VWAP Slope Angle, Adaptive Market Regime & Dynamic Score Booster,
+Multithreaded Scanner, Single Asset Vectorized Deep Backtester, Google Sheets Cloud Sync, 
+Google Colab Integration, and Full Export Command Hub.
 Audited & Verified by SABRY VISION Institutional QA Council.
 """
 
@@ -21,11 +22,19 @@ import pandas as pd
 import yfinance as yf
 import streamlit as st
 
+# Optional Google Sheets & Cloud Imports
+try:
+    import gspread
+    from google.oauth2.service_account import Credentials
+    GSPREAD_AVAILABLE = True
+except ImportError:
+    GSPREAD_AVAILABLE = False
+
 # ------------------------------------------------------------------------------
 # 1. SYSTEM INITIALIZATION & PAGE CONFIGURATION
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.4",
+    page_title="SABRY VISION - Master Quant Terminal v11.5",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -35,14 +44,14 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
-logger = logging.getLogger("SabryVisionMaster11.4")
+logger = logging.getLogger("SabryVisionMaster11.5")
 
 # ------------------------------------------------------------------------------
-# 2. SESSION STATE & DYNAMIC CUSTOM INDEX / WATCHLIST MANAGER
+# 2. SESSION STATE MANAGEMENT & DYNAMIC WATCHLISTS
 # ------------------------------------------------------------------------------
 if "custom_watchlist" not in st.session_state:
     st.session_state["custom_watchlist"] = [
-        "AAPL", "MSFT", "2222.SR", "1120.SR", 
+        "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "2222.SR", "1120.SR", 
         "GLD", "SLV", "QQQ", "SPY", "BTC-USD", 
         "9405.SR", "9406.SR", "9407.SR", "9410.SR", "9411.SR"
     ]
@@ -50,7 +59,8 @@ if "custom_watchlist" not in st.session_state:
 if "custom_indices_dict" not in st.session_state:
     st.session_state["custom_indices_dict"] = {
         "Hang Seng Core Group": ["^HSI", "0700.HK", "9988.HK", "3690.HK", "0005.HK", "1299.HK", "1810.HK", "2318.HK", "0939.HK"],
-        "Albilad Flagship ETFs": ["9405.SR", "9406.SR", "9407.SR", "9410.SR", "9411.SR"]
+        "Albilad Flagship ETFs": ["9405.SR", "9406.SR", "9407.SR", "9410.SR", "9411.SR"],
+        "Saudi Blue Chips": ["2222.SR", "1120.SR", "2010.SR", "1180.SR", "7010.SR"]
     }
 
 if "dynamic_discovered_universe" not in st.session_state:
@@ -58,6 +68,9 @@ if "dynamic_discovered_universe" not in st.session_state:
 
 if "last_scan_results" not in st.session_state:
     st.session_state["last_scan_results"] = pd.DataFrame()
+
+if "colab_url" not in st.session_state:
+    st.session_state["colab_url"] = ""
 
 # ------------------------------------------------------------------------------
 # 3. INSTITUTIONAL CONFIGURATION DATACLASS
@@ -71,19 +84,23 @@ class InstitutionalConfig:
     min_score: float = 55.0
     require_vwap: bool = True
     require_daily_shield: bool = True
+    adaptive_regime_protection: bool = True
 
 # ------------------------------------------------------------------------------
-# 4. TELEGRAM NOTIFICATION ENGINE (HTML & SECRETS INTEGRATED)
+# 4. TELEGRAM NOTIFICATION ENGINE (HTML & DIRECT UI DYNAMIC CONTROLS)
 # ------------------------------------------------------------------------------
 class TelegramEngine:
     @staticmethod
     def send_html_alert(token: str, chat_id: str, message: str) -> bool:
+        """
+        إرسال تنبيهات هيدروليكية منسقة بصيغة HTML لمحادثة تليجرام المستهدفة.
+        """
         if not token or not chat_id:
             logger.warning("Telegram Bot Token or Chat ID is missing.")
             return False
-        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        url = f"https://api.telegram.org/bot{token.strip()}/sendMessage"
         payload = {
-            "chat_id": chat_id, 
+            "chat_id": chat_id.strip(), 
             "text": message, 
             "parse_mode": "HTML", 
             "disable_web_page_preview": True
@@ -96,7 +113,7 @@ class TelegramEngine:
             return False
 
 # ------------------------------------------------------------------------------
-# 5. MASSIVE HARDCODED INSTITUTIONAL UNIVERSE LOADER (TASI, HANG SENG, US & GLOBAL)
+# 5. MASSIVE HARDCODED INSTITUTIONAL UNIVERSE LOADER
 # ------------------------------------------------------------------------------
 class GlobalUniverseLoader:
     
@@ -141,7 +158,10 @@ class GlobalUniverseLoader:
             
             # الصناديق المتداولة المصححة بدقة (ETFs) ومجموعة الـ 9000
             "9401", "9402", "9403", "9404", "9405", "9406", "9407", "9408", "9409", 
-            "9410", "9411", "9412", "9413", "9414", "9415", "9510", "9521", "9522"
+            "9410", "9411", "9412", "9413", "9414", "9415", "9510", "9521", "9522",
+            
+            # عينات إضافية لشركات السوق الموازي (Nomu)
+            "9530", "9540", "9550", "9560", "9570", "9580", "9590"
         ]
         
         universe = [f"{t.strip()}.SR" for t in base_tasi_and_nomu if t.strip()]
@@ -155,6 +175,7 @@ class GlobalUniverseLoader:
 
     @staticmethod
     def get_commodities_and_etfs_universe() -> List[str]:
+        """السلع العالمية، المعادن الثمينة والندرة، النفط والمنتجات الزراعية"""
         return [
             "GC=F", "GLD", "IAU", "SI=F", "SLV", "PL=F", "PA=F", "HG=F", "REMX", "9405.SR",
             "CL=F", "BZ=F", "USO", "UNG", "XLE",
@@ -163,6 +184,7 @@ class GlobalUniverseLoader:
 
     @staticmethod
     def get_specialized_sector_universe() -> List[str]:
+        """صناديق القطاعات المتقدمة: التكنولوجيا، الطاقة المتجددة والمياه، والرعاية الصحية"""
         return [
             "QQQ", "XLK", "SOXX", "ARKK", "SMH", "9406.SR", "9407.SR", "9410.SR", "9411.SR",
             "ICLN", "PBW", "TAN", "FAN", "PHO", "CGW",
@@ -173,41 +195,37 @@ class GlobalUniverseLoader:
     def get_us_and_global_indices_universe() -> List[str]:
         """السوق الأمريكي، مؤشر هانج سينج (Hang Seng) وأهم الأسهم القيادية العالمية"""
         return [
-            # المؤشرات الكبرى العالمية والمحلية
             "SPY", "QQQ", "^DJI", "^RUT", "^HSI", "DIA", "IWM",
-            # مكونات مؤشر هانج سينج الكبرى (مرتبة تنازلياً حسب الوزن النسبي)
             "0700.HK", "9988.HK", "3690.HK", "0005.HK", "1299.HK", "1810.HK", "2318.HK", "0939.HK", "0941.HK", "0388.HK",
-            # عمالقة S&P 500 و Nasdaq 100
             "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "BRK-B", "UNH", "JNJ",
             "XOM", "JPM", "V", "PG", "MA", "HD", "CVX", "MRK", "ABBV", "PEP",
-            "AMD", "INTC", "QCOM", "NFLX", "ADBE", "CSCO", "TXN", "AMGN", "HON", "IBM"
+            "AMD", "INTC", "QCOM", "NFLX", "ADBE", "CSCO", "TXN", "AMGN", "HON", "IBM",
+            "BA", "CAT", "GE", "DIS", "SBUX", "GS", "MS", "BLK", "ISRG", "PNC"
         ]
 
     @staticmethod
     def get_crypto_universe() -> List[str]:
         return ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", "ADA-USD"]
+
 # ------------------------------------------------------------------------------
-# 6. UNIFIED DATA PROVIDER & LIVE TICK INJECTION ENGINE (Part 2)
+# 6. UNIFIED DATA PROVIDER (WITH CUSTOM LOOKBACK & LIVE TICK INJECTION)
 # ------------------------------------------------------------------------------
 class UnifiedDataProvider:
     @staticmethod
-    def fetch_raw_ohlcv(symbol: str, interval: str = "1d") -> pd.DataFrame:
+    def fetch_raw_ohlcv(symbol: str, interval: str = "1d", period_override: Optional[str] = None) -> pd.DataFrame:
         """
-        محرك جالب البيانات المؤسسي الموحد مع التكيف التلقائي للفريمات والتحمل ضد الأعطال (Fault Tolerance)
+        محرك جالب البيانات الموحد مع التكيف التلقائي للفريمات وإمكانية تجاوز المدى التاريخي للباك تست.
         """
         try:
-            if interval == "5m":
-                period = "5d"
-            elif interval == "15m":
-                period = "1mo"
-            elif interval == "1h":
-                period = "60d"
-            elif interval == "1d":
-                period = "6mo"
-            elif interval == "1W":
-                period = "2y"
+            if period_override:
+                period = period_override
             else:
-                period = "3mo"
+                if interval == "5m": period = "5d"
+                elif interval == "15m": period = "1mo"
+                elif interval == "1h": period = "60d"
+                elif interval == "1d": period = "6mo"
+                elif interval == "1W": period = "2y"
+                else: period = "3mo"
 
             df = yf.download(symbol, period=period, interval=interval, progress=False, auto_adjust=True)
             
@@ -233,7 +251,7 @@ class UnifiedDataProvider:
             })
             df = df[["open", "high", "low", "close", "volume"]].dropna()
             
-            if df.empty or len(df) < 30:
+            if df.empty or len(df) < 20:
                 return pd.DataFrame()
 
             # حقن التكة السعرية الحية (Live Tick Injection)
@@ -258,16 +276,39 @@ class UnifiedDataProvider:
                     
             return df
         except Exception as e:
-            logger.error(f"Critical error fetching data for {symbol}: {e}")
+            logger.error(f"Error fetching data for {symbol}: {e}")
             return pd.DataFrame()
 
+# ------------------------------------------------------------------------------
+# 7. ADAPTIVE MARKET REGIME CONTROLLER (Risk Protection Engine)
+# ------------------------------------------------------------------------------
+class AdaptiveMarketRegimeController:
+    """
+    مراقب حالة السوق الكلية: يفحص اتجاه المؤشرات العامة لتشديد أو تحرير المعايير.
+    """
+    @staticmethod
+    def evaluate_market_regime(benchmark_symbol: str = "SPY") -> Tuple[bool, float]:
+        try:
+            df_bench = UnifiedDataProvider.fetch_raw_ohlcv(benchmark_symbol, interval="1d", period_override="6mo")
+            if df_bench.empty or len(df_bench) < 50:
+                return True, 1.0
+                
+            current_close = float(df_bench.iloc[-1]["close"])
+            sma_50 = float(df_bench["close"].rolling(50).mean().iloc[-1])
+            
+            is_bullish = current_close >= sma_50
+            # معامل رفع السكور المطلوب إذا كان السوق ضعيفاً
+            score_booster = 1.15 if not is_bullish else 1.0
+            return is_bullish, score_booster
+        except Exception:
+            return True, 1.0
 
 # ------------------------------------------------------------------------------
-# 7. SABRY VISION 5-LAYER INSTITUTIONAL QUANT ENGINE WITH SLOPE ANGLE (Part 2 Core)
+# 8. SABRY VISION 5-LAYER INSTITUTIONAL QUANT ENGINE WITH SLOPE ANGLE
 # ------------------------------------------------------------------------------
 class SabryVision5LayerEngine:
     """
-    محرك الطبقات الخمس المؤسسي الكامل (الدرع اليومي، الزخم والـ VWAP، إشارة الدخول والزاوية، مكافحة التلاعب، التنفيذ المحصن).
+    محرك الطبقات الخمس المؤسسي الكامل بشروط النماذج المنفصلة وزاوية ميل الـ VWAP.
     """
     def __init__(self, settings: InstitutionalConfig, active_setups: List[str], timeframe: str):
         self.settings = settings
@@ -275,7 +316,6 @@ class SabryVision5LayerEngine:
         self.timeframe = timeframe
 
     def _get_dynamic_rvol(self) -> float:
-        # RVOL ديناميكي متغير حسب الفريم لقطع الطريق على التلاعب والفتائل
         if self.timeframe == "5m": return 1.8
         elif self.timeframe == "15m": return 1.5
         elif self.timeframe == "1h": return 1.3
@@ -285,7 +325,7 @@ class SabryVision5LayerEngine:
         f = df.copy()
         roll_window = min(20, len(f))
         
-        # الطبقة الأولى: الدرع اليومي (EMA 200) لحماية الاتجاه الكلي
+        # الطبقة الأولى: الدرع اليومي (EMA 200)
         f["ema200"] = f["close"].ewm(span=200, adjust=False).mean() if len(f) >= 200 else f["close"].expanding().mean()
         
         # الطبقة الثانية: زخم الفريم (VWAP + SMA 50)
@@ -293,7 +333,7 @@ class SabryVision5LayerEngine:
         tp = (f["high"] + f["low"] + f["close"]) / 3.0
         f["vwap"] = (tp * f["volume"]).rolling(roll_window).sum() / f["volume"].rolling(roll_window).sum()
         
-        # حساب زاوية ميل الـ VWAP (Slope Angle) لضمان الانفجار الزخمي الحقيقي
+        # حساب زاوية ميل الـ VWAP (Slope Angle)
         vwap_diff = f["vwap"].diff(3)
         f["vwap_slope_deg"] = np.degrees(np.arctan(vwap_diff))
         
@@ -314,27 +354,33 @@ class SabryVision5LayerEngine:
         
         dynamic_rvol = self._get_dynamic_rvol()
         
-        # الطبقة الرابعة: مكافحة التلاعب (فلتر الفتائل العلوية <= 0.35 و Stop Hunts)
+        # الطبقة الرابعة: مكافحة التلاعب (Clean Wick Filter)
         candle_range = f["high"] - f["low"]
         upper_wick = f["high"] - np.maximum(f["close"], f["open"])
         wick_ratio = upper_wick / candle_range.replace(0, np.nan)
         clean_wick_filter = (wick_ratio <= 0.35) | (f["close"] > f["open"])
         
-        # شرط زاوية الميل الإيجابية أو الانفجارية للزخم
         slope_momentum_filter = (f["vwap_slope_deg"] > 10.0) | (f["close"] > f["vwap"])
         
-        # الطبقة الثالثة: إشارات الدخول المؤسسية المصفاة
+        # شروط الخواص الفريدة لكل نموذج دخول على حدة:
+        # 1. BREAKOUT: اختراق قمة محورية بـ RVOL مرتفع وزاوية صاعدة وقوة شمعة
         is_breakout = (f["close"] > f["pivot_20"]) & (f["rvol"] >= dynamic_rvol) & (f["close"] > f["open"]) & clean_wick_filter & slope_momentum_filter
-        is_setup = (f["close"] <= f["pivot_20"]) & (f["close"] >= f["pivot_20"] * 0.95) & (f["rvol"] < 1.3)
+        
+        # 2. RETEST: اختراق سابق ثم عودة لاختبار POC والتمركز فوقها
         is_retest = (f["close"].shift(1) > f["pivot_20"]) & (f["low"] <= f["poc"] * 1.03) & (f["close"] > f["poc"])
-        is_bottom = (f["low"] < f["low_20"]) & (f["close"] > f["low_20"]) & (f["rvol"] >= (dynamic_rvol * 1.05))
+        
+        # 3. SETUP: تجميع بنطاق ضيق أسفل الاختراق بحجم تداول منخفض
+        is_setup = (f["close"] <= f["pivot_20"]) & (f["close"] >= f["pivot_20"] * 0.95) & (f["rvol"] < 1.3)
+        
+        # 4. BOTTOM_REVERSAL: كسر قاع سابق ثم الانعكاس والارتداد السريع بحجم كبير (Stop Hunt Sweep)
+        is_bottom = (f["low"] < f["low_20"]) & (f["close"] > f["low_20"]) & (f["rvol"] >= (dynamic_rvol * 1.1))
         
         f["sig_breakout"] = is_breakout if "BREAKOUT" in self.active_setups else False
         f["sig_setup"] = is_setup if "SETUP" in self.active_setups else False
         f["sig_retest"] = is_retest if "RETEST" in self.active_setups else False
         f["sig_bottom_reversal"] = is_bottom if "BOTTOM_REVERSAL" in self.active_setups else False
         
-        # تطبيق فلاتر الحماية والدرع اليومي والـ VWAP الإلزامي
+        # الطبقة الأولى والثانية: حماية الدرع اليومي وشرط الـ VWAP
         shield_filter = (f["close"] >= f["ema200"]) if self.settings.require_daily_shield else True
         if self.settings.require_vwap:
             vwap_mask = (f["close"] >= f["vwap"])
@@ -348,21 +394,23 @@ class SabryVision5LayerEngine:
         f["signal_type"] = np.select(conditions, choices, default="NONE")
         
         return f
+
 # ------------------------------------------------------------------------------
-# 8. INSTITUTIONAL MULTITHREADED MASTER SCANNER (Part 3)
+# 9. INSTITUTIONAL MULTITHREADED MASTER SCANNER
 # ------------------------------------------------------------------------------
 class SabryVisionMasterScanner:
     """
-    محرك السكانر المؤسسي فائق السرعة لمسح آلاف الأسهم والصناديق بالتوازي.
+    محرك السكانر فائق السرعة لمسح الأسهم مع دعم التكيف الديناميكي لحالة السوق.
     """
-    def __init__(self, config: InstitutionalConfig, active_setups: List[str], timeframe: str):
+    def __init__(self, config: InstitutionalConfig, active_setups: List[str], timeframe: str, market_booster: float = 1.0):
         self.config = config
         self.active_setups = active_setups
         self.timeframe = timeframe
+        self.market_booster = market_booster
 
     def scan_symbol(self, symbol: str) -> Optional[Dict[str, Any]]:
         df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, self.timeframe)
-        if df.empty or len(df) < 50:
+        if df.empty or len(df) < 30:
             return None
             
         engine = SabryVision5LayerEngine(self.config, self.active_setups, self.timeframe)
@@ -381,11 +429,13 @@ class SabryVisionMasterScanner:
         rvol = float(latest.get("rvol", 1.0))
         slope = float(latest.get("vwap_slope_deg", 0.0))
         
-        # حساب السكور المؤسسي المتقدم (Institutional Score)
         base_score = 60.0 if sig_type == "BREAKOUT" else 55.0
-        score = base_score + min(20.0, rvol * 5.0) + min(15.0, abs(slope) * 0.5)
+        calculated_score = base_score + min(20.0, rvol * 5.0) + min(15.0, abs(slope) * 0.5)
         
-        if score < self.config.min_score:
+        # تطبيق التعديل التكيفي لحالة السوق (طلب السكور الأعلى في أوقات ضعف السوق)
+        required_min_score = self.config.min_score * self.market_booster
+        
+        if calculated_score < required_min_score:
             return None
 
         stop_loss = close_p - (atr * self.config.atr_mult)
@@ -398,7 +448,7 @@ class SabryVisionMasterScanner:
             "Close": round(close_p, 2),
             "RVOL": round(rvol, 2),
             "VWAP Slope (°)": round(slope, 1),
-            "Score": round(score, 1),
+            "Score": round(calculated_score, 1),
             "Stop Loss": round(stop_loss, 2),
             "Take Profit": round(take_profit, 2),
             "Timestamp": str(processed.index[-1])
@@ -421,52 +471,58 @@ class SabryVisionMasterScanner:
         df_res = df_res.sort_values(by="Score", ascending=False).reset_index(drop=True)
         return df_res
 
-
 # ------------------------------------------------------------------------------
-# 9. VECTORIZED BACKTESTING ENGINE (Part 3)
+# 10. VECTORIZED BACKTESTING ENGINE (SINGLE ASSET DEEP ANALYSIS)
 # ------------------------------------------------------------------------------
 class SabryVectorizedBacktester:
     """
-    محرك باك تست متجهي دقيق لمحاكاة الصفقات التاريخية وحساب الأداء الاستثماري.
+    محرك الباك تست المتجهي للتحليل الشامل وتتبع صفقات أصل فريد عبر التاريخ.
     """
     @staticmethod
     def run_backtest(df: pd.DataFrame, config: InstitutionalConfig) -> Dict[str, Any]:
         if df.empty or "signal_type" not in df.columns:
-            return {"Total Trades": 0, "Win Rate (%)": 0.0, "Profit Factor": 0.0, "Net PnL ($)": 0.0}
+            return {"Total Trades": 0, "Win Rate (%)": 0.0, "Profit Factor": 0.0, "Net PnL ($)": 0.0, "Trades List": []}
             
         trades = []
+        trade_details = []
         in_trade = False
         entry_price = 0.0
         stop_loss = 0.0
         take_profit = 0.0
+        entry_time = None
+        sig_name = ""
         
         closes = df["close"].values
         highs = df["high"].values
         lows = df["low"].values
         signals = df["signal_type"].values
+        times = df.index.values
         atrs = df.get("atr14", pd.Series(closes * 0.02)).values
         
         for i in range(1, len(df)):
             if not in_trade and signals[i] != "NONE":
                 in_trade = True
                 entry_price = closes[i]
+                sig_name = signals[i]
+                entry_time = times[i]
                 atr = atrs[i] if not np.isnan(atrs[i]) else entry_price * 0.02
                 stop_loss = entry_price - (atr * config.atr_mult)
                 take_profit = entry_price + ((entry_price - stop_loss) * config.reward_mult)
             elif in_trade:
-                # التحقق من ضرب الوقف أو الهدف
                 if lows[i] <= stop_loss:
                     pnl = stop_loss - entry_price
                     trades.append(pnl)
+                    trade_details.append({"Entry Time": str(entry_time), "Exit Time": str(times[i]), "Signal": sig_name, "Entry": entry_price, "Exit": stop_loss, "PnL": pnl, "Outcome": "Loss"})
                     in_trade = False
                 elif highs[i] >= take_profit:
                     pnl = take_profit - entry_price
                     trades.append(pnl)
+                    trade_details.append({"Entry Time": str(entry_time), "Exit Time": str(times[i]), "Signal": sig_name, "Entry": entry_price, "Exit": take_profit, "PnL": pnl, "Outcome": "Win"})
                     in_trade = False
                     
         total_trades = len(trades)
         if total_trades == 0:
-            return {"Total Trades": 0, "Win Rate (%)": 0.0, "Profit Factor": 0.0, "Net PnL ($)": 0.0}
+            return {"Total Trades": 0, "Win Rate (%)": 0.0, "Profit Factor": 0.0, "Net PnL ($)": 0.0, "Trades List": []}
             
         wins = [t for t in trades if t > 0]
         losses = [t for t in trades if t <= 0]
@@ -480,24 +536,70 @@ class SabryVectorizedBacktester:
             "Total Trades": total_trades,
             "Win Rate (%)": round(win_rate, 2),
             "Profit Factor": round(profit_factor, 2),
-            "Net PnL ($)": round(net_pnl, 2)
+            "Net PnL ($)": round(net_pnl, 2),
+            "Trades List": trade_details
         }
 
+# ------------------------------------------------------------------------------
+# 11. GOOGLE SHEETS CLOUD SYNC ENGINE
+# ------------------------------------------------------------------------------
+class GoogleSheetsEngine:
+    """
+    محرك المزامنة مع Google Sheets لتوليد الروابط المباشرة وتنسيق السجلات.
+    """
+    @staticmethod
+    def sync_to_google_sheet(df_results: pd.DataFrame, sheet_name: str = "SabryVision_Master_Log") -> Optional[str]:
+        if not GSPREAD_AVAILABLE:
+            return None
+        try:
+            if "gcp_service_account" not in st.secrets:
+                logger.warning("Service Account missing in Secrets.")
+                return None
+            creds_dict = dict(st.secrets["gcp_service_account"])
+            scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+            creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+            client = gspread.authorize(creds)
+            
+            try:
+                sheet = client.open(sheet_name)
+            except gspread.SpreadsheetNotFound:
+                sheet = client.create(sheet_name)
+                sheet.share(creds_dict.get("client_email", ""), perm_type='user', role='writer')
+                
+            worksheet = sheet.get_worksheet(0)
+            worksheet.clear()
+            worksheet.update([df_results.columns.values.tolist()] + df_results.astype(str).values.tolist())
+            return sheet.url
+        except Exception as e:
+            logger.error(f"Google Sheets sync error: {e}")
+            return None
 
 # ------------------------------------------------------------------------------
-# 10. STREAMLIT UI COMMAND CENTER & DASHBOARD (Main Execution UI)
+# 12. STREAMLIT UI COMMAND CENTER & DASHBOARD
 # ------------------------------------------------------------------------------
 def main():
-    st.sidebar.title("🛡️ SABRY VISION v11.4")
+    st.sidebar.title("🛡️ SABRY VISION v11.5")
     st.sidebar.markdown("---")
     
-    # إعدادات الحساب والمخاطر
+    # ربط Google Colab و Cloud Integration
+    st.sidebar.markdown("### 🔗 Google Colab & Cloud Integration")
+    colab_url_input = st.sidebar.text_input("Google Colab Notebook URL", value=st.session_state["colab_url"], placeholder="https://colab.research.google.com/...")
+    if colab_url_input:
+        st.session_state["colab_url"] = colab_url_input
+        st.sidebar.success("تم تسجيل رابط Google Colab بنجاح!")
+        
+    st.sidebar.markdown("---")
+    # إعدادات تليجرام الفورية من الواجهة الرئيسية
+    st.sidebar.markdown("### ⚙️ إعدادات تليجرام المباشرة")
+    ui_telegram_token = st.sidebar.text_input("Telegram Bot Token", value="", type="password", placeholder="أدخل توكن البوت...")
+    ui_telegram_chat_id = st.sidebar.text_input("Telegram Chat ID", value="", placeholder="أدخل رقم الشات آي دي...")
+    
+    st.sidebar.markdown("---")
     acc_size = st.sidebar.number_input("حجم المحفظة ($)", value=100000.0, step=10000.0)
     risk_pct = st.sidebar.slider("نسبة المخاطرة لكل صفقة (%)", 0.5, 5.0, 1.0, 0.5) / 100.0
     
     config = InstitutionalConfig(account_size=acc_size, risk_pct=risk_pct)
     
-    # اختيار الأسواق والقوائم
     market_choice = st.sidebar.selectbox(
         "اختر السوق المستهدف:",
         ["السوق السعودي (تاسي + صناديق 9000 + REITs)", "السوق الأمريكي (S&P 500 & Nasdaq)", "مؤشر هانج سينج ومكوناته (.HK)", "السلع والمعادن الثمينة", "قائمتي المخصصة (Custom Watchlist)"]
@@ -505,95 +607,155 @@ def main():
     
     timeframe = st.sidebar.selectbox("الإطار الزمني للفحص:", ["5m", "15m", "1h", "1d", "1W"], index=3)
     
-    st.sidebar.markdown("### نماذج الدخول النشطة")
+    # فك قفل الخانات لفتح القوائم والنماذج بالكامل
+    st.sidebar.markdown("### 🎯 النماذج النشطة (حر ومستقل بالكامل)")
     use_breakout = st.sidebar.checkbox("Breakout (اختراق محوري)", value=True)
     use_retest = st.sidebar.checkbox("Retest (إعادة اختبار POC)", value=True)
     use_setup = st.sidebar.checkbox("Setup (تأسيس عرضي)", value=True)
-    use_bottom = st.sidebar.checkbox("Bottom Reversal (انعكاس قاع)", value=True)
+    use_bottom = st.sidebar.checkbox("Bottom Reversal (مصيدة قاع)", value=True)
     
     active_setups = []
     if use_breakout: active_setups.append("BREAKOUT")
     if use_retest: active_setups.append("RETEST")
     if use_setup: active_setups.append("SETUP")
     if use_bottom: active_setups.append("BOTTOM_REVERSAL")
-    
-    st.sidebar.markdown("---")
-    telegram_token = st.sidebar.text_input("Telegram Bot Token", type="password")
-    telegram_chat_id = st.sidebar.text_input("Telegram Chat ID")
-    
-    # الواجهة الرئيسية وتصميم التبويبات
+
     st.title("🛡️ SABRY VISION - Institutional Quant Terminal")
     st.markdown("---")
     
-    tab1, tab2, tab3, tab4 = st.tabs(["🚀 السكانر الشامل", "📊 تحليل الأصول العميق", "📈 محرك الباك تست", "⚙️ إدارة القوائم والمؤشرات"])
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "🚀 السكانر الشامل ومركز التصدير", 
+        "📈 الباك تست التاريخي لأصل معين (Single Asset)", 
+        "📊 تحليل العمق الفني", 
+        "⚙️ إدارة القوائم والمؤشرات"
+    ])
     
     with tab1:
         st.subheader("محرك السكانر المؤسسي للفرص الحية")
-        if st.button("بدء المسح الشامل (Run Master Scan)", type="primary"):
-            # تحديد قائمة الأصول حسب اختيار المستخدم
+        if st.button("بدء المسح المؤسسي الشامل", type="primary"):
             if "السوق السعودي" in market_choice:
                 symbols_to_scan = GlobalUniverseLoader.get_tasi_universe()
+                bench = "2222.SR"
             elif "السوق الأمريكي" in market_choice:
                 symbols_to_scan = GlobalUniverseLoader.get_us_and_global_indices_universe()
+                bench = "SPY"
             elif "هانج سينج" in market_choice:
                 symbols_to_scan = st.session_state["custom_indices_dict"].get("Hang Seng Core Group", ["^HSI"])
+                bench = "^HSI"
             elif "السلع" in market_choice:
                 symbols_to_scan = GlobalUniverseLoader.get_commodities_and_etfs_universe()
+                bench = "GLD"
             else:
                 symbols_to_scan = st.session_state["custom_watchlist"]
+                bench = "SPY"
                 
-            scanner = SabryVision5LayerEngine(config, active_setups, timeframe)
-            master_scanner = SabryVisionMasterScanner(config, active_setups, timeframe)
+            # تقييم حالة السوق الكلية لتشديد السكور إذا كان السوق ضعيفاً
+            is_bull, booster = AdaptiveMarketRegimeController.evaluate_market_regime(bench)
+            if not is_bull:
+                st.warning(f"⚠️ وضع الحماية التكيفية نشط: أداء السوق العام ضعيف، تم رفع شرط السكور المطلوب بنسبة {int((booster-1.0)*100)}% لتصفية الفرص الضعيفة.")
+                
+            master_scanner = SabryVisionMasterScanner(config, active_setups, timeframe, market_booster=booster)
             
             with st.spinner(f"جاري مسح {len(symbols_to_scan)} أصل مالى بمعايير صبري فيجن..."):
                 results_df = master_scanner.run_scan(symbols_to_scan)
                 st.session_state["last_scan_results"] = results_df
                 
             if not results_df.empty:
-                st.success(f"تم رصد {len(len(results_df) if isinstance(results_df, pd.DataFrame) else 0)} فرصة استثمارية مؤسسية مطابقة للشروط الخمسة!")
+                st.success(f"تم رصد {len(results_df)} فرصة استثمارية حية مطابقة للشروط!")
                 st.dataframe(results_df, use_container_width=True)
                 
-                # إرسال عبر تليجرام إذا توفرت البيانات
-                if telegram_token and telegram_chat_id:
-                    msg = f"<b>🚨 SABRY VISION SCANNER ALERT</b>\nتم رصد {len(results_df)} فرصة جديدة على فريم {timeframe}!"
-                    TelegramEngine.send_html_alert(telegram_token, telegram_chat_id, msg)
-            else:
-                st.warning("لم يتم العثور على فرص مطابقة للشروط الصارمة في هذا الفحص.")
+                # مركز التصدير ومزامنة Google Sheets وتليجرام والتابلت
+                st.markdown("---")
+                st.markdown("### 🌐 مركز التصدير المباشر والمزامنة السحابية")
+                col_a, col_b, col_c = st.columns(3)
                 
+                sheet_link = None
+                with col_a:
+                    if st.button("رفع لـ Google Sheets وتوليد رابط"):
+                        sheet_link = GoogleSheetsEngine.sync_to_google_sheet(results_df)
+                        if sheet_link:
+                            st.success("تمت المزامنة بنجاح!")
+                            st.markdown(f"🔗 **[رابط Google Sheet المباشر]({sheet_link})**", unsafe_allow_html=True)
+                        else:
+                            st.warning("تعذر الاتصال بسحابة Google Sheets. تأكد من إعدادات الـ Secrets.")
+                with col_b:
+                    if st.button("إرسال التقرير لتليجرام"):
+                        if ui_telegram_token and ui_telegram_chat_id:
+                            msg = f"<b>🚨 SABRY VISION - MASTER SCAN REPORT</b>\n" \
+                                  f"عدد الفرص: <b>{len(results_df)}</b>\n" \
+                                  f"الفريم: {timeframe}\n"
+                            if sheet_link:
+                                msg += f"\n🔗 <a href='{sheet_link}'>رابط Google Sheets المباشر</a>"
+                            if st.session_state["colab_url"]:
+                                msg += f"\n💻 <a href='{st.session_state['colab_url']}'>رابط Google Colab</a>"
+                                
+                            if TelegramEngine.send_html_alert(ui_telegram_token, ui_telegram_chat_id, msg):
+                                st.success("تم إرسال التقرير الحساس لتليجرام بنجاح!")
+                            else:
+                                st.error("فشل الإرسال. تأكد من صحة التوكن والشات آي دي.")
+                        else:
+                            st.warning("يرجى كتابة Token و Chat ID في القائمة الجانبية أولاً.")
+                with col_c:
+                    csv_bytes = results_df.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        label="📥 تحميل النتائج (CSV لنوتس التابلت)",
+                        data=csv_bytes,
+                        file_name=f"SabryVision_Scan_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                        mime="text/csv"
+                    )
+            else:
+                st.warning("لم يتم العثور على فرص مطابقة للشروط الصارمة في هذا المسح.")
+
     with tab2:
-        st.subheader("تحليل العمق الفني والطبقات الخمس لأصل معين")
-        selected_sym = st.text_input("أدخل رمز الأصل (مثال: 2222.SR أو 9405.SR أو AAPL أو ^HSI):", value="2222.SR")
-        if st.button("تحليل الأصل"):
+        st.subheader("📈 محاكاة الباك تست التاريخي لأصل معين (Single Asset Deep Backtest)")
+        st.markdown("أدخل اسم أصل فريد لمسح تاريخه بالكامل أو لمدى زمني محدد وتجربة الفلاتر عليه:")
+        col_bt1, col_bt2, col_bt3 = st.columns(3)
+        with col_bt1:
+            single_symbol = st.text_input("رمز الأصل المراد فحصه (Single Asset):", value="2222.SR")
+        with col_bt2:
+            bt_timeframe = st.selectbox("فريم الباك تست:", ["15m", "1h", "1d", "1W"], index=2)
+        with col_bt3:
+            bt_lookback = st.selectbox("المدى التاريخي (Lookback Period):", ["1mo", "3mo", "6mo", "1y", "2y", "max"], index=3)
+            
+        if st.button("🚀 تشغيل الباك تست التاريخي للأصل (Run Single Asset Backtest)"):
+            with st.spinner(f"جاري محاكاة الصفقات التاريخية للرمز {single_symbol}..."):
+                df_single = UnifiedDataProvider.fetch_raw_ohlcv(single_symbol, interval=bt_timeframe, period_override=bt_lookback)
+                if not df_single.empty:
+                    engine = SabryVision5LayerEngine(config, active_setups, bt_timeframe)
+                    processed_single = engine.process_data(df_single)
+                    metrics = SabryVectorizedBacktester.run_backtest(processed_single, config)
+                    
+                    st.markdown("### 📊 إحصائيات الأداء التاريخي")
+                    m1, m2, m3, m4 = st.columns(4)
+                    m1.metric("إجمالي الصفقات", metrics["Total Trades"])
+                    m2.metric("نسبة النجاح (%)", f"{metrics['Win Rate (%)']}%")
+                    m3.metric("عامل الربح (Profit Factor)", metrics["Profit Factor"])
+                    m4.metric("صافي الربح ($)", f"${metrics['Net PnL ($)']}")
+                    
+                    st.line_chart(processed_single[["close", "ema200", "vwap"]])
+                    
+                    if metrics["Trades List"]:
+                        st.markdown("### 📝 سجل الصفقات المحاكاة تفصيلياً")
+                        st.dataframe(pd.DataFrame(metrics["Trades List"]), use_container_width=True)
+                else:
+                    st.error("تعذر جلب البيانات لهذا الأصل أو المدى الزمني المحدد.")
+
+    with tab3:
+        st.subheader("تحليل العمق الفني لأصل معين")
+        selected_sym = st.text_input("رمز الأصل للتحليل اللحظي (مثال: 1120.SR أو AAPL):", value="1120.SR")
+        if st.button("تحليل الشموع والطبقات"):
             df_asset = UnifiedDataProvider.fetch_raw_ohlcv(selected_sym, timeframe)
             if not df_asset.empty:
                 engine = SabryVision5LayerEngine(config, active_setups, timeframe)
                 res_df = engine.process_data(df_asset)
                 st.line_chart(res_df[["close", "ema200", "vwap"]])
-                st.dataframe(res_df.tail(10), use_container_width=True)
+                st.dataframe(res_df.tail(15), use_container_width=True)
             else:
-                st.error("فشل في جلب البيانات لهذا الأصل. تأكد من صحة الرمز.")
-                
-    with tab3:
-        st.subheader("محرك الباك تست التاريخي (Vectorized Backtest)")
-        bt_symbol = st.text_input("رمز الأصل لفحص الباك تست:", value="2222.SR")
-        if st.button("تشغيل المحاكاة التاريخية"):
-            df_bt = UnifiedDataProvider.fetch_raw_ohlcv(bt_symbol, "1d")
-            if not df_bt.empty:
-                engine = SabryVision5LayerEngine(config, active_setups, "1d")
-                processed_bt = engine.process_data(df_bt)
-                metrics = SabryVectorizedBacktester.run_backtest(processed_bt, config)
-                
-                col1, col2, col3, col4 = st.columns(4)
-                col1.metric("إجمالي الصفقات", metrics["Total Trades"])
-                col2.metric("نسبة النجاح (%)", f"{metrics['Win Rate (%)']}%")
-                col3.metric("عامل الربح (Profit Factor)", metrics["Profit Factor"])
-                col4.metric("صافي الربح ($)", f"${metrics['Net PnL ($)']}")
-            else:
-                st.error("لا توجد بيانات كافية لتشغيل الباك تست.")
-                
+                st.error("فشل في جلب البيانات.")
+
     with tab4:
-        st.subheader("إدارة القوائم والمؤشرات المخصصة")
-        new_item = st.text_input("أضف رمز جديد للقائمة (مثال: 1120.SR أو TSLA):")
+        st.subheader("⚙️ إدارة القوائم والمؤشرات المخصصة")
+        new_item = st.text_input("أضف رمز جديد للقائمة (مثال: 2010.SR أو NVDA):")
         if st.button("إضافة للقائمة المخصصة"):
             if new_item and new_item not in st.session_state["custom_watchlist"]:
                 st.session_state["custom_watchlist"].append(new_item.strip())
@@ -610,108 +772,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-# ------------------------------------------------------------------------------
-# 11. GOOGLE SHEETS CLOUD SYNC ENGINE (Part 4)
-# ------------------------------------------------------------------------------
-import gspread
-from google.oauth2.service_account import Credentials
-
-class GoogleSheetsEngine:
-    """
-    محرك المزامنة السحابية مع Google Sheets لتخزين ومشاركة نتائج السكانر والباك تست فورياً.
-    """
-    @staticmethod
-    def sync_to_google_sheet(df_results: pd.DataFrame, sheet_name: str = "SabryVision_Master_Log") -> Optional[str]:
-        try:
-            # التحقق من وجود الاعتمادات في Streamlit Secrets
-            if "gcp_service_account" not in st.secrets:
-                logger.warning("Google Cloud Service Account secrets not found. Using local session sync.")
-                return None
-                
-            creds_dict = dict(st.secrets["gcp_service_account"])
-            scopes = [
-                "https://www.googleapis.com/auth/spreadsheets",
-                "https://www.googleapis.com/auth/drive"
-            ]
-            creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-            client = gspread.authorize(creds)
-            
-            # فتح أو إنشاء شيت جديد
-            try:
-                sheet = client.open(sheet_name)
-            except gspread.SpreadsheetNotFound:
-                sheet = client.create(sheet_name)
-                sheet.share(creds_dict.get("client_email", ""), perm_type='user', role='writer')
-                
-            worksheet = sheet.get_worksheet(0)
-            worksheet.clear()
-            
-            # رفع البيانات
-            data_to_upload = [df_results.columns.values.tolist()] + df_results.astype(str).values.tolist()
-            worksheet.update(data_to_upload)
-            
-            sheet_url = sheet.url
-            return sheet_url
-        except Exception as e:
-            logger.error(f"Error syncing with Google Sheets: {e}")
-            return None
-
-
-# ------------------------------------------------------------------------------
-# 12. ENHANCED TELEGRAM & EXPORT COMMAND HUB (Part 4 UI Extension)
-# ------------------------------------------------------------------------------
-def render_export_and_cloud_hub(scan_df: pd.DataFrame, telegram_token: str, telegram_chat_id: str):
-    st.markdown("---")
-    st.subheader("🌐 مركز التصدير، الربط السحابي (Google Sheets) ومشاركة النتائج")
-    
-    if scan_df.empty:
-        st.info("لا توجد نتائج سحب حالية لتصديرها أو مشاركتها. قم بتشغيل السكانر أولاً.")
-        return
-        
-    col1, col2, col3 = st.columns(3)
-    
-    sheet_link = None
-    with col1:
-        st.markdown("### 📊 مزامنة Google Sheets")
-        if st.button("رفع النتائج إلى Google Sheets وفتح الرابط"):
-            with st.spinner("جاري الاتصال بسحابة جوجل ورفع السجلات..."):
-                sheet_link = GoogleSheetsEngine.sync_to_google_sheet(scan_df)
-                if sheet_link:
-                    st.success("تم الرفع بنجاح!")
-                    st.markdown(f"🔗 **[رابط Google Sheet المباشر]({sheet_link})**", unsafe_allow_html=True)
-                else:
-                    st.warning("تعذر الاتصال بـ Google Sheets. تأكد من إعدادات الـ Secrets أو استخدم التصدير اليدوي أدناه.")
-
-    with col2:
-        st.markdown("### 📱 التنبيه عبر تليجرام")
-        if st.button("إرسال التقرير الشامل والرابط لتليجرام"):
-            if telegram_token and telegram_chat_id:
-                msg = f"<b>🚨 SABRY VISION - MASTER SCAN REPORT</b>\n" \
-                      f"عدد الفرص المرصودة: <b>{len(scan_df)}</b>\n" \
-                      f"التاريخ: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
-                      
-                if sheet_link:
-                    msg += f"\n🔗 <a href='{sheet_link}'>رابط جدول بيانات Google Sheets</a>"
-                    
-                success = TelegramEngine.send_html_alert(telegram_token, telegram_chat_id, msg)
-                if success:
-                    st.success("تم إرسال التقرير لتليجرام بنجاح!")
-                else:
-                    st.error("فشل الإرسال. تأكد من صحة التوكن ومحادثة تليجرام.")
-            else:
-                st.warning("يرجى إدخال Telegram Bot Token و Chat ID في القائمة الجانبية أولاً.")
-
-    with col3:
-        st.markdown("### 💾 التخزين على التابلت والنوتس")
-        # زر لتحميل الملف بصيغة CSV لتخزينه في نوتس التابلت أو إرساله بالإيميل
-        csv_data = scan_df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 تحميل النتائج (CSV لنوتس التابلت)",
-            data=csv_data,
-            file_name=f"SabryVision_Scan_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-            mime="text/csv",
-        )
-        
-        # خيار تجهيز رسالة بريد إلكتروني جاهزة للمشاركة
-        email_body = f"Sabry Vision Scan Results - {len(scan_df)} Assets Found."
-        st.markdown(f"📧 **[مشاركة عبر البريد الإلكتروني](mailto:?subject=Sabry%20Vision%20Report&body={email_body})**", unsafe_allow_html=True)
