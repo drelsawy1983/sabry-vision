@@ -1,7 +1,7 @@
 """
-SABRY VISION - Ultimate Institutional Quant Terminal (v6.2 Live Tick Engine Edition)
-Fund Management Grade: Real-time Live Tick Integration, Dynamic UI Controls,
-Position Sizing, Parallel Multi-Threading, and Real-time Strategy Tuning.
+SABRY VISION - Ultimate Institutional Quant Terminal (v7.0 Master Edition)
+Fund Management Grade: Full Universes, Live Tick Engine, Telegram Integration,
+Dynamic UI Controls, Parallel Multi-Threading, and Advanced Risk Management.
 """
 
 import os
@@ -11,7 +11,6 @@ import io
 import requests
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
-import zoneinfo
 from typing import Dict, List, Optional, Tuple, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -21,21 +20,38 @@ import yfinance as yf
 import streamlit as st
 
 st.set_page_config(
-    page_title="SABRY VISION - Dynamic Institutional Terminal",
+    page_title="SABRY VISION - Ultimate Master Quant Terminal",
     page_icon="🛡️",
     layout="wide"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger("SabryVisionLiveTickInstitutional")
+logger = logging.getLogger("SabryVisionMaster")
 
-# تهيئة القائمة المخصصة الافتراضية
+# تهيئة القائمة المخصصة في الذاكرة المؤقتة
 if "custom_watchlist" not in st.session_state:
     st.session_state["custom_watchlist"] = [
         "AAPL", "MSFT", "2222.SR", "1120.SR", 
         "GLD", "SLV", "QQQ", "SPY", "BTC-USD"
     ]
 
+# ------------------------------------------------------------------------------
+# TELEGRAM NOTIFICATION SYSTEM
+# ------------------------------------------------------------------------------
+def send_telegram_html(token: str, chat_id: str, text: str, parse_mode: str = "HTML"):
+    if not token or not chat_id:
+        return False
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": parse_mode}
+    try:
+        r = requests.post(url, json=payload, timeout=10)
+        return r.ok
+    except Exception:
+        return False
+
+# ------------------------------------------------------------------------------
+# GLOBAL UNIVERSE LOADER
+# ------------------------------------------------------------------------------
 class GlobalUniverseLoader:
     @staticmethod
     def get_tasi_universe() -> List[str]:
@@ -62,11 +78,11 @@ class GlobalUniverseLoader:
 
     @staticmethod
     def get_commodities_and_etfs_universe() -> List[str]:
-        return ["GC=F", "GLD", "IAU", "SI=F", "SLV", "CL=F", "USO", "QQQ", "XLK", "SPY"]
+        return ["GC=F", "GLD", "IAU", "SI=F", "SLV", "CL=F", "USO", "QQQ", "XLK", "SPY", "SOXX", "ARKK"]
 
     @staticmethod
     def get_crypto_universe() -> List[str]:
-        return ["BTC-USD", "ETH-USD", "SOL-USD"]
+        return ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD"]
 
     @staticmethod
     def fetch_sp500_tickers() -> List[str]:
@@ -92,132 +108,160 @@ class GlobalUniverseLoader:
     def get_full_us_universe(cls) -> List[str]:
         return sorted(list(set(cls.fetch_sp500_tickers() + cls.fetch_nasdaq100_tickers())))
 
+# ------------------------------------------------------------------------------
+# UNIFIED DATA PROVIDER WITH LIVE TICKS
+# ------------------------------------------------------------------------------
 class UnifiedDataProvider:
     @staticmethod
     def fetch_raw_ohlcv(symbol: str, period: str = "3mo", interval: str = "1d") -> pd.DataFrame:
-        """جلب البيانات التاريخية مع دمج التكة السعرية الحية (Live Tick Price) فوراً"""
         try:
             df = yf.download(symbol, period=period, interval=interval, progress=False, auto_adjust=True)
-            if df.empty:
+            if df is None or df.empty:
                 return pd.DataFrame()
+            
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
+                
+            required_cols = ["Open", "High", "Low", "Close", "Volume"]
+            if not all(col in df.columns for col in required_cols):
+                return pd.DataFrame()
+                
             df = df.rename(columns={"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"})
             df = df[["open", "high", "low", "close", "volume"]].dropna()
             
-            # حقن السعر الحى اللحظي (Live Tick Price) في آخر شمعة لتحديث المؤشرات لحظياً دون انتظار الإغلاق
+            if df.empty or len(df) < 30:
+                return pd.DataFrame()
+
+            # حقن التكة السعرية الحية اللحظية
             try:
                 ticker_obj = yf.Ticker(symbol)
-                live_price = ticker_obj.fast_info.get('last_price', None)
-                if live_price and live_price > 0 and not df.empty:
-                    df.iloc[-1, df.columns.get_loc('close')] = live_price
-                    if live_price > df.iloc[-1]['high']:
-                        df.iloc[-1, df.columns.get_loc('high')] = live_price
-                    if live_price < df.iloc[-1]['low']:
-                        df.iloc[-1, df.columns.get_loc('low')] = live_price
+                fast_info = getattr(ticker_obj, 'fast_info', None)
+                live_price = fast_info.get('last_price', None) if fast_info else None
+                if live_price and live_price > 0:
+                    df.iloc[-1, df.columns.get_loc('close')] = float(live_price)
+                    if float(live_price) > df.iloc[-1]['high']:
+                        df.iloc[-1, df.columns.get_loc('high')] = float(live_price)
+                    if float(live_price) < df.iloc[-1]['low']:
+                        df.iloc[-1, df.columns.get_loc('low')] = float(live_price)
             except Exception:
                 pass
 
             if df.index.tz is not None:
-                df.index = df.index.tz_convert("UTC").tz_localize(None)
+                try:
+                    df.index = df.index.tz_convert("UTC").tz_localize(None)
+                except Exception:
+                    df.index = df.index.tz_localize(None)
+                    
             return df
         except Exception:
             return pd.DataFrame()
 
-class DynamicSabryScanner:
+# ------------------------------------------------------------------------------
+# MASTER DYNAMIC SABRY SCANNER
+# ------------------------------------------------------------------------------
+class MasterSabryScanner:
     def __init__(self, settings: Dict[str, Any], active_setups: List[str]):
         self.settings = settings
         self.active_setups = active_setups
 
     def analyze_asset(self, symbol: str, period: str, interval: str) -> Optional[Dict[str, Any]]:
-        df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, period, interval)
-        if df.empty or len(df) < 40:
-            return None
+        try:
+            df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, period, interval)
+            if df.empty or len(df) < 40:
+                return None
+                
+            f = df.copy()
+            f["sma50"] = f["close"].rolling(50).mean()
+            f["ema20"] = f["close"].ewm(span=20, adjust=False).mean()
             
-        f = df.copy()
-        f["sma50"] = f["close"].rolling(50).mean()
-        f["ema20"] = f["close"].ewm(span=20, adjust=False).mean()
-        
-        tp = (f["high"] + f["low"] + f["close"]) / 3.0
-        f["vwap"] = (tp * f["volume"]).rolling(20).sum() / f["volume"].rolling(20).sum()
-        
-        tr = np.maximum(
-            f["high"] - f["low"],
-            np.maximum((f["high"] - f["close"].shift(1)).abs(), (f["low"] - f["close"].shift(1)).abs())
-        )
-        f["atr14"] = tr.rolling(14).mean()
-        
-        f["volume_ma20"] = f["volume"].rolling(20).mean()
-        f["rvol"] = (f["volume"] / f["volume_ma20"].replace(0, np.nan)).fillna(1.0)
-        f["poc"] = tp.rolling(50).mean()
-        f["rs_momentum"] = f["close"].pct_change(63)
-        
-        f["pivot_20"] = f["high"].rolling(20).max().shift(1)
-        f["low_20"] = f["low"].rolling(20).min().shift(1)
-        
-        min_rvol = self.settings["min_rvol"]
-        
-        is_breakout = (f["close"] > f["pivot_20"]) & (f["rvol"] >= min_rvol) & (f["close"] > f["open"])
-        is_setup = (f["close"] <= f["pivot_20"]) & (f["close"] >= f["pivot_20"] * 0.96)
-        is_retest = (f["close"].shift(1) > f["pivot_20"]) & (f["low"] <= f["poc"] * 1.02) & (f["close"] > f["poc"])
-        is_bottom = (f["low"] < f["low_20"]) & (f["close"] > f["low_20"]) & (f["rvol"] >= (min_rvol * 1.1))
-        
-        f["sig_breakout"] = is_breakout if "BREAKOUT" in self.active_setups else False
-        f["sig_setup"] = is_setup if "SETUP" in self.active_setups else False
-        f["sig_retest"] = is_retest if "RETEST" in self.active_setups else False
-        f["sig_bottom_reversal"] = is_bottom if "BOTTOM_REVERSAL" in self.active_setups else False
-        
-        if self.settings["require_vwap"]:
-            vwap_mask = f["close"] >= f["vwap"]
-            f["sig_breakout"] &= vwap_mask
-            f["sig_setup"] &= vwap_mask
-            f["sig_retest"] &= vwap_mask
-            f["sig_bottom_reversal"] &= vwap_mask
+            tp = (f["high"] + f["low"] + f["close"]) / 3.0
+            f["vwap"] = (tp * f["volume"]).rolling(20).sum() / f["volume"].rolling(20).sum()
+            
+            tr = np.maximum(
+                f["high"] - f["low"],
+                np.maximum((f["high"] - f["close"].shift(1)).abs(), (f["low"] - f["close"].shift(1)).abs())
+            )
+            f["atr14"] = tr.rolling(14).mean()
+            
+            f["volume_ma20"] = f["volume"].rolling(20).mean()
+            f["rvol"] = (f["volume"] / f["volume_ma20"].replace(0, np.nan)).fillna(1.0)
+            f["poc"] = tp.rolling(50).mean()
+            f["rs_momentum"] = f["close"].pct_change(63)
+            
+            f["pivot_20"] = f["high"].rolling(20).max().shift(1)
+            f["low_20"] = f["low"].rolling(20).min().shift(1)
+            
+            min_rvol = self.settings["min_rvol"]
+            
+            # النماذج الأربعة المعتمدة
+            is_breakout = (f["close"] > f["pivot_20"]) & (f["rvol"] >= min_rvol) & (f["close"] > f["open"])
+            is_setup = (f["close"] <= f["pivot_20"]) & (f["close"] >= f["pivot_20"] * 0.96)
+            is_retest = (f["close"].shift(1) > f["pivot_20"]) & (f["low"] <= f["poc"] * 1.02) & (f["close"] > f["poc"])
+            is_bottom = (f["low"] < f["low_20"]) & (f["close"] > f["low_20"]) & (f["rvol"] >= (min_rvol * 1.1))
+            
+            f["sig_breakout"] = is_breakout if "BREAKOUT" in self.active_setups else False
+            f["sig_setup"] = is_setup if "SETUP" in self.active_setups else False
+            f["sig_retest"] = is_retest if "RETEST" in self.active_setups else False
+            f["sig_bottom_reversal"] = is_bottom if "BOTTOM_REVERSAL" in self.active_setups else False
+            
+            if self.settings["require_vwap"]:
+                vwap_mask = f["close"] >= f["vwap"]
+                f["sig_breakout"] &= vwap_mask
+                f["sig_setup"] &= vwap_mask
+                f["sig_retest"] &= vwap_mask
+                f["sig_bottom_reversal"] &= vwap_mask
 
-        conditions = [f["sig_breakout"], f["sig_retest"], f["sig_setup"], f["sig_bottom_reversal"]]
-        choices = ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL"]
-        f["signal_type"] = np.select(conditions, choices, default="NONE")
-        
-        latest = f.iloc[-1]
-        if latest["signal_type"] == "NONE":
-            return None
+            conditions = [f["sig_breakout"], f["sig_retest"], f["sig_setup"], f["sig_bottom_reversal"]]
+            choices = ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL"]
+            f["signal_type"] = np.select(conditions, choices, default="NONE")
             
-        rs_s = latest["rs_momentum"] * 30.0 if pd.notna(latest["rs_momentum"]) else 0
-        rvol_s = min(latest["rvol"], 3.0) / 3.0 * 40.0
-        score = round(max(0, min(100, 50.0 + rs_s + rvol_s)), 1)
-        
-        if score < self.settings["min_score"]:
-            return None
+            latest = f.iloc[-1]
+            if latest["signal_type"] == "NONE":
+                return None
+                
+            rs_s = latest["rs_momentum"] * 30.0 if pd.notna(latest["rs_momentum"]) else 0
+            rvol_s = min(latest["rvol"], 3.0) / 3.0 * 40.0
+            score = round(max(0, min(100, 50.0 + rs_s + rvol_s)), 1)
             
-        close_p = latest["close"]
-        atr = latest["atr14"]
-        stop_price = round(close_p - (self.settings["atr_mult"] * atr), 2)
-        risk_per_share = close_p - stop_price
-        
-        if risk_per_share <= 0:
-            return None
+            if score < self.settings["min_score"]:
+                return None
+                
+            close_p = latest["close"]
+            atr = latest["atr14"]
+            if pd.isna(atr) or atr <= 0:
+                atr = close_p * 0.02
+                
+            stop_price = round(close_p - (self.settings["atr_mult"] * atr), 2)
+            risk_per_share = close_p - stop_price
             
-        total_risk_dollar = self.settings["account_size"] * self.settings["risk_pct"]
-        shares_to_buy = int(total_risk_dollar / risk_per_share)
-        position_value = shares_to_buy * close_p
-        target_price = round(close_p + (self.settings["reward_mult"] * risk_per_share), 2)
-        
-        return {
-            "الرمز / الصندوق": symbol,
-            "النموذج": latest["signal_type"],
-            "السكور": score,
-            "الإغلاق": round(close_p, 2),
-            "وقف الخسارة": stop_price,
-            "الهدف المقترح": target_price,
-            "حجم الأسهم": shares_to_buy,
-            "قيمة المركز ($)": round(position_value, 2),
-            "RVOL": round(latest["rvol"], 2)
-        }
+            if risk_per_share <= 0:
+                return None
+                
+            total_risk_dollar = self.settings["account_size"] * self.settings["risk_pct"]
+            shares_to_buy = int(total_risk_dollar / risk_per_share) if risk_per_share > 0 else 0
+            position_value = shares_to_buy * close_p
+            target_price = round(close_p + (self.settings["reward_mult"] * risk_per_share), 2)
+            
+            return {
+                "الرمز / الصندوق": symbol,
+                "النموذج": latest["signal_type"],
+                "السكور": score,
+                "الإغلاق": round(close_p, 2),
+                "وقف الخسارة": stop_price,
+                "الهدف المقترح": target_price,
+                "حجم الأسهم": shares_to_buy,
+                "قيمة المركز ($)": round(position_value, 2),
+                "RVOL": round(latest["rvol"], 2)
+            }
+        except Exception:
+            return None
 
-# --- STREAMLIT DYNAMIC UI COMMAND CENTER ---
-st.title("🛡️ SABRY VISION - Dynamic Enterprise Quant Terminal (v6.2 Live)")
+# ------------------------------------------------------------------------------
+# STREAMLIT MASTER UI COMMAND CENTER
+# ------------------------------------------------------------------------------
+st.title("🛡️ SABRY VISION - Ultimate Master Quant Terminal (v7.0)")
 
-st.sidebar.header("🎛️ لوحة التحكم الديناميكية الحية")
+st.sidebar.header("🎛️ لوحة القيادة المركزية")
 
 market_mode = st.sidebar.selectbox(
     "اختر نطاق السوق المستهدف:",
@@ -261,17 +305,22 @@ current_settings = {
     "reward_mult": reward_mult
 }
 
-tab1, tab2 = st.tabs(["🚀 السكانر اللحظي الحي", "📋 إدارة القائمة المخصصة"])
+# --- TABS ---
+tab1, tab2, tab3 = st.tabs([
+    "🚀 السكانر اللحظي الحي", 
+    "📋 إدارة القائمة المخصصة",
+    "⚙️ إعدادات تليجرام الآلية"
+])
 
 with tab1:
-    st.header("🔍 المسح الذكي المتزامن (مع ملاحقة الأسعار الحية Tick-by-Tick)")
+    st.header("🔍 المسح الذكي المتزامن (الأسعار الحية + إدارة المخاطر)")
     
-    if st.button("🚀 بدء المسح الحي اللحظي"):
+    if st.button("🚀 بدء المسح الشامل المتقدم"):
         if not selected_setups:
             st.error("⚠️ يرجى اختيار نموذج تداول واحد على الأقل.")
         else:
-            with st.spinner("جاري سحب التكات السعرية الحية اللحظية، وتطبيق المعايير الديناميكية..."):
-                scanner = DynamicSabryScanner(current_settings, selected_setups)
+            with st.spinner("جاري سحب التكات الحية، تطبيق الخوارزميات، والتحليل المتزامن..."):
+                scanner = MasterSabryScanner(current_settings, selected_setups)
                 
                 if "القائمة المخصصة" in market_mode:
                     tickers = st.session_state["custom_watchlist"]
@@ -285,7 +334,7 @@ with tab1:
                     tickers = GlobalUniverseLoader.get_crypto_universe()
                     
                 results = []
-                max_workers = 12
+                max_workers = 10
                 
                 prog_bar = st.progress(0)
                 completed_tasks = 0
@@ -299,7 +348,10 @@ with tab1:
                     
                     for future in as_completed(future_to_ticker):
                         completed_tasks += 1
-                        prog_bar.progress(completed_tasks / total_tickers)
+                        try:
+                            prog_bar.progress(min(1.0, completed_tasks / total_tickers))
+                        except Exception:
+                            pass
                         try:
                             res = future.result()
                             if res:
@@ -311,5 +363,51 @@ with tab1:
                 
                 if results:
                     res_df = pd.DataFrame(results).sort_values(by="السكور", ascending=False)
-                    st.success(f"🎉 تم مسح الأسواق بالأسعار الحية بنجاح ورصد {len(res_df)} فرصة متوافقة تماماً مع إعداداتك:")
-                    st.dataframe(res_df, use_container_width=True
+                    st.success(f"🎉 تم مسح الأصول بنجاح ورصد {len(res_df)} فرصة استثمارية مطابقة:")
+                    st.dataframe(res_df, use_container_width=True)
+                    
+                    # إمكانية إرسال النتائج تلقائياً عبر تليجرام إذا كانت الإعدادات متوفرة
+                    st.session_state["last_scan_results"] = res_df
+                else:
+                    st.warning("⚠️ لم يتم رصد إشارات مطابقة لشروط الفلترة الحالية في السوق المختار.")
+
+with tab2:
+    st.header("📋 إدارة القائمة المخصصة للأصول والصناديق (Expansion Hub)")
+    st.write("أضف أي صندوق أو سهم عالمي/محلي (مثل صناديق الذهب أو التقنية أو تاسي) لفحصه فوراً:")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        user_input_ticker = st.text_input("أدخل الرمز بدقة (مثال: GLD, QQQ, AAPL أو رمز تاسي):")
+        if st.button("➕ إضافة الرمز للقائمة"):
+            if user_input_ticker and user_input_ticker.upper() not in st.session_state["custom_watchlist"]:
+                st.session_state["custom_watchlist"].append(user_input_ticker.upper())
+                st.success(f"تم إضافة {user_input_ticker.upper()} بنجاح!")
+                st.rerun()
+    with col2:
+        st.subheader("قائمتك الموسعة الحالية:")
+        st.write(st.session_state["custom_watchlist"])
+        if st.button("🗑️ إعادة تعيين القائمة"):
+            st.session_state["custom_watchlist"] = ["AAPL", "MSFT", "2222.SR", "GLD", "SLV", "QQQ"]
+            st.rerun()
+
+with tab3:
+    st.header("⚙️ إعدادات التليجرام وإرسال التقارير الآلية")
+    tg_token = st.text_input("Telegram Bot Token", type="password")
+    tg_chat = st.text_input("Telegram Chat ID")
+    
+    if st.button("📤 إرسال تقرير الفرص المكتشفة الأخيرة عبر تليجرام"):
+        if not tg_token or not tg_chat:
+            st.error("⚠️ يرجى إدخال التوكن وشات آي دي أولاً.")
+        elif "last_scan_results" not in st.session_state or st.session_state["last_scan_results"].empty:
+            st.warning("⚠️ لا توجد نتائج مسح حديثة لإرسالها. قم بتشغيل السكانر أولاً من التبويب الأول.")
+        else:
+            df_res = st.session_state["last_scan_results"]
+            msg = f"🚨 <b>SABRY VISION - تقرير الفرص المؤسسية</b>\nإجمالي الفرص: <code>{len(df_res)}</code>\n\n"
+            for r in df_res.head(5).itertuples(index=False):
+                msg += f"📌 <b>{r._asdict().get('الرمز / الصندوق')}</b> | نموذج: <code>{r._asdict().get('النموذج')}</code> | سكور: <b>{r._asdict().get('السكور')}</b>\n"
+            
+            success = send_telegram_html(tg_token, tg_chat, msg)
+            if success:
+                st.success("🎉 تم إرسال التقرير بنجاح عبر تليجرام!")
+            else:
+                st.error("❌ فشل إرسال الرسالة، تحقق من صحة بيانات التليجرام.")
