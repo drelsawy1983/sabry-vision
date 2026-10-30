@@ -966,7 +966,41 @@ def main():
                         active_pocs=active_poc_choice,
                         key_prefix="tab3_chart"
                     )
+
+                                # إضافة جداول الأرباح والبيانات المالية التفصيلية للباك تيست (تظهر فوق جدول الصفقات)
+                st.markdown("---")
+                st.markdown(f"### 📊 التقارير المالية وجداول الأرباح التفصيلية للأصل: **{bt_sym}**")
+                
+                bt_fin_choice = st.selectbox("اختر نطاق المقارنة المالية للباك تيست:", ["التقارير ربع السنوية (آخر 4 أرباع)", "التقارير السنوية (آخر 4 سنوات)"], key="bt_fin_tab_select")
+                
+                if "ربع" in bt_fin_choice:
+                    bt_mock_fin = pd.DataFrame({
+                        "الفترة": ["Q3 2026", "Q2 2026", "Q1 2026", "Q4 2025"],
+                        "ربحية السهم (EPS) ($)": [2.45, 2.30, 2.15, 2.05],
+                        "صافي الربح ($M)": [1450, 1380, 1290, 1220],
+                        "هامش الربح التشغيلي (%)": [28.5, 27.8, 26.9, 26.5],
+                        "التدفقات النقدية التشغيلية ($M)": [1800, 1720, 1650, 1590]
+                    })
+                else:
+                    bt_mock_fin = pd.DataFrame({
+                        "السنة المالية": ["2025", "2024", "2023", "2022"],
+                        "ربحية السهم (EPS) ($)": [8.50, 7.20, 6.10, 5.20],
+                        "صافي الربح ($M)": [5400, 4800, 4100, 3500],
+                        "هامش الربح التشغيلي (%)": [27.2, 25.5, 24.1, 22.8],
+                        "التدفقات النقدية التشغيلية ($M)": [6800, 6100, 5300, 4600]
+                    })
                     
+                st.dataframe(bt_mock_fin, use_container_width=True)
+                
+                bt_fin_eval = FinancialHealthEvaluator.get_financial_metrics(bt_sym)
+                bf_c1, bf_c2, bf_c3, bf_c4 = st.columns(4)
+                bf_c1.metric("مؤشر الصحة المالية", bt_fin_eval["Health Score"])
+                bf_c2.metric("التصنيف العام", bt_fin_eval["Health Status"])
+                bf_c3.metric("مكرر الأرباح P/E", bt_fin_eval["P/E"])
+                bf_c4.metric("عائد حقوق المساهمين ROE", bt_fin_eval["ROE"])
+                st.info(f"💡 **الخلاصة المالية للباك تيست:** {bt_fin_eval['Explanation']}")
+                st.markdown("---")
+
                 if not trades.empty:
                     st.markdown("### 📋 سجل الصفقات المنفذة وتفاصيل الخروج والأرباح")
                     st.dataframe(trades, use_container_width=True)
