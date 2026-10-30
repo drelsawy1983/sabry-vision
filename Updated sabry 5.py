@@ -469,7 +469,7 @@ class AdvancedChartingEngine:
 
         fig.update_layout(
             title=dict(text=f"SABRY VISION v11.48 Institutional Terminal - {symbol}", font=dict(size=18)),
-            xaxis=dict(title="التاريخ الزمني", rangeslider=dict(visible=False), showgrid=True),
+            xaxis=dict(title="التاريخ الزمني", rangeslider=dict(visible=False), showgrid=True, tickformat="%Y-%m-%d %H:%M"),
             yaxis=dict(title="السعر ($)", showgrid=True),
             template="plotly_dark",
             paper_bgcolor="#0e1117",
