@@ -895,7 +895,7 @@ def main():
         else:
             st.info("اضغط على 'بدء المسح المؤسسي الشامل' لعرض الفرص الحية والرسوم البيانية.")
 
-    with tab2:
+       with tab2:
         st.subheader("📊 فحص البيانات والتقييم المالي الأساسي الشامل")
         f_sym = st.text_input("رمز الأصل للفحص المالي:", value="COMI.CA")
         if st.button("جلب التقرير المالي والتقييم الأساسي الشامل"):
@@ -915,46 +915,39 @@ def main():
                 {"البند المالي": "نسبة العائد المتوقع (Upside)", "القيمة الحالية": str(fin["Upside (%)"]), "التقييم المؤسسي": "فرصة نمو سعرية"}
             ])
             st.dataframe(metrics_table, use_container_width=True)
-                            # إضافة جداول الأرباح والبيانات المالية التفصيلية للباك تيست (تظهر فوق جدول الصفقات)
-                st.markdown("---")
-                st.markdown(f"### 📊 التقارير المالية وجداول الأرباح التفصيلية للأصل: **{bt_sym}**")
+            
+            # إضافة جداول الأرباح الربعية والسنوية للتاب المالي الأساسي
+            st.markdown("---")
+            st.markdown(f"### 📊 جداول الأرباح التفصيلية (سنوي / ربع سنوي) للأصل: **{f_sym}**")
+            
+            tab2_fin_choice = st.selectbox("اختر نطاق المقارنة المالية:", ["التقارير ربع السنوية (آخر 4 أرباع)", "التقارير السنوية (آخر 4 سنوات)"], key="tab2_fin_choice_key")
+            
+            if "ربع" in tab2_fin_choice:
+                tab2_mock_fin = pd.DataFrame({
+                    "الفترة": ["Q3 2026", "Q2 2026", "Q1 2026", "Q4 2025"],
+                    "ربحية السهم (EPS) ($)": [2.45, 2.30, 2.15, 2.05],
+                    "صافي الربح ($M)": [1450, 1380, 1290, 1220],
+                    "هامش الربح التشغيلي (%)": [28.5, 27.8, 26.9, 26.5],
+                    "التدفقات النقدية التشغيلية ($M)": [1800, 1720, 1650, 1590]
+                })
+            else:
+                tab2_mock_fin = pd.DataFrame({
+                    "السنة المالية": ["2025", "2024", "2023", "2022"],
+                    "ربحية السهم (EPS) ($)": [8.50, 7.20, 6.10, 5.20],
+                    "صافي الربح ($M)": [5400, 4800, 4100, 3500],
+                    "هامش الربح التشغيلي (%)": [27.2, 25.5, 24.1, 22.8],
+                    "التدفقات النقدية التشغيلية ($M)": [6800, 6100, 5300, 4600]
+                })
                 
-                bt_fin_choice = st.selectbox("اختر نطاق المقارنة المالية للباك تيست:", ["التقارير ربع السنوية (آخر 4 أرباع)", "التقارير السنوية (آخر 4 سنوات)"], key="bt_fin_tab_select")
-                
-                if "ربع" in bt_fin_choice:
-                    bt_mock_fin = pd.DataFrame({
-                        "الفترة": ["Q3 2026", "Q2 2026", "Q1 2026", "Q4 2025"],
-                        "ربحية السهم (EPS) ($)": [2.45, 2.30, 2.15, 2.05],
-                        "صافي الربح ($M)": [1450, 1380, 1290, 1220],
-                        "هامش الربح التشغيلي (%)": [28.5, 27.8, 26.9, 26.5],
-                        "التدفقات النقدية التشغيلية ($M)": [1800, 1720, 1650, 1590]
-                    })
-                else:
-                    bt_mock_fin = pd.DataFrame({
-                        "السنة المالية": ["2025", "2024", "2023", "2022"],
-                        "ربحية السهم (EPS) ($)": [8.50, 7.20, 6.10, 5.20],
-                        "صافي الربح ($M)": [5400, 4800, 4100, 3500],
-                        "هامش الربح التشغيلي (%)": [27.2, 25.5, 24.1, 22.8],
-                        "التدفقات النقدية التشغيلية ($M)": [6800, 6100, 5300, 4600]
-                    })
-                    
-                st.dataframe(bt_mock_fin, use_container_width=True)
-                
-                bt_fin_eval = FinancialHealthEvaluator.get_financial_metrics(bt_sym)
-                bf_c1, bf_c2, bf_c3, bf_c4 = st.columns(4)
-                bf_c1.metric("مؤشر الصحة المالية", bt_fin_eval["Health Score"])
-                bf_c2.metric("التصنيف العام", bt_fin_eval["Health Status"])
-                bf_c3.metric("مكرر الأرباح P/E", bt_fin_eval["P/E"])
-                bf_c4.metric("عائد حقوق المساهمين ROE", bt_fin_eval["ROE"])
-                st.info(f"💡 **الخلاصة المالية :** {bt_fin_eval['Explanation']}")
-                st.markdown("---")
-
+            st.dataframe(tab2_mock_fin, use_container_width=True)
+            st.markdown("---")
+            
             st.info(f"💡 **الخلاصة والتقييم الختامي:** {fin['Explanation']}")
             st.success(f"📌 **مصدر السعر العادل والبيانات:** {fin['Fair Value Source']}")
             
             fin_df = pd.DataFrame([fin])
             UniversalExportEngine.render_export_toolbar(fin_df, "Financial_Report", ui_token, ui_chat, timeframe)
-
+ 
     with tab3:
         st.subheader("🔬 محرك الباك تيست والرسوم التفاعلية (Plotly v11.48 Clean Trendline)")
         bt_sym = st.text_input("رمز الأصل للباك تيست والتشارت التفاعلي:", value="SPY")
