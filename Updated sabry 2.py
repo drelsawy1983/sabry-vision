@@ -167,6 +167,12 @@ if "market_lists_repo" not in st.session_state:
             "WMT", "PDD", "MAR", "FTNT", "ALAB", "QQQ", "QQQM", "TQQQ", "SQQQ", "QLD", 
             "PSQ", "ONEQ", "XLK", "SMH", "SOXX", "ARKK", "IGV", "XLC", "XLY"
         ]
+        "الصناديق المتداولة في السوق الأمريكي (US ETFs)": [
+            "SPY", "VOO", "IVV", "QQQ", "QQQM", "TQQQ", "SQQQ", "IWM", "EEM", "EFA", 
+            "GLD", "IAU", "SLV", "USO", "TLT", "IEF", "HYG", "LQD", "XLF", "XLK", 
+            "XLE", "XLV", "XLI", "XLP", "XLU", "XLY", "XLB", "XLC", "ARKK", "VTI"
+        ],
+
     }
 
 if "last_scan_results" not in st.session_state:
@@ -339,8 +345,8 @@ class AdvancedChartingEngine:
         nine_low = f['low'].rolling(9).min()
         f['tenkan'] = (nine_high + nine_low) / 2.0
 
-        26_high = f['high'].rolling(26).max()
-        26_low = f['low'].rolling(26).min()
+        val_26_high = f['high'].rolling(26).max()
+        val_26_low = f['low'].rolling(26).min()
         f['kijun'] = (26_high + 26_low) / 2.0
         f['tenkan_slope'] = np.degrees(np.arctan(f['tenkan'].diff()))
 
