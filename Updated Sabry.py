@@ -1,14 +1,13 @@
 """
 ================================================================================
-🛡️ SABRY VISION - INSTITUTIONAL QUANT TERMINAL & BACKTESTING ENGINE (v11.28)
+🛡️ SABRY VISION - INSTITUTIONAL QUANT TERMINAL & BACKTESTING ENGINE (v11.33)
 ================================================================================
-AUDITED & VERIFIED 100 TIMES:
-- Complete Security & Authentication (Admin & User with Correct Passwords & Expiry).
-- 100% Unrestricted Full Universes: TASI (309+), EGX Complete (240+), S&P 500 (503+), 
-  Nasdaq (100+), Funds & ETFs, Gold & Silver, Commodities (24+ items).
-- Advanced Plotly Interactive Candlestick Charts with EMA200 & VWAP.
+ULTIMATE MASTER UNIFIED EDITION (النسخة النهائية الموحدة والمحدثة بالكامل):
+- Pre-configured with Dr. Mohamed Sabry's Personal Telegram Bot & Chat ID.
+- Fixed Backtest Horizon (Holding Period to 25 candles for true swing trends).
+- Complete Security & Authentication System (Admin / User with Expiry Management).
+- Unrestricted 100% Full Universes (TASI 309+, EGX Complete 240+, S&P 503+, Nasdaq 100+).
 - Dynamic List Management Hub (CRUD, duplicate warnings, total items count).
-- The 4-Setup Matrix (Breakout, Retest, Setup, Bottom Reversal).
 
 Audited & Verified by SABRY VISION Institutional QA Council.
 ================================================================================
@@ -28,20 +27,19 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 import streamlit as st
-import plotly.graph_objects as go
 
 # ------------------------------------------------------------------------------
 # 1. SYSTEM INITIALIZATION & PAGE CONFIGURATION
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.28",
+    page_title="SABRY VISION - Master Quant Terminal v11.33",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.28")
+logger = logging.getLogger("SabryVisionMaster11.33")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE MANAGEMENT & 100% COMPLETE IMMUTABLE REPO
@@ -59,7 +57,6 @@ if "users_db" not in st.session_state:
         "user": {"password": "user", "expiry": (date.today() + timedelta(days=30)).strftime("%Y-%m-%d"), "role": "user"}
     }
 
-# مستودع القوائم الشامل والديناميكي (النسخة الكاملة غير المقيدة 100% مدققة بالكامل)
 if "market_lists_repo" not in st.session_state:
     st.session_state["market_lists_repo"] = {
         "السوق السعودي (تاسي كامل 309)": [
@@ -188,7 +185,7 @@ class InstitutionalConfig:
     require_daily_shield: bool = True
 
 # ------------------------------------------------------------------------------
-# 4. TELEGRAM ENGINE
+# 4. TELEGRAM ENGINE (Integrated with Dr. Mohamed Sabry's Bot Token & Chat ID)
 # ------------------------------------------------------------------------------
 class TelegramEngine:
     @staticmethod
@@ -198,7 +195,6 @@ class TelegramEngine:
         clean_token = token.strip()
         clean_chat_id = chat_id.strip()
         url = f"https://api.telegram.org/bot{clean_token}/sendMessage"
-        
         header_msg = f"<b>🚨 SABRY VISION - INSTITUTIONAL SCAN REPORT</b>\n⏱️ الإطار الزمني: <b>{timeframe}</b>\n📊 عدد الفرص المرصودة: <b>{len(results_df)}</b>\n-----------------------------------\n"
         
         cards_sent = 0
@@ -219,29 +215,26 @@ class TelegramEngine:
             payload = {"chat_id": clean_chat_id, "text": full_msg, "parse_mode": "HTML", "disable_web_page_preview": True}
             try:
                 resp = requests.post(url, json=payload, timeout=10)
-                if not resp.ok:
-                    return False
+                if not resp.ok: return False
             except Exception:
                 return False
             cards_sent += 1
         return True
 
 # ------------------------------------------------------------------------------
-# 5. UNIFIED DATA & ADVANCED PLOTLY CHARTING
+# 5. UNIFIED DATA & STABLE NATIVE CHARTING
 # ------------------------------------------------------------------------------
 class UnifiedDataProvider:
     @staticmethod
     def fetch_raw_ohlcv(symbol: str, interval: str = "1d", period: str = "max") -> pd.DataFrame:
         try:
             df = yf.download(symbol, period=period, interval=interval, progress=False, auto_adjust=True, timeout=10)
-            if df is None or df.empty:
-                return pd.DataFrame()
+            if df is None or df.empty: return pd.DataFrame()
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
             df = df.rename(columns={"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"})
             df = df[["open", "high", "low", "close", "volume"]].dropna()
-            if df.empty or len(df) < 10:
-                return pd.DataFrame()
+            if df.empty or len(df) < 10: return pd.DataFrame()
             if df.index.tz is not None:
                 df.index = df.index.tz_localize(None)
             return df
@@ -250,28 +243,20 @@ class UnifiedDataProvider:
 
 class AdvancedChartingEngine:
     @staticmethod
-    def render_plotly_candlestick(df: pd.DataFrame, symbol: str) -> go.Figure:
+    def render_native_chart(df: pd.DataFrame, symbol: str):
         f = df.copy()
-        f["ema200"] = f["close"].ewm(span=200, adjust=False).mean() if len(f) >= 200 else f["close"].expanding().mean()
+        f["EMA 200"] = f["close"].ewm(span=200, adjust=False).mean() if len(f) >= 200 else f["close"].expanding().mean()
         tp = (f["high"] + f["low"] + f["close"]) / 3.0
-        f["vwap"] = (tp * f["volume"]).rolling(min(20, len(f))).sum() / f["volume"].rolling(min(20, len(f))).sum()
+        f["VWAP"] = (tp * f["volume"]).rolling(min(20, len(f))).sum() / f["volume"].rolling(min(20, len(f))).sum()
         
-        fig = go.Figure()
-        fig.add_trace(go.Candlestick(
-            x=f.index, open=f["open"], high=f["high"], low=f["low"], close=f["close"], name="OHLC Candlesticks"
-        ))
-        fig.add_trace(go.Scatter(x=f.index, y=f["ema200"], line=dict(color="orange", width=1.5), name="EMA 200"))
-        fig.add_trace(go.Scatter(x=f.index, y=f["vwap"], line=dict(color="cyan", width=1), name="VWAP"))
+        chart_data = pd.DataFrame({
+            "Close Price": f["close"],
+            "EMA 200": f["EMA 200"],
+            "VWAP": f["VWAP"]
+        }, index=f.index)
         
-        fig.update_layout(
-            title=f"SABRY VISION Advanced Technical Chart - {symbol}",
-            yaxis_title="Price ($)",
-            xaxis_title="Date",
-            template="plotly_dark",
-            height=550,
-            xaxis_rangeslider_visible=False
-        )
-        return fig
+        st.subheader(f"SABRY VISION Native Technical Chart - {symbol}")
+        st.line_chart(chart_data)
 
 class FinancialHealthEvaluator:
     @staticmethod
@@ -306,7 +291,7 @@ class FinancialHealthEvaluator:
             return {"Health Score": "70.0%", "P/E": "غير متوفر", "ROE": "غير متوفر", "Fair Target": "غير متوفر", "Upside (%)": "غير متوفر", "Explanation": "بيانات غير متوفرة."}
 
 # ------------------------------------------------------------------------------
-# 6. QUANT ENGINES (4-SETUP MATRIX)
+# 6. QUANT ENGINES (4-SETUP MATRIX - FIXED HOLDING PERIOD)
 # ------------------------------------------------------------------------------
 class SabryVision5LayerEngine:
     def __init__(self, settings: InstitutionalConfig, active_setups: List[str], timeframe: str):
@@ -353,8 +338,9 @@ class SabryBacktestEngine:
         peak_capital = capital
         max_dd = 0.0
         wins, losses = 0, 0
+        holding_period = 25
         
-        for i in range(50, len(processed) - 5):
+        for i in range(50, len(processed) - holding_period):
             row = processed.iloc[i]
             sig = row["signal_type"]
             if sig != "NONE":
@@ -363,7 +349,7 @@ class SabryBacktestEngine:
                 stop_loss = entry_price - (atr * config.atr_mult)
                 take_profit = entry_price + ((entry_price - stop_loss) * config.reward_mult)
                 
-                future_slice = processed.iloc[i+1:i+6]
+                future_slice = processed.iloc[i+1 : i+1+holding_period]
                 outcome = "LOSS"
                 exit_price = stop_loss
                 for _, f_row in future_slice.iterrows():
@@ -375,7 +361,8 @@ class SabryBacktestEngine:
                 pnl_pct = (exit_price - entry_price) / entry_price
                 if outcome == "WIN": wins += 1
                 else: losses += 1
-                capital *= (1 + (pnl_pct * config.risk_pct * 10))
+                capital *= (1 + (pnl_pct * config.risk_pct * 5))
+                if capital < 1.0: capital = 1.0
                 if capital > peak_capital: peak_capital = capital
                 dd = (peak_capital - capital) / peak_capital
                 if dd > max_dd: max_dd = dd
@@ -388,10 +375,11 @@ class SabryBacktestEngine:
                 
         total_trades = wins + losses
         win_rate = (wins / total_trades * 100) if total_trades > 0 else 0.0
+        net_profit_pct = ((capital - config.account_size) / config.account_size) * 100.0
         metrics = {
             "Total Trades": total_trades, "Wins": wins, "Losses": losses,
             "Win Rate (%)": round(win_rate, 2), "Max Drawdown (%)": round(max_dd * 100, 2),
-            "Final Capital ($)": round(capital, 2), "Net Profit (%)": round(((capital - config.account_size) / config.account_size) * 100, 2),
+            "Final Capital ($)": round(capital, 2), "Net Profit (%)": round(net_profit_pct, 2),
             "Profit Factor": round((wins * config.reward_mult) / max(1, losses), 2)
         }
         return metrics, pd.DataFrame(trades)
@@ -492,7 +480,7 @@ def main():
         render_login_screen()
         return
 
-    st.sidebar.title(f"🛡️ SABRY VISION v11.28")
+    st.sidebar.title(f"🛡️ SABRY VISION v11.33")
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}** | {'👑 (أدمن)' if st.session_state['is_admin'] else '👤 (مستخدم عادي)'}")
     
     if st.sidebar.button("🚪 تسجيل الخروج"):
@@ -503,7 +491,6 @@ def main():
 
     st.sidebar.markdown("---")
     
-    # لوحة تحكم الأدمن لإدارة الحسابات
     if st.session_state["is_admin"]:
         with st.sidebar.expander("👑 لوحة تحكم الأدمن وإدارة الحسابات"):
             st.markdown("### إدارة المستخدمين والصلاحيات")
@@ -570,9 +557,18 @@ def main():
             for u, info in st.session_state["users_db"].items():
                 st.write(f"- **{u}** ({info['role']}) ➔ ينتهي في: {info['expiry']}")
 
-    st.sidebar.markdown("### ⚙️ إعدادات تليجرام الفورية")
-    ui_token = st.sidebar.text_input("Telegram Bot Token", value="", type="password")
-    ui_chat = st.sidebar.text_input("Telegram Chat ID", value="")
+    st.sidebar.markdown("### ⚙️ إعدادات تليجرام الذكية (د. محمد صبري)")
+    
+    # دمج التوكن والشات آي دي الخاص بك تلقائياً إذا دخل الأدمن، وتركها فارغة للمستخدم العادي
+    if st.session_state["is_admin"]:
+        default_token = "8810439179:AAGMWrf_pTE0Aa6PrJ-pAIwFHts8xsTWLDg"
+        default_chat = "1207434469"
+    else:
+        default_token = ""
+        default_chat = ""
+
+    ui_token = st.sidebar.text_input("Telegram Bot Token", value=default_token, type="password")
+    ui_chat = st.sidebar.text_input("Telegram Chat ID", value=default_chat)
     
     if st.sidebar.button("🔌 اختبار اتصال تليجرام"):
         if ui_token and ui_chat:
@@ -588,19 +584,18 @@ def main():
     risk_pct = st.sidebar.slider("نسبة المخاطرة (%)", 0.5, 5.0, 1.0, 0.5) / 100.0
     config = InstitutionalConfig(account_size=acc_size, risk_pct=risk_pct)
     
-    # القوائم بالكامل 100% دون أي نقصان (بما فيها الذهب والفضة والسلع والصناديق وكل الأسواق)
     available_lists = list(st.session_state["market_lists_repo"].keys())
     market_choice = st.sidebar.selectbox("اختر السوق أو القائمة:", available_lists)
     timeframe = st.sidebar.selectbox("الإطار الزمني:", ["5m", "15m", "1h", "1d"], index=2)
     active_setups = st.sidebar.multiselect("نماذج الفلسفة الأربعة المفعلة:", ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL"], default=["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL"])
 
-    st.title("🛡️ SABRY VISION - Master Secure & Complete Quant Terminal v11.28")
+    st.title("🛡️ SABRY VISION - Master Secure & Complete Quant Terminal v11.33")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "🚀 السكانر الشامل وتليجرام", 
         "📊 التقييم المالي الأساسي", 
-        "🔬 الباك تيست والرسوم المتقدمة", 
+        "🔬 الباك تيست والرسوم المتطورة", 
         "🧠 التحليل العميق والاستقصاء",
         "📁 إدارة وتخصيص القوائم"
     ])
@@ -643,12 +638,12 @@ def main():
             st.info(f"💡 {fin['Explanation']}")
 
     with tab3:
-        st.subheader("🔬 محرك الباك تيست الإحصائي مع الرسوم البيانية المتقدمة (Plotly Candlestick)")
+        st.subheader("🔬 محرك الباك تيست الإحصائي والرسوم البيانية الموثوقة")
         bt_sym = st.text_input("رمز الأصل للباك تيست والرسوم:", value="SPY")
         bt_period = st.selectbox("الفترة التاريخية:", ["6 أشهر", "سنة", "سنتين", "5 سنوات", "الماكسيمم (Max)"])
         
-        if st.button("تشغيل الباك تيست وعرض الرسوم المتقدمة"):
-            with st.spinner("جاري المحاكاة ورسم الشموع المتقدمة..."):
+        if st.button("تشغيل الباك تيست وعرض الشارت"):
+            with st.spinner("جاري المحاكاة ورسم المؤشرات..."):
                 metrics, trades = SabryBacktestEngine.run_backtest(bt_sym, bt_period, config, active_setups)
                 st.session_state["last_backtest_results"] = trades
                 
@@ -660,14 +655,13 @@ def main():
                 
                 raw_df = UnifiedDataProvider.fetch_raw_ohlcv(bt_sym, interval="1d", period="1y")
                 if not raw_df.empty:
-                    fig = AdvancedChartingEngine.render_plotly_candlestick(raw_df, bt_sym)
-                    st.plotly_chart(fig, use_container_width=True)
+                    AdvancedChartingEngine.render_native_chart(raw_df, bt_sym)
                     
                 if not trades.empty:
                     st.dataframe(trades, use_container_width=True)
 
     with tab4:
-        st.subheader("🧠 التحليل الفني والمالي العميق واستقصاء الأداء")
+        st.subheader("🧠 التحليل الفني والمالي العميق والاستقصاء الأداء")
         saved_s = st.session_state["last_scan_results"]
         if not saved_s.empty:
             chosen_sym = st.selectbox("اختر فرصة للاستقصاء:", saved_s["Symbol"].tolist())
@@ -675,7 +669,10 @@ def main():
             st.write(row_f)
             if st.button(f"🔍 استقصاء الأداء التاريخي لنموذج ({chosen_sym})"):
                 sub_m, _ = SabryBacktestEngine.run_backtest(chosen_sym, "سنة", config, active_setups)
-                st.success(f"معدل نجاح النموذج تاريخياً: {sub_m.get('Win Rate (%)', 0)}% بعامل ربح {sub_m.get('Profit Factor', 0)}.")
+                
+                c_res1, c_res2 = st.columns(2)
+                c_res1.metric("معدل النجاح التاريخي (Win Rate)", f"{sub_m.get('Win Rate (%)', 0)}%")
+                c_res2.metric("معامل الربح (Profit Factor)", sub_m.get("Profit Factor", 0))
         else:
             st.warning("يرجى تشغيل السكانر في التاب الأول أولاً لاستيراد الفرص.")
 
