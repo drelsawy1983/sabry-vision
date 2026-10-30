@@ -347,7 +347,7 @@ class AdvancedChartingEngine:
 
         val_26_high = f['high'].rolling(26).max()
         val_26_low = f['low'].rolling(26).min()
-        f['kijun'] = (26_high + 26_low) / 2.0
+        f['kijun'] = (val_26_high + val_26_low) / 2.0
         f['tenkan_slope'] = np.degrees(np.arctan(f['tenkan'].diff()))
 
         fig = go.Figure()
