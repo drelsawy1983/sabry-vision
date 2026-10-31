@@ -965,7 +965,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "⚡ التشغيل الآلي والتنبيهات الذكية"
     ])
     
-    with tab1:
+with tab1:
         st.subheader(f"محرك السكانر المؤسسي للقائمة: **{market_choice}** (العدد الكلي: {len(selected_symbols)})")
         c1, c2, c3 = st.columns(3)
         c1.metric("السيولة", market_metrics["Liquidity"])
@@ -986,7 +986,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         else:
             st.info("اضغط على 'بدء المسح المؤسسي الشامل' لعرض الفرص الحية.")
 
-    with tab2:
+with tab2:
         st.subheader("📊 التقييم المالي الأساسي مع مؤشرات الصحة المالية والتقييم بالدوائر الملونة (🟢, 🟡, 🔴)")
         f_sym = st.text_input("رمز الأصل للفحص المالي المتقدم:", value="NVDA")
         if st.button("جلب التقرير المالي والتدقيق الشامل"):
@@ -1024,7 +1024,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
 
         UniversalExportEngine.render_export_toolbar(pd.DataFrame({"Status": ["Financial Audit Loaded"]}), "Financial_Audit_Report", ui_token, ui_chat, timeframe)
 
-    with tab3:
+with tab3:
         st.subheader("🔬 محرك الباك تيست والإحصائيات البحتة (مخصص لقياس الأداء ونماذج الفلسفة الخمسة دون رسوم ثقيلة)")
         bt_sym = st.text_input("رمز الأصل للباك تيست:", value="XAUUSD=X")
         bt_period = st.selectbox("الفترة التاريخية للباك تيست:", ["6 أشهر", "سنة", "سنتين", "5 سنوات", "الماكسيمم (Max)"])
@@ -1046,7 +1046,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
                 st.dataframe(trades, use_container_width=True)
                 UniversalExportEngine.render_export_toolbar(trades, "Backtest_Report", ui_token, ui_chat, bt_tf)
 
-    with tab4:
+with tab4:
         st.subheader("🧠 التحليل العميق والمرئي (الشارت التفاعلي المتقدم + البيانات المالية الأساسية المختصرة ومصدر السعر العادل)")
         saved_s = st.session_state["last_scan_results"]
         
@@ -1084,7 +1084,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         else:
             st.warning("تعذر جلب بيانات الرسم البياني لهذا الأصل على الفريم المختار.")
 
-    with tab5:
+with tab5:
         st.subheader("📁 إدارة وتخصيص القوائم المخصصة والافتراضية بالكامل")
         all_lists_dict = {**st.session_state["market_lists_repo"], **st.session_state["custom_watchlists"]}
         chosen_list = st.selectbox("اختر القائمة للاستعراض والتعديل:", list(all_lists_dict.keys()))
@@ -1134,7 +1134,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
 
         UniversalExportEngine.render_export_toolbar(pd.DataFrame({"Symbols": syms_in_list}), "Watchlist_Report", ui_token, ui_chat, timeframe)
 
-    with tab6:
+with tab6:
         st.subheader("💼 المحفظة المخصصة وتتبع الصفقات المباشرة وإدارتها (الإغلاق الجزئي والكلي)")
         
         # PERSISTENT CLOSED DEAL NOTIFICATION DISPLAY
@@ -1203,7 +1203,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     # ----------------------------------------------------
     # إضافة محتوى التاب السابع الجديد والأخير هنا:
     # ----------------------------------------------------
-    with tab7:
+with tab7:
         render_automation_terminal_tab(config, active_setups, ui_token, ui_chat)
 # ------------------------------------------------------------------------------
 # 10. SABRY VISION v11.60 - AUTOMATION & TELEGRAM RELAY HUB (NEW DEDICATED TAB)
