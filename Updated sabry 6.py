@@ -738,7 +738,8 @@ def main():
     ui_token = st.sidebar.text_input(
     "Telegram Bot Token", value=default_token, type="password"
     )
-   ui_chat = st.sidebar.text_input("Telegram Chat ID", value=default_chat)
+    ui_chat = st.sidebar.text_input("Telegram Chat ID", value=default_chat)
+
 
     
     acc_size = st.sidebar.number_input("حجم المحفظة ($)", value=100000.0, step=10000.0)
