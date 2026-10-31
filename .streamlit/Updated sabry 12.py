@@ -353,7 +353,6 @@ class FinancialHealthEvaluator:
             eps = info.get("trailingEps") or info.get("forwardEps")
             bvps = info.get("bookValue")
             
-            # توسيع نطاق البحث عن السعر المستهدف من بيوت الخبرة والمحللين بدقة
             target_mean = (
                 info.get("targetMeanPrice") or 
                 info.get("targetConsensus") or 
@@ -368,20 +367,15 @@ class FinancialHealthEvaluator:
             source_type = ""
             val_explanation = ""
 
-            # 1. الطبقة الأولى: محسوب مؤسسياً (مسحوب من أحدث تقارير ومستهدفات بيوت الخبرة والبنوك)
             if target_mean and target_mean > 0:
                 fair_target = round(float(target_mean), 2)
                 source_type = "محسوب مؤسسياً 🏛️ (مسحوب من أحدث تقارير ومستهدفات بيوت الخبرة والبنوك)"
                 val_explanation = "تم اعتماد السعر العادل بناءً على إجماع التقديرات الصادرة عن المحللين الماليين المؤسسيين."
-                
-            # 2. الطبقة الثانية: محسوب رياضياً بمعادلة جراهام المؤسسي الحصري على بيانات حقيقية
             elif eps and bvps and eps > 0 and bvps > 0:
                 graham_val = np.sqrt(22.5 * eps * bvps)
                 fair_target = round(float(graham_val), 2)
                 source_type = "محسوب رياضياً 🧮 (نموذج بنيامين جراهام المؤسسي - Graham Formula)"
                 val_explanation = f"تم الحساب بدقة رياضية صارمة بناءً على ربحية السهم الفعلية (${round(eps,2)}) والقيمة الدفترية (${round(bvps,2)})."
-
-            # 3. عدم توفر بيانات كافية: يظهر بوضوح "غير متوفر" لمنع أي أرقام وهمية أو مضللة تماماً
             else:
                 fair_target = "غير متوفر"
                 source_type = "غير متوفر ❌"
@@ -902,310 +896,6 @@ def render_login_screen():
                     st.error("❌ بيانات الدخول غير صحيحة.")
 
 # ------------------------------------------------------------------------------
-# 9. MAIN DASHBOARD INTERFACE
-# ------------------------------------------------------------------------------
-def main():
-    if not st.session_state["authenticated"]:
-        render_login_screen()
-        return
-
-    st.sidebar.title("🛡️ SABRY VISION v11.60")
-    is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
-    st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
-    
-    if st.sidebar.button("🚪 تسجيل الخروج"):
-        st.session_state["authenticated"] = False
-        st.rerun()
-
-    if st.sidebar.button("🔄 تحديث الجلسة (Refresh Session)"):
-        st.rerun()
-
-    if is_admin_mode:
-        with st.sidebar.expander("⚙️ لوحة الأدمن"): render_admin_panel()
-
-    st.sidebar.markdown("---")
-    with st.sidebar.expander("🤖 مساعد الذكاء الاصطناعي التفاعلي", expanded=True):
-        ai_engine = st.selectbox("اختر نموذج الذكاء الاصطناعي:", ["✨ Gemini Pro", "🟢 ChatGPT 4o"])
-        ai_q = st.text_input("اطرح سؤالك التحليلي:", value="قيم الوضع العام للسوق الحالي")
-        if st.button("💬 إرسال للمساعد الذكي"):
-            st.info(f"🤖 **إجابة المساعد ({ai_engine}):** بناءً على تحليل بيانات ({ai_q}) عبر محرك {ai_engine}؛ نوصي بالالتزام التام بإدارة المخاطر وعدم تجاوز 1% لكل صفقة.")
-        st.markdown("[✨ Gemini](https://gemini.google.com) | [🟢 ChatGPT](https://chatgpt.com)")
-
-    st.sidebar.markdown("---")
-    
-    # GLOBAL SAFE TELEGRAM CREDENTIALS DEFINITION
-    ui_token = "8810439179:AAGMWrf_pTE0Aa6PrJ-pAIwFHts8xsTWLDg" if st.session_state["is_admin"] else ""
-    ui_chat = "1207434469" if st.session_state["is_admin"] else ""
-
-    if st.session_state["is_admin"]:
-        with st.sidebar.expander("🚀 إعدادات تليجرام (حساب الأدمن)", expanded=False):
-            ui_token = st.text_input("Telegram Bot Token", value=ui_token, type="password")
-            ui_chat = st.text_input("Telegram Chat ID", value=ui_chat)
-
-    acc_size = st.sidebar.number_input("حجم المحفظة ($)", value=100000.0, step=10000.0)
-    risk_pct = st.sidebar.slider("نسبة المخاطرة (%)", 0.5, 5.0, 1.0, 0.5) / 100.0
-    config = InstitutionalConfig(account_size=acc_size, risk_pct=risk_pct)
-    
-    available_lists = list(st.session_state["market_lists_repo"].keys()) + list(st.session_state["custom_watchlists"].keys())
-    market_choice = st.sidebar.selectbox("اختر السوق أو القائمة:", available_lists)
-    selected_symbols = st.session_state["market_lists_repo"].get(market_choice, st.session_state["custom_watchlists"].get(market_choice, []))
-    
-    market_metrics = RealMarketBreadthEngine.evaluate_market_breadth(selected_symbols)
-    st.sidebar.success(f"📊 جودة السوق: {market_metrics['Market Quality']}")
-
-    timeframe = st.sidebar.selectbox("الإطار الزمني العام:", ["5m", "15m", "1h", "4h", "1d", "1wk"], index=4)
-    active_setups = st.sidebar.multiselect("نماذج الفلسفة المعتمدة:", ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"], default=["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"])
-
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.60")
-    st.markdown("---")
-    
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        "🚀 السكانر الشامل وتليجرام", "📊 التقييم المالي الأساسي", "🔬 الباك تيست وإحصائيات النماذج", 
-        "🧠 التحليل العميق والمرئي", "📁 إدارة القوائم المخصصة", "💼 المحفظة المخصصة والمباشرة",
-        "⚡ التشغيل الآلي والتنبيهات الذكية"
-    ])
-    
-with tab1:
-        st.subheader(f"محرك السكانر المؤسسي للقائمة: **{market_choice}** (العدد الكلي: {len(selected_symbols)})")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("السيولة", market_metrics["Liquidity"])
-        c2.metric("اتساع السوق", market_metrics["Breadth"])
-        c3.metric("مؤشر الجودة", f"{market_metrics['Score']}/100")
-        
-        fetch_fund_status = st.selectbox("جلب البيانات المالية أثناء السكانر (اختر أون أو أوف):", ["أوف (إيقاف لتوفير الوقت)", "أون (تشغيل البيانات المالية)"], index=0)
-        fetch_fund_toggle = True if "أون" in fetch_fund_status else False
-        
-        if st.button("بدء المسح المؤسسي الشامل", type="primary"):
-            st.session_state["last_scan_results"] = SabryVisionMasterScanner(config, active_setups, timeframe, fetch_fundamentals=fetch_fund_toggle).run_scan_with_progress(selected_symbols)
-            
-        saved_df = st.session_state["last_scan_results"]
-        if not saved_df.empty:
-            st.success(f"تم رصد ({len(saved_df)}) فرصة:")
-            st.dataframe(saved_df, use_container_width=True)
-            UniversalExportEngine.render_export_toolbar(saved_df, "Scanner_Report", ui_token, ui_chat, timeframe)
-        else:
-            st.info("اضغط على 'بدء المسح المؤسسي الشامل' لعرض الفرص الحية.")
-
-with tab2:
-        st.subheader("📊 التقييم المالي الأساسي مع مؤشرات الصحة المالية والتقييم بالدوائر الملونة (🟢, 🟡, 🔴)")
-        f_sym = st.text_input("رمز الأصل للفحص المالي المتقدم:", value="NVDA")
-        if st.button("جلب التقرير المالي والتدقيق الشامل"):
-            fin = FinancialHealthEvaluator.get_financial_metrics(f_sym)
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("مؤشر الصحة", fin["Health Score"])
-            c2.metric("التصنيف", fin["Health Status"])
-            c3.metric("السعر العادل (Fair Target)", fin["Fair Target"])
-            c4.metric("نسبة الارتفاع (Upside %)", fin["Upside (%)"])
-            st.info(f"💡 **تحليل الأداء المبدئي ومصدر القيمة:** {fin['Explanation']}")
-            st.success(f"📌 **طريقة التحديد ومصدر السعر العادل:** {fin['Fair Value Source']} | 🔗 [رابط التقارير المالية الرسمية]({fin['Financial Report Link']})")
-            
-            st.markdown("---")
-            st.markdown("#### 📅 التقارير ربع السنوية الموسعة بالكامل (8 Quarters Audit Matrix with Rating Dots)")
-            st.dataframe(pd.DataFrame({
-                "الفترة": ["Q3 2026", "Q2 2026", "Q1 2026", "Q4 2025", "Q3 2025", "Q2 2025", "Q1 2025", "Q4 2024"], 
-                "EPS ($)": [2.45, 2.30, 2.15, 2.05, 1.95, 1.85, 1.75, 1.65], 
-                "نسبة التحسن (QoQ)": ["+6.5% 🟢", "+7.0% 🟢", "+4.9% 🟡", "+5.1% 🟢", "+5.4% 🟢", "+5.7% 🟢", "+6.0% 🟢", "-"],
-                "الإيرادات ($M)": [4200, 4100, 3950, 3900, 3750, 3650, 3550, 3450],
-                "صافي الدخل Net Income ($M)": [1020, 975, 910, 880, 830, 795, 750, 710],
-                "القيمة الدفترية BVPS": [18.5, 17.8, 17.1, 16.5, 15.9, 15.2, 14.6, 14.0],
-                "هامش التشغيل": ["24.5% 🟢", "23.8% 🟢", "22.1% 🟢", "21.9% 🟢", "21.5% 🟡", "21.0% 🟡", "20.5% 🟡", "20.0% 🟡"],
-                "التقييم الشامل": ["ممتاز 🟢", "ممتاز 🟢", "جيد 🟡", "ممتاز 🟢", "جيد 🟡", "جيد 🟡", "مقبول 🟡", "مقبول 🟡"]
-            }), use_container_width=True)
-
-            st.markdown("#### 📆 التقارير السنوية الموسعة بالكامل (8 Years Audit Matrix with Rating Dots)")
-            st.dataframe(pd.DataFrame({
-                "السنة": ["2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018"], 
-                "EPS ($)": [8.50, 7.20, 6.10, 5.30, 4.80, 4.10, 3.60, 3.10], 
-                "نسبة التحسن (YoY)": ["+18.0% 🟢", "+18.0% 🟢", "+15.1% 🟢", "+10.4% 🟡", "+17.0% 🟢", "+13.8% 🟢", "+16.1% 🟢", "-"],
-                "التدفق النقدي الحر FCF": ["$1.2B", "$950M", "$820M", "$740M", "$680M", "$590M", "$520M", "$480M"],
-                "الديون إلى الملكية D/E": ["35% 🟢", "38% 🟢", "42% 🟡", "45% 🟡", "40% 🟢", "48% 🟡", "36% 🟢", "39% 🟢"],
-                "التدقيق العام": ["ممتاز 🟢", "قوي وآمن 🟢", "مقبول 🟡", "مستقر 🟢", "قوي 🟢", "مقبول 🟡", "ممتاز 🟢", "مستقر 🟢"]
-            }), use_container_width=True)
-
-        UniversalExportEngine.render_export_toolbar(pd.DataFrame({"Status": ["Financial Audit Loaded"]}), "Financial_Audit_Report", ui_token, ui_chat, timeframe)
-
-with tab3:
-        st.subheader("🔬 محرك الباك تيست والإحصائيات البحتة (مخصص لقياس الأداء ونماذج الفلسفة الخمسة دون رسوم ثقيلة)")
-        bt_sym = st.text_input("رمز الأصل للباك تيست:", value="XAUUSD=X")
-        bt_period = st.selectbox("الفترة التاريخية للباك تيست:", ["6 أشهر", "سنة", "سنتين", "5 سنوات", "الماكسيمم (Max)"])
-        bt_tf = st.selectbox("فريم الباك تيست الزمني:", ["5m", "15m", "1h", "4h", "1d", "1wk"], index=4)
-
-        if st.button("تشغيل الإحصائيات والباك تيست الشامل"):
-            metrics, trades, setup_matrix = SabryBacktestEngine.run_backtest(bt_sym, bt_period, bt_tf, config, active_setups)
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Win Rate", f"{metrics.get('Win Rate (%)', 0)}%")
-            m2.metric("Profit Factor", metrics.get("Profit Factor", 0))
-            m3.metric("Max DD", f"{metrics.get('Max Drawdown (%)', 0)}%")
-            m4.metric("Net Profit", f"{metrics.get('Net Profit (%)', 0)}%")
-            
-            st.markdown("#### 🎯 الجدول الإحصائي المقسم حسب نماذج الفلسفة الخمسة (Breakout, Retest, Setup, Bottom, Sweep):")
-            st.dataframe(setup_matrix, use_container_width=True)
-
-            if not trades.empty:
-                st.markdown("#### 📊 التحليل الإحصائي المفصل لكافة الفرص والصفقات التاريخية")
-                st.dataframe(trades, use_container_width=True)
-                UniversalExportEngine.render_export_toolbar(trades, "Backtest_Report", ui_token, ui_chat, bt_tf)
-
-with tab4:
-        st.subheader("🧠 التحليل العميق والمرئي (الشارت التفاعلي المتقدم + البيانات المالية الأساسية المختصرة ومصدر السعر العادل)")
-        saved_s = st.session_state["last_scan_results"]
-        
-        if not saved_s.empty:
-            symbols_list_from_scanner = saved_s["Symbol"].tolist()
-            chosen_sym = st.selectbox("اختر الفرصة من قائمة السكانر المكتشفة:", symbols_list_from_scanner)
-            opp_row = saved_s[saved_s["Symbol"] == chosen_sym]
-            st.markdown("#### 📌 جدول بيانات الفرصة المختارة من السكانر:")
-            st.dataframe(opp_row, use_container_width=True)
-        else:
-            chosen_sym = st.text_input("أدخل الرمز يدويًا للاستقصاء العميق:", value="NVDA")
-            st.info("لا توجد نتائج مسح حالية في السكانر، يرجى تشغيل السكانر في التاب الأول أو إدخال الرمز مباشرة.")
-
-        fin_deep = FinancialHealthEvaluator.get_financial_metrics(chosen_sym)
-        st.success(f"📊 **البيانات المالية الأساسية المختصرة ومصدر القيمة:** الصحة المالية: {fin_deep['Health Status']} | P/E: {fin_deep['P/E']} | ROE: {fin_deep['ROE']} | السعر العادل: {fin_deep['Fair Target']} | المصدر: [{fin_deep['Fair Value Source']}] | نسبة الارتفاع: {fin_deep['Upside (%)']} | 🔗 [رابط التقرير الكامل]({fin_deep['Financial Report Link']})")
-
-        AdvancedChartingEngine.render_chart_legend_card()
-        
-        analysis_tf = st.selectbox("اختر الفريم الزمني للتحليل الشارتي العميق:", ["5m", "15m", "1h", "4h", "1d", "1wk"], index=4)
-        deep_ind = st.multiselect("إظهار/إخفاء المؤشرات بالرسم العميق:", ["EMA 200", "EMA 50", "EMA 20", "VWAP", "الشمعة البيضاء القوية (White Power Candle)", "خط الترند الديناميكي / Super Trend", "البولينجر باند (Bollinger Bands)", "خطوط الإيشيموكو (Ichimoku Lines)", "Super Zone"], default=["الشمعة البيضاء القوية (White Power Candle)", "EMA 200", "VWAP", "خط الترند الديناميكي / Super Trend", "Super Zone"])
-        deep_pocs = st.multiselect("إظهار خطوط الـ POC بالرسم العميق:", ["POC 20", "POC 60", "POC 120", "POC 300"], default=["POC 20", "POC 60", "POC 120"])
-        
-        deep_df = UnifiedDataProvider.fetch_raw_ohlcv(chosen_sym, interval=analysis_tf, period="60d" if analysis_tf!="1d" else "max")
-        if not deep_df.empty:
-            AdvancedChartingEngine.render_plotly_chart(deep_df, chosen_sym, deep_ind, deep_pocs, key_prefix="deep_ch")
-            
-            tech_report_md = AdvancedTechnicalReportEngine.generate_detailed_technical_report(deep_df, analysis_tf)
-            st.markdown(tech_report_md)
-            
-            st.markdown("---")
-            if st.button(f"🚀 تشغيل التقرير الفني الشامل والمقارنة عبر جميع الفريمات لـ ({chosen_sym})"):
-                multi_frame_report = AdvancedTechnicalReportEngine.generate_multi_timeframe_alignment_report(chosen_sym, config, active_setups)
-                st.markdown(multi_frame_report)
-                UniversalExportEngine.render_export_toolbar(pd.DataFrame([{"Symbol": chosen_sym, "Report": multi_frame_report}]), "MultiTimeframe_Report", ui_token, ui_chat, analysis_tf)
-        else:
-            st.warning("تعذر جلب بيانات الرسم البياني لهذا الأصل على الفريم المختار.")
-
-with tab5:
-        st.subheader("📁 إدارة وتخصيص القوائم المخصصة والافتراضية بالكامل")
-        all_lists_dict = {**st.session_state["market_lists_repo"], **st.session_state["custom_watchlists"]}
-        chosen_list = st.selectbox("اختر القائمة للاستعراض والتعديل:", list(all_lists_dict.keys()))
-        
-        new_name = st.text_input("تعديل اسم القائمة المحددة:", value=chosen_list)
-        if st.button("حفظ اسم القائمة الجديد"):
-            if new_name and new_name != chosen_list:
-                if chosen_list in st.session_state["custom_watchlists"]:
-                    st.session_state["custom_watchlists"][new_name] = st.session_state["custom_watchlists"].pop(chosen_list)
-                    st.success("تم تحديث اسم القائمة بنجاح!")
-                    st.rerun()
-                else:
-                    st.warning("لا يمكن تعديل اسم القوائم الافتراضية النظامية.")
-
-        syms_in_list = all_lists_dict[chosen_list]
-        st.markdown(f"عدد العناصر في القائمة: **{len(syms_in_list)}** سهم/أصل")
-        
-        for idx, s in enumerate(syms_in_list):
-            c_l1, c_l2 = st.columns([4, 1])
-            c_l1.text(f"عنصر #{idx+1}: {s}")
-            if c_l2.button("🗑️ حذف", key=f"del_{chosen_list}_{s}_{idx}"):
-                syms_in_list.remove(s)
-                st.success(f"تم حذف {s} بنجاح!")
-                st.rerun()
-
-        new_sym = st.text_input("إضافة رمز مفرد جديد للقائمة:")
-        if st.button("إضافة الرمز"):
-            if new_sym:
-                syms_in_list.append(new_sym.upper())
-                st.success("تمت الإضافة بنجاح!")
-                st.rerun()
-
-        bulk_add = st.text_area("إضافة مجموعة أسهم دفعة واحدة (مفصولة بفواصل):", placeholder="AAPL, MSFT, 2222.SR")
-        if st.button("إضافة المجموعة دفعة واحدة"):
-            if bulk_add:
-                items = [x.strip().upper() for x in bulk_add.split(",") if x.strip()]
-                syms_in_list.extend(items)
-                st.success("تمت إضافة الدفعة بنجاح!")
-                st.rerun()
-
-        new_watchlist_title = st.text_input("إنشاء قائمة مخصصة جديدة تماماً:")
-        if st.button("إنشاء القائمة الجديدة"):
-            if new_watchlist_title and new_watchlist_title not in st.session_state["custom_watchlists"]:
-                st.session_state["custom_watchlists"][new_watchlist_title] = []
-                st.success(f"تم إنشاء قائمة '{new_watchlist_title}' بنجاح!")
-                st.rerun()
-
-        UniversalExportEngine.render_export_toolbar(pd.DataFrame({"Symbols": syms_in_list}), "Watchlist_Report", ui_token, ui_chat, timeframe)
-
-with tab6:
-        st.subheader("💼 المحفظة المخصصة وتتبع الصفقات المباشرة وإدارتها (الإغلاق الجزئي والكلي)")
-        
-        # PERSISTENT CLOSED DEAL NOTIFICATION DISPLAY
-        if st.session_state["last_closed_trade_msg"]:
-            st.success(st.session_state["last_closed_trade_msg"])
-            
-        with st.expander("➕ إدخال صفقة جديدة للمحفظة", expanded=True):
-            with st.form("add_trade_form"):
-                p1, p2, p3 = st.columns(3)
-                t_sym = p1.text_input("رمز الأصل:", value="2222.SR")
-                t_entry = p2.number_input("سعر الدخول ($):", value=30.0, step=0.1)
-                t_qty = p3.number_input("عدد الأسهم الكلي:", value=100, step=10)
-                t_sl = p1.number_input("وقف الخسارة ($):", value=28.5, step=0.1)
-                t_tp = p2.number_input("هدف الربح ($):", value=34.0, step=0.1)
-                if st.form_submit_button("🚀 تسجيل الصفقة"):
-                    st.session_state["portfolio_trades"].append({
-                        "ID": len(st.session_state["portfolio_trades"]) + 1,
-                        "Symbol": t_sym.upper(), "Entry Price": t_entry, "Qty": t_qty, "Remaining Qty": t_qty,
-                        "Initial SL": t_sl, "Initial TP": t_tp, "Status": "OPEN"
-                    })
-                    st.success("تم تسجيل الصفقة بنجاح!")
-                    st.rerun()
-
-        open_trades = [t for t in st.session_state["portfolio_trades"] if t["Status"] == "OPEN"]
-        if open_trades:
-            pf_df = pd.DataFrame(open_trades)
-            live_prices, pnl_dollars, pnl_pcts, ch_stops = [], [], [], []
-            for _, row in pf_df.iterrows():
-                df_curr = UnifiedDataProvider.fetch_raw_ohlcv(row["Symbol"], period="5d")
-                curr_p = float(df_curr["close"].iloc[-1]) if not df_curr.empty else row["Entry Price"]
-                live_prices.append(curr_p)
-                pnl_dollars.append(round((curr_p - row["Entry Price"]) * row["Remaining Qty"], 2))
-                pnl_pcts.append(f"{round(((curr_p - row['Entry Price']) / row['Entry Price']) * 100, 2)}%")
-                ch_stops.append(round(max(row["Initial SL"], curr_p - (curr_p * 0.04)), 2))
-            pf_df["Current Price ($)"] = live_prices
-            pf_df["Unrealized PnL ($)"] = pnl_dollars
-            pf_df["Unrealized PnL (%)"] = pnl_pcts
-            pf_df["Chandelier ATR Stop ($)"] = ch_stops
-            st.dataframe(pf_df, use_container_width=True)
-            
-            st.markdown("#### 🔒 إدارة وإغلاق الصفقات (إغلاق جزئي أو كلي مع تقرير الأرباح)")
-            close_id = st.selectbox("اختر معرف الصفقة (ID):", pf_df["ID"].tolist())
-            target_trade = next((t for t in open_trades if t["ID"] == close_id), None)
-            
-            if target_trade:
-                exit_qty = st.number_input("الكمية المراد بيعها/إغلاقها:", min_value=1, max_value=int(target_trade["Remaining Qty"]), value=int(target_trade["Remaining Qty"]))
-                exit_price = st.number_input("سعر التخارج/البيع الفعلي ($):", value=float(target_trade["Entry Price"] * 1.05), step=0.1)
-                
-                if st.button("تأكيد إغلاق جزء أو كل الصفقة وحساب العائد"):
-                    realized_pnl = (exit_price - target_trade["Entry Price"]) * exit_qty
-                    realized_pnl_pct = ((exit_price - target_trade["Entry Price"]) / target_trade["Entry Price"]) * 100
-                    target_trade["Remaining Qty"] -= exit_qty
-                    if target_trade["Remaining Qty"] <= 0:
-                        target_trade["Status"] = "CLOSED"
-                    
-                    st.session_state["last_closed_trade_msg"] = f"🎉 **تهانينا! تقرير التخارج والأرباح الثابت:** تم بيع ({exit_qty}) سهم من {target_trade['Symbol']} بسعر ${exit_price}! صافي الربح المحقق: **${round(realized_pnl, 2)}** (نسبة العائد: **+{round(realized_pnl_pct, 2)}%**)"
-                    st.rerun()
-        else:
-            st.info("لا توجد صفقات مفتوحة حالياً بالمحفظة.")
-
-        closed_trades = [t for t in st.session_state["portfolio_trades"] if t["Status"] == "CLOSED"]
-        if closed_trades:
-            st.markdown("#### 📜 سجل الصفقات المغلقة بالكامل وعوائدها المحققة")
-            st.dataframe(pd.DataFrame(closed_trades), use_container_width=True)
-            UniversalExportEngine.render_export_toolbar(pd.DataFrame(closed_trades), "Closed_Trades_Report", ui_token, ui_chat, timeframe)
-    # ----------------------------------------------------
-    # إضافة محتوى التاب السابع الجديد والأخير هنا:
-    # ----------------------------------------------------
-with tab7:
-        render_automation_terminal_tab(config, active_setups, ui_token, ui_chat)
-# ------------------------------------------------------------------------------
 # 10. SABRY VISION v11.60 - AUTOMATION & TELEGRAM RELAY HUB (NEW DEDICATED TAB)
 # ------------------------------------------------------------------------------
 def render_automation_terminal_tab(config: InstitutionalConfig, active_setups: List[str], ui_token: str, ui_chat: str):
@@ -1213,16 +903,13 @@ def render_automation_terminal_tab(config: InstitutionalConfig, active_setups: L
     st.markdown("## ⚡ تاب التشغيل الآلي والتنبيهات الذكية (Automation & Telegram Relay Engine)")
     st.markdown("<i>محرك الأتمتة المجدولة، إدارة الجداول العالمية، والتنبيهات اللحظية عبر تليجرام.</i>", unsafe_allow_html=True)
     
-    # 1. Timezone Toggle Selector
     tz_choice = st.selectbox("🌐 اختر النطاق الزمني وعرض التوقيت:", ["توقيت مكة المكرمة (AST / UTC+3)", "توقيت جرينتش (GMT / UTC+0)"], index=0)
     
-    # 2. Automation ON/OFF Exclusive Selectbox (Exclusive Switch)
     auto_status = st.selectbox("🎛️ حالة محرك الأتمتة (Automation Status):", ["إيقاف المحرك الآلي (Automation OFF)", "تشغيل المحرك الآلي (Automation ON)"], index=0)
     
     if "تشغيل المحرك الآلي" in auto_status:
         st.success("🟢 محرك التشغيل الآلي والمسح الذكي في الخلفية **نشط ويعمل** بناءً على القواعد المعتمدة.")
         
-        # 3. Multi-Select Timeframes for Automation
         auto_timeframes = st.multiselect(
             "⏱️ اختر الفريمات المراد تفعيل السكانر الآلي عليها:",
             ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"],
@@ -1296,6 +983,306 @@ def render_automation_terminal_tab(config: InstitutionalConfig, active_setups: L
     else:
         st.info("ℹ️ محرك الأتمتة متوقف حالياً. قم باختيار 'تشغيل المحرك الآلي (Automation ON)' لتفعيل السكانر التلقائي والجدولة.")
 
-  
+# ------------------------------------------------------------------------------
+# 9. MAIN DASHBOARD INTERFACE
+# ------------------------------------------------------------------------------
+def main():
+    if not st.session_state["authenticated"]:
+        render_login_screen()
+        return
+
+    st.sidebar.title("🛡️ SABRY VISION v11.60")
+    is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
+    st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
+    
+    if st.sidebar.button("🚪 تسجيل الخروج"):
+        st.session_state["authenticated"] = False
+        st.rerun()
+
+    if st.sidebar.button("🔄 تحديث الجلسة (Refresh Session)"):
+        st.rerun()
+
+    if is_admin_mode:
+        with st.sidebar.expander("⚙️ لوحة الأدمن"): render_admin_panel()
+
+    st.sidebar.markdown("---")
+    with st.sidebar.expander("🤖 مساعد الذكاء الاصطناعي التفاعلي", expanded=True):
+        ai_engine = st.selectbox("اختر نموذج الذكاء الاصطناعي:", ["✨ Gemini Pro", "🟢 ChatGPT 4o"])
+        ai_q = st.text_input("اطرح سؤالك التحليلي:", value="قيم الوضع العام للسوق الحالي")
+        if st.button("💬 إرسال للمساعد الذكي"):
+            st.info(f"🤖 **إجابة المساعد ({ai_engine}):** بناءً على تحليل بيانات ({ai_q}) عبر محرك {ai_engine}؛ نوصي بالالتزام التام بإدارة المخاطر وعدم تجاوز 1% لكل صفقة.")
+        st.markdown("[✨ Gemini](https://gemini.google.com) | [🟢 ChatGPT](https://chatgpt.com)")
+
+    st.sidebar.markdown("---")
+    
+    ui_token = "8810439179:AAGMWrf_pTE0Aa6PrJ-pAIwFHts8xsTWLDg" if st.session_state["is_admin"] else ""
+    ui_chat = "1207434469" if st.session_state["is_admin"] else ""
+
+    if st.session_state["is_admin"]:
+        with st.sidebar.expander("🚀 إعدادات تليجرام (حساب الأدمن)", expanded=False):
+            ui_token = st.text_input("Telegram Bot Token", value=ui_token, type="password")
+            ui_chat = st.text_input("Telegram Chat ID", value=ui_chat)
+
+    acc_size = st.sidebar.number_input("حجم المحفظة ($)", value=100000.0, step=10000.0)
+    risk_pct = st.sidebar.slider("نسبة المخاطرة (%)", 0.5, 5.0, 1.0, 0.5) / 100.0
+    config = InstitutionalConfig(account_size=acc_size, risk_pct=risk_pct)
+    
+    available_lists = list(st.session_state["market_lists_repo"].keys()) + list(st.session_state["custom_watchlists"].keys())
+    market_choice = st.sidebar.selectbox("اختر السوق أو القائمة:", available_lists)
+    selected_symbols = st.session_state["market_lists_repo"].get(market_choice, st.session_state["custom_watchlists"].get(market_choice, []))
+    
+    market_metrics = RealMarketBreadthEngine.evaluate_market_breadth(selected_symbols)
+    st.sidebar.success(f"📊 جودة السوق: {market_metrics['Market Quality']}")
+
+    timeframe = st.sidebar.selectbox("الإطار الزمني العام:", ["5m", "15m", "1h", "4h", "1d", "1wk"], index=4)
+    active_setups = st.sidebar.multiselect("نماذج الفلسفة المعتمدة:", ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"], default=["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"])
+
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.60")
+    st.markdown("---")
+    
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+        "🚀 السكانر الشامل وتليجرام", "📊 التقييم المالي الأساسي", "🔬 الباك تيست وإحصائيات النماذج", 
+        "🧠 التحليل العميق والمرئي", "📁 إدارة القوائم المخصصة", "💼 المحفظة المخصصة والمباشرة",
+        "⚡ التشغيل الآلي والتنبيهات الذكية"
+    ])
+    
+    with tab1:
+        st.subheader(f"محرك السكانر المؤسسي للقائمة: **{market_choice}** (العدد الكلي: {len(selected_symbols)})")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("السيولة", market_metrics["Liquidity"])
+        c2.metric("اتساع السوق", market_metrics["Breadth"])
+        c3.metric("مؤشر الجودة", f"{market_metrics['Score']}/100")
+        
+        fetch_fund_status = st.selectbox("جلب البيانات المالية أثناء السكانر (اختر أون أو أوف):", ["أوف (إيقاف لتوفير الوقت)", "أون (تشغيل البيانات المالية)"], index=0)
+        fetch_fund_toggle = True if "أون" in fetch_fund_status else False
+        
+        if st.button("بدء المسح المؤسسي الشامل", type="primary"):
+            st.session_state["last_scan_results"] = SabryVisionMasterScanner(config, active_setups, timeframe, fetch_fundamentals=fetch_fund_toggle).run_scan_with_progress(selected_symbols)
+            
+        saved_df = st.session_state["last_scan_results"]
+        if not saved_df.empty:
+            st.success(f"تم رصد ({len(saved_df)}) فرصة:")
+            st.dataframe(saved_df, use_container_width=True)
+            UniversalExportEngine.render_export_toolbar(saved_df, "Scanner_Report", ui_token, ui_chat, timeframe)
+        else:
+            st.info("اضغط على 'بدء المسح المؤسسي الشامل' لعرض الفرص الحية.")
+
+    with tab2:
+        st.subheader("📊 التقييم المالي الأساسي مع مؤشرات الصحة المالية والتقييم بالدوائر الملونة (🟢, 🟡, 🔴)")
+        f_sym = st.text_input("رمز الأصل للفحص المالي المتقدم:", value="NVDA")
+        if st.button("جلب التقرير المالي والتدقيق الشامل"):
+            fin = FinancialHealthEvaluator.get_financial_metrics(f_sym)
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("مؤشر الصحة", fin["Health Score"])
+            c2.metric("التصنيف", fin["Health Status"])
+            c3.metric("السعر العادل (Fair Target)", fin["Fair Target"])
+            c4.metric("نسبة الارتفاع (Upside %)", fin["Upside (%)"])
+            st.info(f"💡 **تحليل الأداء المبدئي ومصدر القيمة:** {fin['Explanation']}")
+            st.success(f"📌 **طريقة التحديد ومصدر السعر العادل:** {fin['Fair Value Source']} | 🔗 [رابط التقارير المالية الرسمية]({fin['Financial Report Link']})")
+            
+            st.markdown("---")
+            st.markdown("#### 📅 التقارير ربع السنوية الموسعة بالكامل (8 Quarters Audit Matrix with Rating Dots)")
+            st.dataframe(pd.DataFrame({
+                "الفترة": ["Q3 2026", "Q2 2026", "Q1 2026", "Q4 2025", "Q3 2025", "Q2 2025", "Q1 2025", "Q4 2024"], 
+                "EPS ($)": [2.45, 2.30, 2.15, 2.05, 1.95, 1.85, 1.75, 1.65], 
+                "نسبة التحسن (QoQ)": ["+6.5% 🟢", "+7.0% 🟢", "+4.9% 🟡", "+5.1% 🟢", "+5.4% 🟢", "+5.7% 🟢", "+6.0% 🟢", "-"],
+                "الإيرادات ($M)": [4200, 4100, 3950, 3900, 3750, 3650, 3550, 3450],
+                "صافي الدخل Net Income ($M)": [1020, 975, 910, 880, 830, 795, 750, 710],
+                "القيمة الدفترية BVPS": [18.5, 17.8, 17.1, 16.5, 15.9, 15.2, 14.6, 14.0],
+                "هامش التشغيل": ["24.5% 🟢", "23.8% 🟢", "22.1% 🟢", "21.9% 🟢", "21.5% 🟡", "21.0% 🟡", "20.5% 🟡", "20.0% 🟡"],
+                "التقييم الشامل": ["ممتاز 🟢", "ممتاز 🟢", "جيد 🟡", "ممتاز 🟢", "جيد 🟡", "جيد 🟡", "مقبول 🟡", "مقبول 🟡"]
+            }), use_container_width=True)
+
+            st.markdown("#### 📆 التقارير السنوية الموسعة بالكامل (8 Years Audit Matrix with Rating Dots)")
+            st.dataframe(pd.DataFrame({
+                "السنة": ["2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018"], 
+                "EPS ($)": [8.50, 7.20, 6.10, 5.30, 4.80, 4.10, 3.60, 3.10], 
+                "نسبة التحسن (YoY)": ["+18.0% 🟢", "+18.0% 🟢", "+15.1% 🟢", "+10.4% 🟡", "+17.0% 🟢", "+13.8% 🟢", "+16.1% 🟢", "-"],
+                "التدفق النقدي الحر FCF": ["$1.2B", "$950M", "$820M", "$740M", "$680M", "$590M", "$520M", "$480M"],
+                "الديون إلى الملكية D/E": ["35% 🟢", "38% 🟢", "42% 🟡", "45% 🟡", "40% 🟢", "48% 🟡", "36% 🟢", "39% 🟢"],
+                "التدقيق العام": ["ممتاز 🟢", "قوي وآمن 🟢", "مقبول 🟡", "مستقر 🟢", "قوي 🟢", "مقبول 🟡", "ممتاز 🟢", "مستقر 🟢"]
+            }), use_container_width=True)
+
+        UniversalExportEngine.render_export_toolbar(pd.DataFrame({"Status": ["Financial Audit Loaded"]}), "Financial_Audit_Report", ui_token, ui_chat, timeframe)
+
+    with tab3:
+        st.subheader("🔬 محرك الباك تيست والإحصائيات البحتة (مخصص لقياس الأداء ونماذج الفلسفة الخمسة دون رسوم ثقيلة)")
+        bt_sym = st.text_input("رمز الأصل للباك تيست:", value="XAUUSD=X")
+        bt_period = st.selectbox("الفترة التاريخية للباك تيست:", ["6 أشهر", "سنة", "سنتين", "5 سنوات", "الماكسيمم (Max)"])
+        bt_tf = st.selectbox("فريم الباك تيست الزمني:", ["5m", "15m", "1h", "4h", "1d", "1wk"], index=4)
+
+        if st.button("تشغيل الإحصائيات والباك تيست الشامل"):
+            metrics, trades, setup_matrix = SabryBacktestEngine.run_backtest(bt_sym, bt_period, bt_tf, config, active_setups)
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Win Rate", f"{metrics.get('Win Rate (%)', 0)}%")
+            m2.metric("Profit Factor", metrics.get("Profit Factor", 0))
+            m3.metric("Max DD", f"{metrics.get('Max Drawdown (%)', 0)}%")
+            m4.metric("Net Profit", f"{metrics.get('Net Profit (%)', 0)}%")
+            
+            st.markdown("#### 🎯 الجدول الإحصائي المقسم حسب نماذج الفلسفة الخمسة (Breakout, Retest, Setup, Bottom, Sweep):")
+            st.dataframe(setup_matrix, use_container_width=True)
+
+            if not trades.empty:
+                st.markdown("#### 📊 التحليل الإحصائي المفصل لكافة الفرص والصفقات التاريخية")
+                st.dataframe(trades, use_container_width=True)
+                UniversalExportEngine.render_export_toolbar(trades, "Backtest_Report", ui_token, ui_chat, bt_tf)
+
+    with tab4:
+        st.subheader("🧠 التحليل العميق والمرئي (الشارت التفاعلي المتقدم + البيانات المالية الأساسية المختصرة ومصدر السعر العادل)")
+        saved_s = st.session_state["last_scan_results"]
+        
+        if not saved_s.empty:
+            symbols_list_from_scanner = saved_s["Symbol"].tolist()
+            chosen_sym = st.selectbox("اختر الفرصة من قائمة السكانر المكتشفة:", symbols_list_from_scanner)
+            opp_row = saved_s[saved_s["Symbol"] == chosen_sym]
+            st.markdown("#### 📌 جدول بيانات الفرصة المختارة من السكانر:")
+            st.dataframe(opp_row, use_container_width=True)
+        else:
+            chosen_sym = st.text_input("أدخل الرمز يدويًا للاستقصاء العميق:", value="NVDA")
+            st.info("لا توجد نتائج مسح حالية في السكانر، يرجى تشغيل السكانر في التاب الأول أو إدخال الرمز مباشرة.")
+
+        fin_deep = FinancialHealthEvaluator.get_financial_metrics(chosen_sym)
+        st.success(f"📊 **البيانات المالية الأساسية المختصرة ومصدر القيمة:** الصحة المالية: {fin_deep['Health Status']} | P/E: {fin_deep['P/E']} | ROE: {fin_deep['ROE']} | السعر العادل: {fin_deep['Fair Target']} | المصدر: [{fin_deep['Fair Value Source']}] | نسبة الارتفاع: {fin_deep['Upside (%)']} | 🔗 [رابط التقرير الكامل]({fin_deep['Financial Report Link']})")
+
+        AdvancedChartingEngine.render_chart_legend_card()
+        
+        analysis_tf = st.selectbox("اختر الفريم الزمني للتحليل الشارتي العميق:", ["5m", "15m", "1h", "4h", "1d", "1wk"], index=4)
+        deep_ind = st.multiselect("إظهار/إخفاء المؤشرات بالرسم العميق:", ["EMA 200", "EMA 50", "EMA 20", "VWAP", "الشمعة البيضاء القوية (White Power Candle)", "خط الترند الديناميكي / Super Trend", "البولينجر باند (Bollinger Bands)", "خطوط الإيشيموكو (Ichimoku Lines)", "Super Zone"], default=["الشمعة البيضاء القوية (White Power Candle)", "EMA 200", "VWAP", "خط الترند الديناميكي / Super Trend", "Super Zone"])
+        deep_pocs = st.multiselect("إظهار خطوط الـ POC بالرسم العميق:", ["POC 20", "POC 60", "POC 120", "POC 300"], default=["POC 20", "POC 60", "POC 120"])
+        
+        deep_df = UnifiedDataProvider.fetch_raw_ohlcv(chosen_sym, interval=analysis_tf, period="60d" if analysis_tf!="1d" else "max")
+        if not deep_df.empty:
+            AdvancedChartingEngine.render_plotly_chart(deep_df, chosen_sym, deep_ind, deep_pocs, key_prefix="deep_ch")
+            
+            tech_report_md = AdvancedTechnicalReportEngine.generate_detailed_technical_report(deep_df, analysis_tf)
+            st.markdown(tech_report_md)
+            
+            st.markdown("---")
+            if st.button(f"🚀 تشغيل التقرير الفني الشامل والمقارنة عبر جميع الفريمات لـ ({chosen_sym})"):
+                multi_frame_report = AdvancedTechnicalReportEngine.generate_multi_timeframe_alignment_report(chosen_sym, config, active_setups)
+                st.markdown(multi_frame_report)
+                UniversalExportEngine.render_export_toolbar(pd.DataFrame([{"Symbol": chosen_sym, "Report": multi_frame_report}]), "MultiTimeframe_Report", ui_token, ui_chat, analysis_tf)
+        else:
+            st.warning("تعذر جلب بيانات الرسم البياني لهذا الأصل على الفريم المختار.")
+
+    with tab5:
+        st.subheader("📁 إدارة وتخصيص القوائم المخصصة والافتراضية بالكامل")
+        all_lists_dict = {**st.session_state["market_lists_repo"], **st.session_state["custom_watchlists"]}
+        chosen_list = st.selectbox("اختر القائمة للاستعراض والتعديل:", list(all_lists_dict.keys()))
+        
+        new_name = st.text_input("تعديل اسم القائمة المحددة:", value=chosen_list)
+        if st.button("حفظ اسم القائمة الجديد"):
+            if new_name and new_name != chosen_list:
+                if chosen_list in st.session_state["custom_watchlists"]:
+                    st.session_state["custom_watchlists"][new_name] = st.session_state["custom_watchlists"].pop(chosen_list)
+                    st.success("تم تحديث اسم القائمة بنجاح!")
+                    st.rerun()
+                else:
+                    st.warning("لا يمكن تعديل اسم القوائم الافتراضية النظامية.")
+
+        syms_in_list = all_lists_dict[chosen_list]
+        st.markdown(f"عدد العناصر في القائمة: **{len(syms_in_list)}** سهم/أصل")
+        
+        for idx, s in enumerate(syms_in_list):
+            c_l1, c_l2 = st.columns([4, 1])
+            c_l1.text(f"عنصر #{idx+1}: {s}")
+            if c_l2.button("🗑️ حذف", key=f"del_{chosen_list}_{s}_{idx}"):
+                syms_in_list.remove(s)
+                st.success(f"تم حذف {s} بنجاح!")
+                st.rerun()
+
+        new_sym = st.text_input("إضافة رمز مفرد جديد للقائمة:")
+        if st.button("إضافة الرمز"):
+            if new_sym:
+                syms_in_list.append(new_sym.upper())
+                st.success("تمت الإضافة بنجاح!")
+                st.rerun()
+
+        bulk_add = st.text_area("إضافة مجموعة أسهم دفعة واحدة (مفصولة بفواصل):", placeholder="AAPL, MSFT, 2222.SR")
+        if st.button("إضافة المجموعة دفعة واحدة"):
+            if bulk_add:
+                items = [x.strip().upper() for x in bulk_add.split(",") if x.strip()]
+                syms_in_list.extend(items)
+                st.success("تمت إضافة الدفعة بنجاح!")
+                st.rerun()
+
+        new_watchlist_title = st.text_input("إنشاء قائمة مخصصة جديدة تماماً:")
+        if st.button("إنشاء القائمة الجديدة"):
+            if new_watchlist_title and new_watchlist_title not in st.session_state["custom_watchlists"]:
+                st.session_state["custom_watchlists"][new_watchlist_title] = []
+                st.success(f"تم إنشاء قائمة '{new_watchlist_title}' بنجاح!")
+                st.rerun()
+
+        UniversalExportEngine.render_export_toolbar(pd.DataFrame({"Symbols": syms_in_list}), "Watchlist_Report", ui_token, ui_chat, timeframe)
+
+    with tab6:
+        st.subheader("💼 المحفظة المخصصة وتتبع الصفقات المباشرة وإدارتها (الإغلاق الجزئي والكلي)")
+        
+        if st.session_state["last_closed_trade_msg"]:
+            st.success(st.session_state["last_closed_trade_msg"])
+            
+        with st.expander("➕ إدخال صفقة جديدة للمحفظة", expanded=True):
+            with st.form("add_trade_form"):
+                p1, p2, p3 = st.columns(3)
+                t_sym = p1.text_input("رمز الأصل:", value="2222.SR")
+                t_entry = p2.number_input("سعر الدخول ($):", value=30.0, step=0.1)
+                t_qty = p3.number_input("عدد الأسهم الكلي:", value=100, step=10)
+                t_sl = p1.number_input("وقف الخسارة ($):", value=28.5, step=0.1)
+                t_tp = p2.number_input("هدف الربح ($):", value=34.0, step=0.1)
+                if st.form_submit_button("🚀 تسجيل الصفقة"):
+                    st.session_state["portfolio_trades"].append({
+                        "ID": len(st.session_state["portfolio_trades"]) + 1,
+                        "Symbol": t_sym.upper(), "Entry Price": t_entry, "Qty": t_qty, "Remaining Qty": t_qty,
+                        "Initial SL": t_sl, "Initial TP": t_tp, "Status": "OPEN"
+                    })
+                    st.success("تم تسجيل الصفقة بنجاح!")
+                    st.rerun()
+
+        open_trades = [t for t in st.session_state["portfolio_trades"] if t["Status"] == "OPEN"]
+        if open_trades:
+            pf_df = pd.DataFrame(open_trades)
+            live_prices, pnl_dollars, pnl_pcts, ch_stops = [], [], [], []
+            for _, row in pf_df.iterrows():
+                df_curr = UnifiedDataProvider.fetch_raw_ohlcv(row["Symbol"], period="5d")
+                curr_p = float(df_curr["close"].iloc[-1]) if not df_curr.empty else row["Entry Price"]
+                live_prices.append(curr_p)
+                pnl_dollars.append(round((curr_p - row["Entry Price"]) * row["Remaining Qty"], 2))
+                pnl_pcts.append(f"{round(((curr_p - row['Entry Price']) / row['Entry Price']) * 100, 2)}%")
+                ch_stops.append(round(max(row["Initial SL"], curr_p - (curr_p * 0.04)), 2))
+            pf_df["Current Price ($)"] = live_prices
+            pf_df["Unrealized PnL ($)"] = pnl_dollars
+            pf_df["Unrealized PnL (%)"] = pnl_pcts
+            pf_df["Chandelier ATR Stop ($)"] = ch_stops
+            st.dataframe(pf_df, use_container_width=True)
+            
+            st.markdown("#### 🔒 إدارة وإغلاق الصفقات (إغلاق جزئي أو كلي مع تقرير الأرباح)")
+            close_id = st.selectbox("اختر معرف الصفقة (ID):", pf_df["ID"].tolist())
+            target_trade = next((t for t in open_trades if t["ID"] == close_id), None)
+            
+            if target_trade:
+                exit_qty = st.number_input("الكمية المراد بيعها/إغلاقها:", min_value=1, max_value=int(target_trade["Remaining Qty"]), value=int(target_trade["Remaining Qty"]))
+                exit_price = st.number_input("سعر التخارج/البيع الفعلي ($):", value=float(target_trade["Entry Price"] * 1.05), step=0.1)
+                
+                if st.button("تأكيد إغلاق جزء أو كل الصفقة وحساب العائد"):
+                    realized_pnl = (exit_price - target_trade["Entry Price"]) * exit_qty
+                    realized_pnl_pct = ((exit_price - target_trade["Entry Price"]) / target_trade["Entry Price"]) * 100
+                    target_trade["Remaining Qty"] -= exit_qty
+                    if target_trade["Remaining Qty"] <= 0:
+                        target_trade["Status"] = "CLOSED"
+                    
+                    st.session_state["last_closed_trade_msg"] = f"🎉 **تهانينا! تقرير التخارج والأرباح الثابت:** تم بيع ({exit_qty}) سهم من {target_trade['Symbol']} بسعر ${exit_price}! صافي الربح المحقق: **${round(realized_pnl, 2)}** (نسبة العائد: **+{round(realized_pnl_pct, 2)}%**)"
+                    st.rerun()
+        else:
+            st.info("لا توجد صفقات مفتوحة حالياً بالمحفظة.")
+
+        closed_trades = [t for t in st.session_state["portfolio_trades"] if t["Status"] == "CLOSED"]
+        if closed_trades:
+            st.markdown("#### 📜 سجل الصفقات المغلقة بالكامل وعوائدها المحققة")
+            st.dataframe(pd.DataFrame(closed_trades), use_container_width=True)
+            UniversalExportEngine.render_export_toolbar(pd.DataFrame(closed_trades), "Closed_Trades_Report", ui_token, ui_chat, timeframe)
+
+    with tab7:
+        render_automation_terminal_tab(config, active_setups, ui_token, ui_chat)
+
 if __name__ == "__main__":
     main()
