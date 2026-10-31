@@ -5,8 +5,8 @@
 INSTITUTIONAL EDITION (النسخة المؤسسية الشاملة والموسعة بدون أي اختصار):
 - Retains 100% of v11.60 Architecture: Pure statistical backtest tab, concise financial 
   metrics embedded in Deep Analysis, persistent portfolio success banners, and strict 3+ POC Super Zone logic.
-- Integrated Institutional Fair Value Engine with transparent source labeling:
-  ("محسوب مؤسسياً 🏛️" vs "محسوب رياضياً 🧮" via Graham & ROE models).
+- Pure Institutional & Graham Fair Value Engine: NO fake fallback estimates. Strictly labels 
+  ("محسوب مؤسسياً 🏛️", "محسوب رياضياً 🧮", or "غير متوفر ❌").
 
 Audited & Verified by Institutional QA Council.
 ================================================================================
@@ -352,7 +352,15 @@ class FinancialHealthEvaluator:
             current_price = info.get("currentPrice") or info.get("regularMarketPrice") or info.get("previousClose", 0.0)
             eps = info.get("trailingEps") or info.get("forwardEps")
             bvps = info.get("bookValue")
-            target_mean = info.get("targetMeanPrice") or info.get("targetConsensus")
+            
+            # توسيع نطاق البحث عن السعر المستهدف من بيوت الخبرة والمحللين بدقة
+            target_mean = (
+                info.get("targetMeanPrice") or 
+                info.get("targetConsensus") or 
+                info.get("targetMedianPrice") or
+                info.get("analystTargetPrice")
+            )
+            
             pe = info.get("trailingPE") or info.get("forwardPE")
             roe = info.get("returnOnEquity")
             
@@ -360,31 +368,24 @@ class FinancialHealthEvaluator:
             source_type = ""
             val_explanation = ""
 
-            # 1. محسوب مؤسسياً (مسحوب جاهزاً من تقديرات البنوك والمحللين)
+            # 1. الطبقة الأولى: محسوب مؤسسياً (مسحوب من أحدث تقارير ومستهدفات بيوت الخبرة والبنوك)
             if target_mean and target_mean > 0:
                 fair_target = round(float(target_mean), 2)
-                source_type = "محسوب مؤسسياً 🏛️ (مسحوب من تقارير المحللين والبنوك العالمية)"
-                val_explanation = "تم اعتماد التقييم المباشر من إجماع بيوت الخبرة والمؤسسات المالية."
+                source_type = "محسوب مؤسسياً 🏛️ (مسحوب من أحدث تقارير ومستهدفات بيوت الخبرة والبنوك)"
+                val_explanation = "تم اعتماد السعر العادل بناءً على إجماع التقديرات الصادرة عن المحللين الماليين المؤسسيين."
                 
-            # 2. محسوب رياضياً عبر نموذج بنيامين جراهام المؤسسي
+            # 2. الطبقة الثانية: محسوب رياضياً بمعادلة جراهام المؤسسي الحصري على بيانات حقيقية
             elif eps and bvps and eps > 0 and bvps > 0:
                 graham_val = np.sqrt(22.5 * eps * bvps)
                 fair_target = round(float(graham_val), 2)
-                source_type = "محسوب رياضياً 🧮 (نموذج جراهام للقيمة العادلة - Graham Formula)"
-                val_explanation = f"تم الحساب بناءً على ربحية السهم (${round(eps,2)}) والقيمة الدفترية (${round(bvps,2)})."
+                source_type = "محسوب رياضياً 🧮 (نموذج بنيامين جراهام المؤسسي - Graham Formula)"
+                val_explanation = f"تم الحساب بدقة رياضية صارمة بناءً على ربحية السهم الفعلية (${round(eps,2)}) والقيمة الدفترية (${round(bvps,2)})."
 
-            # 3. محسوب رياضياً عبر نموذج مضاعفات الأرباح وعائد الملكية
-            elif current_price > 0 and roe:
-                growth_factor = 1.0 + (min(roe, 0.35) * 0.8)
-                fair_target = round(float(current_price * growth_factor), 2)
-                source_type = "محسوب رياضياً 🧮 (نموذج النمو وعائد الملكية - ROE Growth Model)"
-                val_explanation = f"تم الحساب بناءً على معدل عائد الملكية ({round(roe*100,1)}%) والسعر الحالي."
-
-            # 4. غير متوفر
+            # 3. عدم توفر بيانات كافية: يظهر بوضوح "غير متوفر" لمنع أي أرقام وهمية أو مضللة تماماً
             else:
                 fair_target = "غير متوفر"
                 source_type = "غير متوفر ❌"
-                val_explanation = "البيانات المالية الأساسية غير كافية لحساب القيمة العادلة."
+                val_explanation = "لا توجد تغطية تحليلية حالية من بيوت الخبرة أو بيانات أساسية كافية للحساب لتجنب التضليل."
 
             upside_str = "غير متوفر"
             if isinstance(fair_target, (int, float)) and current_price > 0:
@@ -413,7 +414,7 @@ class FinancialHealthEvaluator:
                 "Health Score": "غير متوفر", "Health Status": "غير متوفر 🔴",
                 "Fair Target": "غير متوفر", "Upside (%)": "غير متوفر",
                 "Fair Value Source": "غير متوفر ❌",
-                "Explanation": "حدث خطأ أثناء الاتصال بجلب البيانات المالية.",
+                "Explanation": "تعذر الاتصال بمصادر البيانات المالية لجلب مستهدفات بيوت الخبرة.",
                 "P/E": "غير متوفر", "ROE": "غير متوفر",
                 "Financial Report Link": f"https://finance.yahoo.com/quote/{symbol}/financials"
             }
