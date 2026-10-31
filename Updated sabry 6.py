@@ -732,8 +732,14 @@ def main():
         st.markdown("[✨ Gemini](https://gemini.google.com) | [🟢 ChatGPT](https://chatgpt.com)")
 
     st.sidebar.markdown("---")
-    ui_token = st.sidebar.text_input("Telegram Bot Token", type="password")
-    ui_chat = st.sidebar.text_input("Telegram Chat ID")
+    default_token = st.secrets.get("TELEGRAM_BOT_TOKEN", "")
+    default_chat = st.secrets.get("TELEGRAM_CHAT_ID", "")
+
+    ui_token = st.sidebar.text_input(
+    "Telegram Bot Token", value=default_token, type="password"
+    )
+   ui_chat = st.sidebar.text_input("Telegram Chat ID", value=default_chat)
+
     
     acc_size = st.sidebar.number_input("حجم المحفظة ($)", value=100000.0, step=10000.0)
     risk_pct = st.sidebar.slider("نسبة المخاطرة (%)", 0.5, 5.0, 1.0, 0.5) / 100.0
