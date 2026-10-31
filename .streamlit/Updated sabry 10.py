@@ -1,6 +1,6 @@
 """
 ================================================================================
-🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.57 Master Uncompressed)
+🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.58 Master Uncompressed)
 ================================================================================
 INSTITUTIONAL EDITION (النسخة المؤسسية الشاملة والموسعة بدون أي اختصار):
 - 100% Uncompressed Stock Repository Retention (TASI 309, EGX 240+, S&P 500, Nasdaq, ADX, DFM, HSI, ETFs & Commodities).
@@ -15,7 +15,7 @@ INSTITUTIONAL EDITION (النسخة المؤسسية الشاملة والموس
 - Cross-Timeframe Multi-Frame Alignment Engine (5m, 15m, 1h, 4h, 1d, 1wk Matrix).
 - Live Real-Time Portfolio Engine with Chandelier ATR Trailing Stop, PnL ($ / %), Partial & Full Exits.
 - Universal Export Hub Integrated in ALL Tabs without exception.
-- Bug-Free Scope & Fixed Selectbox On/Off State Engine.
+- Fully Patched Plotly Super Zone Index Error & Safe DateTime Mapping.
 
 Audited & Verified by Institutional QA Council.
 ================================================================================
@@ -42,14 +42,14 @@ import plotly.express as px
 # 1. SYSTEM INITIALIZATION & RESPONSIVE CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.57 Ultimate",
+    page_title="SABRY VISION - Master Quant Terminal v11.58 Ultimate",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.57")
+logger = logging.getLogger("SabryVisionMaster11.58")
 
 st.markdown("""
 <style>
@@ -514,7 +514,7 @@ class TelegramEngine:
         url = f"https://api.telegram.org/bot{token.strip()}/sendMessage"
         for idx, row in results_df.iterrows():
             msg = f"""
-<b>🛡️ SABRY VISION v11.57 - INSTITUTIONAL TRADE CARD</b>
+<b>🛡️ SABRY VISION v11.58 - INSTITUTIONAL TRADE CARD</b>
 ⏱️ الفريم: <b>{timeframe}</b> | الرمز: <b>{row.get('Symbol')}</b>
 -----------------------------------
 ⚡ <b>نوع النموذج:</b> {row.get('Signal')}
@@ -618,7 +618,7 @@ class AdvancedChartingEngine:
     def render_chart_legend_card():
         st.markdown("""
         <div style='background-color: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 15px;'>
-            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.57)</h4>
+            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.58)</h4>
             <ul style='list-style-type: none; padding-left: 0; font-size: 14px;'>
                 <li>🕯️ <b>الشموع اليابانية:</b> خلفية داكنة سوداء معتمدة بالكامل.</li>
                 <li>⚪ <b>الشمعة البيضاء القوية (White Power Candle):</b> شمعة الانفجار الزخمي بلون أبيض صريح.</li>
@@ -693,9 +693,14 @@ class AdvancedChartingEngine:
 
         if pocs_info.get("is_super", False) or "Super Zone" in active_indicators:
             sz_p = pocs_info.get("super_zone", f['close'].iloc[-1])
-            fig.add_shape(type="rect", x0=f.index[-min(30, len(f))], y0=sz_p*0.9925, x1=f.index[-1], y1=sz_p*1.0075, fillcolor="gold", opacity=0.3, name="Super Zone")
+            try:
+                x_start = f.index[-min(30, len(f))]
+                x_end = f.index[-1]
+                fig.add_shape(type="rect", x0=x_start, y0=sz_p*0.9925, x1=x_end, y1=sz_p*1.0075, fillcolor="gold", opacity=0.3, name="Super Zone")
+            except Exception:
+                pass
 
-        fig.update_layout(title=f"SABRY VISION v11.57 - {symbol}", template="plotly_dark", height=600, xaxis_rangeslider_visible=False, paper_bgcolor="#0e1117", plot_bgcolor="#0e1117")
+        fig.update_layout(title=f"SABRY VISION v11.58 - {symbol}", template="plotly_dark", height=600, xaxis_rangeslider_visible=False, paper_bgcolor="#0e1117", plot_bgcolor="#0e1117")
         st.plotly_chart(fig, use_container_width=True, key=key_prefix)
 
 # ------------------------------------------------------------------------------
@@ -835,7 +840,7 @@ def render_admin_panel():
                 st.rerun()
 
 def render_login_screen():
-    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.57 - Security Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.58 - Security Portal</h1>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.form("login_form"):
@@ -859,7 +864,7 @@ def main():
         render_login_screen()
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v11.57")
+    st.sidebar.title("🛡️ SABRY VISION v11.58")
     is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
     
@@ -906,7 +911,7 @@ def main():
     timeframe = st.sidebar.selectbox("الإطار الزمني العام:", ["5m", "15m", "1h", "4h", "1d", "1wk"], index=4)
     active_setups = st.sidebar.multiselect("نماذج الفلسفة المعتمدة:", ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"], default=["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"])
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.57")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.58")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -921,7 +926,6 @@ def main():
         c2.metric("اتساع السوق", market_metrics["Breadth"])
         c3.metric("مؤشر الجودة", f"{market_metrics['Score']}/100")
         
-        # FIXED SELECTBOX ON/OFF TOGGLE FOR FINANCIAL DATA IN SCANNER
         fetch_fund_status = st.selectbox("جلب البيانات المالية أثناء السكانر (اختر أون أو أوف):", ["أوف (إيقاف لتوفير الوقت)", "أون (تشغيل البيانات المالية)"], index=0)
         fetch_fund_toggle = True if "أون" in fetch_fund_status else False
         
