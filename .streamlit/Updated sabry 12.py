@@ -905,7 +905,7 @@ def render_automation_terminal_tab(config: InstitutionalConfig, active_setups: L
     
     tz_choice = st.selectbox("🌐 اختر النطاق الزمني وعرض التوقيت:", ["توقيت مكة المكرمة (AST / UTC+3)", "توقيت جرينتش (GMT / UTC+0)"], index=0)
     
-    auto_status = st.selectbox("🎛️ حالة محرك الأتمتة (Automation Status):", ["إيقاف المحرك الآلي (Automation OFF)", "تشغيل المحرك الآلي (Automation ON)"], index=0)
+    auto_status = st.selectbox("🎛️ حالة محرك الأتمتة (Automation Status):", ["إيقاف المحرك الآلي (Automation OFF)", "تشغيل المحرك الآلي (Automation ON)"], index=1)
     
     if "تشغيل المحرك الآلي" in auto_status:
         st.success("🟢 محرك التشغيل الآلي والمسح الذكي في الخلفية **نشط ويعمل** بناءً على القواعد المعتمدة.")
