@@ -1,6 +1,6 @@
 """
 ================================================================================
-🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.54 Master Uncompressed)
+🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.55 Master Uncompressed)
 ================================================================================
 INSTITUTIONAL EDITION (النسخة المؤسسية الشاملة والموسعة بدون أي اختصار):
 - 100% Uncompressed Stock Repository Retention (TASI 309, EGX 240+, S&P 500, Nasdaq, ADX, DFM, HSI, ETFs & Commodities).
@@ -8,7 +8,7 @@ INSTITUTIONAL EDITION (النسخة المؤسسية الشاملة والموس
 - Advanced Fibonacci Golden Ratio (61.8%) & High-Volume Liquidity Sweep Suite.
 - Full Financial Audit Matrix (8 Quarters & 8 Years) with QoQ/YoY Growth %, Fair Target & Upside %.
 - Comprehensive Security Admin Control Panel with Role Management & User Expiry.
-- Protected Telegram Credentials Integration (Visible ONLY in Admin Session).
+- Protected Telegram Credentials Integration (Visible & Active ONLY in Admin Session).
 - 5-Layer Quant Philosophy (BREAKOUT, RETEST, SETUP, BOTTOM_REVERSAL, LIQUIDITY_SWEEP).
 - Single Dynamic Trendline & Super Trend Engine & Multi-POC Super Zones (20, 60, 120, 300).
 - Advanced Technical Indicators: Bollinger Bands (Squeeze), Ichimoku Cloud, RSI Divergence.
@@ -40,14 +40,14 @@ import plotly.express as px
 # 1. SYSTEM INITIALIZATION & RESPONSIVE CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.54 Ultimate",
+    page_title="SABRY VISION - Master Quant Terminal v11.55 Ultimate",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.54")
+logger = logging.getLogger("SabryVisionMaster11.55")
 
 st.markdown("""
 <style>
@@ -502,7 +502,7 @@ class TelegramEngine:
     def send_rich_trade_cards(token: str, chat_id: str, results_df: pd.DataFrame, timeframe: str) -> bool:
         if not token or not chat_id or results_df.empty: return False
         url = f"https://api.telegram.org/bot{token.strip()}/sendMessage"
-        header = f"<b>🛡️ SABRY VISION v11.54 - INSTITUTIONAL REPORT</b>\n⏱️ الفريم: <b>{timeframe}</b>\n📊 العدد: <b>{len(results_df)}</b>\n-----------------------------------\n"
+        header = f"<b>🛡️ SABRY VISION v11.55 - INSTITUTIONAL REPORT</b>\n⏱️ الفريم: <b>{timeframe}</b>\n📊 العدد: <b>{len(results_df)}</b>\n-----------------------------------\n"
         for idx, row in results_df.iterrows():
             msg = header + f"🎯 فرصة #{idx+1}\n📌 الرمز: {row.get('Symbol')}\n⚡ النموذج: {row.get('Signal')}\n💰 السعر: ${row.get('Close')}\n"
             try:
@@ -594,7 +594,7 @@ class AdvancedChartingEngine:
     def render_chart_legend_card():
         st.markdown("""
         <div style='background-color: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 15px;'>
-            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.54)</h4>
+            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.55)</h4>
             <ul style='list-style-type: none; padding-left: 0; font-size: 14px;'>
                 <li>🕯️ <b>الشموع اليابانية:</b> خلفية داكنة سوداء معتمدة بالكامل.</li>
                 <li>⚪ <b>الشمعة البيضاء القوية (White Power Candle):</b> شمعة الانفجار الزخمي بلون أبيض صريح.</li>
@@ -671,7 +671,7 @@ class AdvancedChartingEngine:
             sz_p = pocs_info.get("super_zone", f['close'].iloc[-1])
             fig.add_shape(type="rect", x0=f.index[-min(30, len(f))], y0=sz_p*0.9925, x1=f.index[-1], y1=sz_p*1.0075, fillcolor="gold", opacity=0.3, name="Super Zone")
 
-        fig.update_layout(title=f"SABRY VISION v11.54 - {symbol}", template="plotly_dark", height=600, xaxis_rangeslider_visible=False, paper_bgcolor="#0e1117", plot_bgcolor="#0e1117")
+        fig.update_layout(title=f"SABRY VISION v11.55 - {symbol}", template="plotly_dark", height=600, xaxis_rangeslider_visible=False, paper_bgcolor="#0e1117", plot_bgcolor="#0e1117")
         st.plotly_chart(fig, use_container_width=True, key=key_prefix)
 
 # ------------------------------------------------------------------------------
@@ -811,7 +811,7 @@ def render_admin_panel():
                 st.rerun()
 
 def render_login_screen():
-    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.54 - Security Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.55 - Security Portal</h1>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.form("login_form"):
@@ -835,7 +835,7 @@ def main():
         render_login_screen()
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v11.54")
+    st.sidebar.title("🛡️ SABRY VISION v11.55")
     is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
     
@@ -884,7 +884,7 @@ def main():
     timeframe = st.sidebar.selectbox("الإطار الزمني العام:", ["5m", "15m", "1h", "4h", "1d", "1wk"], index=4)
     active_setups = st.sidebar.multiselect("نماذج الفلسفة المعتمدة:", ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"], default=["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"])
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.54")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.55")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -959,4 +959,167 @@ def main():
         poc_choice = st.multiselect("خطوط الـ POC:", ["POC 20", "POC 60", "POC 120", "POC 300"], default=["POC 20", "POC 60"])
 
         if st.button("تشغيل الباك تيست والشارت المتقدم"):
-            metrics, trades = SabryBacktestEngine.run_backtest(bt_sym, bt_period
+            metrics, trades = SabryBacktestEngine.run_backtest(bt_sym, bt_period, bt_tf, config, active_setups)
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Win Rate", f"{metrics.get('Win Rate (%)', 0)}%")
+            m2.metric("Profit Factor", metrics.get("Profit Factor", 0))
+            m3.metric("Max DD", f"{metrics.get('Max Drawdown (%)', 0)}%")
+            m4.metric("Net Profit", f"{metrics.get('Net Profit (%)', 0)}%")
+            
+            raw_df = UnifiedDataProvider.fetch_raw_ohlcv(bt_sym, interval=bt_tf, period="1y")
+            if not raw_df.empty:
+                AdvancedChartingEngine.render_plotly_chart(raw_df, bt_sym, ind_choice, poc_choice, key_prefix="bt_ch")
+            
+            if not trades.empty:
+                st.markdown("#### 📊 التحليل الإحصائي المفصل للفرص والصفقات التاريخية")
+                st.dataframe(trades, use_container_width=True)
+                
+                st.markdown("---")
+                st.markdown("#### 📈 الأداء الإحصائي المجمع حسب نماذج الفلسفة:")
+                summary_stats = trades.groupby("Signal").agg(
+                    Total_Trades=("Outcome", "count"),
+                    Wins=("Outcome", lambda x: (x == "WIN").sum()),
+                    Losses=("Outcome", lambda x: (x == "LOSS").sum()),
+                    Net_Return_Pct=("Return (%)", "sum")
+                ).reset_index()
+                summary_stats["Win Rate (%)"] = round((summary_stats["Wins"] / summary_stats["Total_Trades"]) * 100, 2)
+                st.dataframe(summary_stats, use_container_width=True)
+
+    with tab4:
+        st.subheader("🧠 التحليل العميق واستقصاء الفرص والبيانات المالية الحية")
+        saved_s = st.session_state["last_scan_results"]
+        chosen_sym = st.text_input("أدخل الرمز للاستقصاء العميق والمالي الفوري:", value="COMI.CA" if saved_s.empty else saved_s["Symbol"].iloc[0])
+        
+        fin_deep = FinancialHealthEvaluator.get_financial_metrics(chosen_sym)
+        st.success(f"📊 **البيانات المالية التفصيلية الحية:** الصحة: {fin_deep['Health Status']} | P/E: {fin_deep['P/E']} | ROE: {fin_deep['ROE']} | السعر العادل: {fin_deep['Fair Target']} | نسبة الارتفاع: {fin_deep['Upside (%)']} | 🔗 [رابط التقارير]({fin_deep['Financial Report Link']})")
+
+        analysis_tf = st.selectbox("اختر الفريم الزمني للتحليل الشارتي العميق:", ["5m", "15m", "1h", "4h", "1d", "1wk"], index=4)
+        deep_ind = st.multiselect("إظهار/إخفاء المؤشرات بالرسم العميق:", ["EMA 200", "EMA 50", "EMA 20", "VWAP", "الشمعة البيضاء القوية (White Power Candle)", "خط الترند الديناميكي / Super Trend", "البولينجر باند (Bollinger Bands)", "خطوط الإيشيموكو (Ichimoku Lines)", "Super Zone"], default=["الشمعة البيضاء القوية (White Power Candle)", "EMA 200", "VWAP", "خط الترند الديناميكي / Super Trend", "Super Zone"])
+        deep_pocs = st.multiselect("إظهار خطوط الـ POC بالرسم العميق:", ["POC 20", "POC 60", "POC 120", "POC 300"], default=["POC 20", "POC 60", "POC 120"])
+        
+        deep_df = UnifiedDataProvider.fetch_raw_ohlcv(chosen_sym, interval=analysis_tf, period="60d" if analysis_tf!="1d" else "max")
+        if not deep_df.empty:
+            AdvancedChartingEngine.render_plotly_chart(deep_df, chosen_sym, deep_ind, deep_pocs, key_prefix="deep_ch")
+            
+            tech_report_md = AdvancedTechnicalReportEngine.generate_detailed_technical_report(deep_df, analysis_tf)
+            st.markdown(tech_report_md)
+            
+            st.markdown("---")
+            if st.button(f"🚀 تشغيل التقرير الفني الشامل والمقارنة عبر جميع الفريمات لـ ({chosen_sym})"):
+                multi_frame_report = AdvancedTechnicalReportEngine.generate_multi_timeframe_alignment_report(chosen_sym, config, active_setups)
+                st.markdown(multi_frame_report)
+        else:
+            st.warning("تعذر جلب بيانات الرسم البياني لهذا الأصل على الفريم المختار.")
+
+    with tab5:
+        st.subheader("📁 إدارة وتخصيص القوائم المخصصة والافتراضية بالكامل")
+        all_lists_dict = {**st.session_state["market_lists_repo"], **st.session_state["custom_watchlists"]}
+        chosen_list = st.selectbox("اختر القائمة للاستعراض والتعديل:", list(all_lists_dict.keys()))
+        
+        new_name = st.text_input("تعديل اسم القائمة المحددة:", value=chosen_list)
+        if st.button("حفظ اسم القائمة الجديد"):
+            if new_name and new_name != chosen_list:
+                if chosen_list in st.session_state["custom_watchlists"]:
+                    st.session_state["custom_watchlists"][new_name] = st.session_state["custom_watchlists"].pop(chosen_list)
+                    st.success("تم تحديث اسم القائمة بنجاح!")
+                    st.rerun()
+                else:
+                    st.warning("لا يمكن تعديل اسم القوائم الافتراضية النظامية.")
+
+        syms_in_list = all_lists_dict[chosen_list]
+        st.markdown(f"عدد العناصر في القائمة: **{len(syms_in_list)}** سهم/أصل")
+        
+        for idx, s in enumerate(syms_in_list):
+            c_l1, c_l2 = st.columns([4, 1])
+            c_l1.text(f"عنصر #{idx+1}: {s}")
+            if c_l2.button("🗑️ حذف", key=f"del_{chosen_list}_{s}_{idx}"):
+                syms_in_list.remove(s)
+                st.success(f"تم حذف {s} بنجاح!")
+                st.rerun()
+
+        new_sym = st.text_input("إضافة رمز مفرد جديد للقائمة:")
+        if st.button("إضافة الرمز"):
+            if new_sym:
+                syms_in_list.append(new_sym.upper())
+                st.success("تمت الإضافة بنجاح!")
+                st.rerun()
+
+        bulk_add = st.text_area("إضافة مجموعة أسهم دفعة واحدة (مفصولة بفواصل):", placeholder="AAPL, MSFT, 2222.SR")
+        if st.button("إضافة المجموعة دفعة واحدة"):
+            if bulk_add:
+                items = [x.strip().upper() for x in bulk_add.split(",") if x.strip()]
+                syms_in_list.extend(items)
+                st.success("تمت إضافة الدفعة بنجاح!")
+                st.rerun()
+
+        new_watchlist_title = st.text_input("إنشاء قائمة مخصصة جديدة تماماً:")
+        if st.button("إنشاء القائمة الجديدة"):
+            if new_watchlist_title and new_watchlist_title not in st.session_state["custom_watchlists"]:
+                st.session_state["custom_watchlists"][new_watchlist_title] = []
+                st.success(f"تم إنشاء قائمة '{new_watchlist_title}' بنجاح!")
+                st.rerun()
+
+    with tab6:
+        st.subheader("💼 المحفظة المخصصة وتتبع الصفقات المباشرة وإدارتها (الإغلاق الجزئي والكلي)")
+        with st.expander("➕ إدخال صفقة جديدة للمحفظة", expanded=True):
+            with st.form("add_trade_form"):
+                p1, p2, p3 = st.columns(3)
+                t_sym = p1.text_input("رمز الأصل:", value="2222.SR")
+                t_entry = p2.number_input("سعر الدخول ($):", value=30.0, step=0.1)
+                t_qty = p3.number_input("عدد الأسهم الكلي:", value=100, step=10)
+                t_sl = p1.number_input("وقف الخسارة ($):", value=28.5, step=0.1)
+                t_tp = p2.number_input("هدف الربح ($):", value=34.0, step=0.1)
+                if st.form_submit_button("🚀 تسجيل الصفقة"):
+                    st.session_state["portfolio_trades"].append({
+                        "ID": len(st.session_state["portfolio_trades"]) + 1,
+                        "Symbol": t_sym.upper(), "Entry Price": t_entry, "Qty": t_qty, "Remaining Qty": t_qty,
+                        "Initial SL": t_sl, "Initial TP": t_tp, "Status": "OPEN"
+                    })
+                    st.success("تم تسجيل الصفقة بنجاح!")
+                    st.rerun()
+
+        open_trades = [t for t in st.session_state["portfolio_trades"] if t["Status"] == "OPEN"]
+        if open_trades:
+            pf_df = pd.DataFrame(open_trades)
+            live_prices, pnl_dollars, pnl_pcts, ch_stops = [], [], [], []
+            for _, row in pf_df.iterrows():
+                df_curr = UnifiedDataProvider.fetch_raw_ohlcv(row["Symbol"], period="5d")
+                curr_p = float(df_curr["close"].iloc[-1]) if not df_curr.empty else row["Entry Price"]
+                live_prices.append(curr_p)
+                pnl_dollars.append(round((curr_p - row["Entry Price"]) * row["Remaining Qty"], 2))
+                pnl_pcts.append(f"{round(((curr_p - row['Entry Price']) / row['Entry Price']) * 100, 2)}%")
+                ch_stops.append(round(max(row["Initial SL"], curr_p - (curr_p * 0.04)), 2))
+            pf_df["Current Price ($)"] = live_prices
+            pf_df["Unrealized PnL ($)"] = pnl_dollars
+            pf_df["Unrealized PnL (%)"] = pnl_pcts
+            pf_df["Chandelier ATR Stop ($)"] = ch_stops
+            st.dataframe(pf_df, use_container_width=True)
+            
+            st.markdown("#### 🔒 إدارة وإغلاق الصفقات (إغلاق جزئي أو كلي مع تقرير الأرباح)")
+            close_id = st.selectbox("اختر معرف الصفقة (ID):", pf_df["ID"].tolist())
+            target_trade = next((t for t in open_trades if t["ID"] == close_id), None)
+            
+            if target_trade:
+                exit_qty = st.number_input("الكمية المراد بيعها/إغلاقها:", min_value=1, max_value=int(target_trade["Remaining Qty"]), value=int(target_trade["Remaining Qty"]))
+                exit_price = st.number_input("سعر التخارج/البيع الفعلي ($):", value=float(target_trade["Entry Price"] * 1.05), step=0.1)
+                
+                if st.button("تأكيد إغلاق جزء أو كل الصفقة وحساب العائد"):
+                    realized_pnl = (exit_price - target_trade["Entry Price"]) * exit_qty
+                    realized_pnl_pct = ((exit_price - target_trade["Entry Price"]) / target_trade["Entry Price"]) * 100
+                    target_trade["Remaining Qty"] -= exit_qty
+                    if target_trade["Remaining Qty"] <= 0:
+                        target_trade["Status"] = "CLOSED"
+                    st.balloons()
+                    st.success(f"🎉 **تقرير الإغلاق:** تم بيع ({exit_qty}) سهم بسعر ${exit_price}! صافي الأرباح المحققة: **${round(realized_pnl, 2)}** (نسبة العائد: **+{round(realized_pnl_pct, 2)}%**)")
+                    st.rerun()
+        else:
+            st.info("لا توجد صفقات مفتوحة حالياً بالمحفظة.")
+
+        closed_trades = [t for t in st.session_state["portfolio_trades"] if t["Status"] == "CLOSED"]
+        if closed_trades:
+            st.markdown("#### 📜 سجل الصفقات المغلقة بالكامل وعوائدها المحققة")
+            st.dataframe(pd.DataFrame(closed_trades), use_container_width=True)
+
+if __name__ == "__main__":
+    main()
+
