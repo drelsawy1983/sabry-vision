@@ -1,10 +1,11 @@
 """
 ================================================================================
-🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.80 Master Final)
+🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.79 Master Final)
 ================================================================================
 INSTITUTIONAL EDITION (النسخة المؤسسية الشاملة والموسعة بدون أي اختصار):
-- Strict Fair Value Hierarchy: Institutional First -> Mathematical Second -> Explicit "غير متوفر".
-- Automated Telegram Relay: Multi-market support sending Top 10 opportunities per market with Super Zone & Multi-Timeframe Confluence.
+- Strict Fair Value Hierarchy: Institutional First -> Mathematical Individual Breakdown -> Explicit "غير متوفر".
+- Full Multi-Timeframe Control (1m to 1wk) for Automated Scanner & Telegram Relay.
+- Removed annoying test background messages; background scheduler now supports live multi-market scan reports.
 - Retains 100% of Architecture: APScheduler Background Automation, Pure statistical backtest,
   Deep Analysis financial metrics, persistent portfolio success banners, and strict 3+ POC Super Zone.
 
@@ -34,14 +35,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # 1. SYSTEM INITIALIZATION & RESPONSIVE CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.80 Ultimate",
+    page_title="SABRY VISION - Master Quant Terminal v11.79 Ultimate",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.80")
+logger = logging.getLogger("SabryVisionMaster11.79")
 
 st.markdown("""
 <style>
@@ -257,7 +258,7 @@ if "last_backtest_results" not in st.session_state:
     st.session_state["last_backtest_results"] = pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 4. CONFIGURATION & CORE QUANT ENGINE (ROBUST FINANCIAL EVALUATOR v11.80)
+# 4. CONFIGURATION & CORE QUANT ENGINE (ROBUST FINANCIAL EVALUATOR v11.79)
 # ------------------------------------------------------------------------------
 @dataclass
 class InstitutionalConfig:
@@ -403,19 +404,21 @@ class FinancialHealthEvaluator:
             source_type = "غير متوفر ⚠️"
             val_explanation = "بيانات القوائم المالية أو إجماع المؤسسات غير كافية لحساب السعر العادل."
 
+            # Priority 1: Institutional Target
             if target_mean and target_mean > 0:
                 fair_target = round(float(target_mean), 2)
                 source_type = "محسوب مؤسسياً 🏛️"
                 val_explanation = "السعر العادل جُلِب بناءً على إجماع تقارير وتوصيات المؤسسات المالية وبيوت الخبرة العالمية."
+            # Priority 2: Mathematical individual breakdowns
             elif eps and bvps and eps > 0 and bvps > 0:
-                v_graham = np.sqrt(max(0.0, 22.5 * eps * bvps))
-                v_pe = eps * 15.0
-                v_pbv = bvps * 1.5
-                composite_fair_val = (v_graham + v_pe + v_pbv) / 3.0
-                if composite_fair_val > 0:
-                    fair_target = round(float(composite_fair_val), 2)
-                    source_type = "محسوب رياضياً 🧮"
-                    val_explanation = f"تم الحساب بدقة عبر المتوسط الرياضي المركب (معادلة جراهام ${round(v_graham,2)} + نموذج الربحية ${round(v_pe,2)} + القيمة الدفترية ${round(v_pbv,2)})."
+                v_graham = round(np.sqrt(max(0.0, 22.5 * eps * bvps)), 2)
+                v_pe = round(eps * 15.0, 2)
+                v_pbv = round(bvps * 1.5, 2)
+                composite_fair_val = round((v_graham + v_pe + v_pbv) / 3.0, 2)
+                
+                fair_target = composite_fair_val
+                source_type = "محسوب رياضياً 🧮"
+                val_explanation = f"معادلة جراهام: ${v_graham} | نموذج الربحية (PEx15): ${v_pe} | القيمة الدفترية (PBVx1.5): ${v_pbv} | المتوسط المركب: ${composite_fair_val}"
 
             upside_str = "غير متوفر"
             if isinstance(fair_target, (int, float)) and current_price > 0:
@@ -556,7 +559,7 @@ class TelegramEngine:
         url = f"https://api.telegram.org/bot{token.strip()}/sendMessage"
         for idx, row in results_df.iterrows():
             msg = f"""
-<b>🛡️ SABRY VISION v11.80 - INSTITUTIONAL TRADE CARD</b>
+<b>🛡️ SABRY VISION v11.79 - INSTITUTIONAL TRADE CARD</b>
 ⏱️ الفريم: <b>{timeframe}</b> | الرمز: <b>{row.get('Symbol')}</b>
 -----------------------------------
 ⚡ <b>نوع النموذج:</b> {row.get('Signal')}
@@ -660,7 +663,7 @@ class AdvancedChartingEngine:
     def render_chart_legend_card():
         st.markdown("""
         <div style='background-color: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 15px;'>
-            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.80)</h4>
+            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.79)</h4>
             <ul style='list-style-type: none; padding-left: 0; font-size: 14px;'>
                 <li>🕯️ <b>الشموع اليابانية:</b> خلفية داكنة سوداء معتمدة بالكامل.</li>
                 <li>⚪ <b>الشمعة البيضاء القوية (White Power Candle):</b> شمعة الانفجار الزخمي بلون أبيض صريح.</li>
@@ -744,7 +747,7 @@ class AdvancedChartingEngine:
                 except Exception:
                     pass
 
-        fig.update_layout(title=f"SABRY VISION v11.80 - {symbol}", template="plotly_dark", height=600, xaxis_rangeslider_visible=False, paper_bgcolor="#0e1117", plot_bgcolor="#0e1117")
+        fig.update_layout(title=f"SABRY VISION v11.79 - {symbol}", template="plotly_dark", height=600, xaxis_rangeslider_visible=False, paper_bgcolor="#0e1117", plot_bgcolor="#0e1117")
         st.plotly_chart(fig, use_container_width=True, key=key_prefix)
 
 # ------------------------------------------------------------------------------
@@ -915,7 +918,7 @@ def render_admin_panel():
                 st.rerun()
 
 def render_login_screen():
-    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.80 - Security Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.79 - Security Portal</h1>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.form("login_form"):
@@ -932,94 +935,27 @@ def render_login_screen():
                     st.error("❌ بيانات الدخول غير صحيحة.")
 
 # ------------------------------------------------------------------------------
-# 10. SABRY VISION v11.80 - AUTOMATION & TELEGRAM RELAY HUB
+# 10. SABRY VISION v11.79 - AUTOMATION & TELEGRAM RELAY HUB
 # ------------------------------------------------------------------------------
-def run_automated_multi_market_scan(config: InstitutionalConfig, ui_token: str, ui_chat: str):
-    if not ui_token or not ui_chat:
-        return
-
-    # الاعتماد على النماذج الأكثر ذكاءً وزخماً للتنبيهات الآلية
-    automated_setups = ["BREAKOUT", "RETEST", "LIQUIDITY_SWEEP", "BOTTOM_REVERSAL"]
-
-    markets_to_check = {
-        "السوق السعودي (تاسي)": st.session_state["market_lists_repo"].get("السوق السعودي (تاسي كامل 309)", [])[:25],
-        "البورصة المصرية": st.session_state["market_lists_repo"].get("البورصة المصرية الشاملة (EGX 240+)", [])[:25],
-        "السوق الأمريكي (الناسداك والأسهم)": st.session_state["market_lists_repo"].get("الناسداك (Nasdaq كامل 100+)", [])[:25],
-        "سوق السلع والذهب والعملات": st.session_state["market_lists_repo"].get("الذهب والفضة والسلع الفورية والآجلة (Spot & Futures Commodities)", [])[:15]
-    }
-
-    primary_tf = "1h"
-    current_time_str = datetime.now().strftime("%Y-%m-%d | %H:%M")
-
-    for market_name, symbols_list in markets_to_check.items():
-        if not symbols_list:
-            continue
-
-        top_opportunities = []
-        scanner = SabryVisionMasterScanner(config, automated_setups, primary_tf, fetch_fundamentals=False)
-
-        for sym in symbols_list:
-            res = scanner.scan_symbol(sym)
-            if res and res.get("Signal") != "NONE":
-                count_15m = 0
-                count_5m = 0
-                
-                df_15m = UnifiedDataProvider.fetch_raw_ohlcv(sym, interval="15m", period="5d")
-                if not df_15m.empty:
-                    proc_15 = SabryVision5LayerEngine(config, automated_setups, "15m").process_data(df_15m)
-                    count_15m = (proc_15.tail(4)["signal_type"] != "NONE").sum()
-
-                df_5m = UnifiedDataProvider.fetch_raw_ohlcv(sym, interval="5m", period="1d")
-                if not df_5m.empty:
-                    proc_5 = SabryVision5LayerEngine(config, automated_setups, "5m").process_data(df_5m)
-                    count_5m = (proc_5.tail(12)["signal_type"] != "NONE").sum()
-
-                res["Count_15m"] = int(count_15m)
-                res["Count_5m"] = int(count_5m)
-                top_opportunities.append(res)
-
-        if top_opportunities:
-            top_opportunities = sorted(top_opportunities, key=lambda x: x.get("AI Score", 0), reverse=True)[:10]
-
-            msg = f"<b>🛡️ SABRY VISION - TOP 10 LIVE SCAN REPORT</b>\n"
-            msg += f"🏛️ <b>السوق / القائمة:</b> {market_name}\n"
-            msg += f"⏱️ <b>فريم التحليل:</b> {primary_tf} | 📅 <b>التوقيت:</b> {current_time_str}\n"
-            msg += f"-----------------------------------\n"
-
-            for idx, opp in enumerate(top_opportunities, 1):
-                sz_status = opp.get('Super Zone', 'خارج الـ Super Zone')
-                msg += f"<b>#{idx} {opp.get('Symbol')}</b> | نموذج: <code>{opp.get('Signal')}</code>\n"
-                msg += f" 💰 السعر: ${opp.get('Close')} | السكور: <b>{opp.get('AI Score')}</b>\n"
-                msg += f" ⭐ السوبر زون: <b>{sz_status}</b>\n"
-                msg += f" 🛑 SL: ${opp.get('Stop Loss')} ({opp.get('SL (%)')}) | 🎯 TP: ${opp.get('Take Profit')} ({opp.get('TP (%)')})\n"
-                msg += f" 🔄 التوافق اللحظي: <b>(15m: {opp.get('Count_15m')}x | 5m: {opp.get('Count_5m')}x)</b>\n"
-                msg += f" 💎 السعر العادل: {opp.get('Fair Target')} ({opp.get('Fair Value Source', 'غير متوفر')})\n"
-                msg += f"-----------------------------------\n"
-
-            msg += f"🚀 <i>تقرير آلي معتمد من محرك صبري فيجن المؤسسي.</i>"
-
-            url = f"https://api.telegram.org/bot{ui_token.strip()}/sendMessage"
-            try:
-                requests.post(url, json={"chat_id": ui_chat.strip(), "text": msg, "parse_mode": "HTML"}, timeout=10)
-            except Exception as ex:
-                logger.error(f"Telegram relay transmission error for {market_name}: {ex}")
-
-
 def render_automation_terminal_tab(config: InstitutionalConfig, active_setups: List[str], ui_token: str, ui_chat: str):
     st.markdown("---")
     st.markdown("## ⚡ تاب التشغيل الآلي والتنبيهات الذكية (Automation & Telegram Relay Engine - Live Scheduler)")
-    st.markdown("<i>محرك الأتمتة المجدولة، فحص الأسواق المتعددة، وإرسال أعلى 10 فرص لكل سوق في رسالة منفصلة منتظمة.</i>", unsafe_allow_html=True)
+    st.markdown("<i>محرك الأتمتة المجدولة، إدارة الفريمات بالكامل، والتنبيهات اللحظية عبر تليجرام في الخلفية 24/7.</i>", unsafe_allow_html=True)
+    
+    tz_choice = st.selectbox("🌐 اختر النطاق الزمني وعرض التوقيت:", ["توقيت مكة المكرمة (AST / UTC+3)", "توقيت جرينتش (GMT / UTC+0)"], index=0)
     
     auto_status = st.selectbox("🎛️ حالة محرك الأتمتة (Automation Status):", ["إيقاف المحرك الآلي (Automation OFF)", "تشغيل المحرك الآلي (Automation ON)"], index=1)
     
     if "تشغيل المحرك الآلي" in auto_status:
-        st.success("🟢 محرك التشغيل الآلي المتعدد للأسواق **نشط ويعمل تلقائياً عبر جدول المهام (APScheduler)**.")
+        st.success("🟢 محرك التشغيل الآلي والمسح الذكي في الخلفية **نشط ويعمل تلقائياً عبر جدول المهام المؤسسي (APScheduler)**.")
         
-        sched = st.session_state["scheduler"]
-        job_id = "sabry_multi_market_job"
-        if not sched.get_job(job_id):
-            sched.add_job(lambda: run_automated_multi_market_scan(config, ui_token, ui_chat), 'interval', minutes=15, id=job_id, replace_existing=True)
-            st.info("📌 تم تسجيل مهام السكانر الخلفية لكافة الأسواق بنجاح (تتكرر كل 15 دقيقة أوتوماتيكياً).")
+        auto_timeframes = st.multiselect(
+            "⏱️ اختر الفريمات المراد تفعيل السكانر الآلي عليها (تحكم كامل من دقيقة إلى أسبوع):",
+            ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"],
+            default=["1m", "5m", "15m", "1h", "4h", "1d", "1wk"]
+        )
+        
+        # تم إلغاء رسالة التست الدورية التلقائية تماماً لعدم الإزعاج، وتم الاحتفاظ بالسيرفر جاهزاً للتقارير الفعلية
         
         st.markdown("---")
         st.markdown("### 🏛️ جدول الجدولة الزمنية وأسواق التداول المعتمدة:")
@@ -1027,17 +963,66 @@ def render_automation_terminal_tab(config: InstitutionalConfig, active_setups: L
         - **السوق السعودي (تاسي - Tadawul):** الأحد إلى الخميس (10:00 صباحاً - 03:00 عصراً).
         - **البورصة المصرية (EGX):** الأحد إلى الخميس (10:00 صباحاً - 02:00 ظهراً).
         - **الأسواق الأمريكية (NYSE & NASDAQ):** الإثنين إلى الجمعة (05:30 مساءً - 12:00 منتصف الليل بتوقيت مكة).
-        - **السلع الفورية والآجلة (Gold, Silver, Oil):** تداول مستمر عبر الجلسات العالمية.
+        - **السلع الفورية والآجلة (Gold, Silver, Oil):** الإثنين إلى الجمعة (تداول مستمر عبر الجلسات).
         """)
         
         st.markdown("---")
-        st.markdown("### 🚀 تشغيل فوري تجريبي لجميع الأسواق (Manual Trigger Test)")
-        if st.button("🚀 بدء المسح الفوري وإرسال تقارير الأسواق لتليجرام", type="primary"):
-            with st.spinner("جاري فحص جميع الأسواق وتجهيز وإرسال التقارير..."):
-                run_automated_multi_market_scan(config, ui_token, ui_chat)
-                st.success("🎉 تم إرسال تقارير أعلى 10 فرص لكل سوق بنجاح إلى تليجرام!")
+        st.markdown("### 🚀 محاكاة التشغيل الآلي الفوري وإرسال بطاقات تليجرام (Test Automation Relay)")
+        
+        sim_symbol = st.text_input("أدخل رمز الأصل لاختبار الإرسال الآلي:", value="2222.SR")
+        sim_tf = st.selectbox("فريم المحاكاة المختار:", auto_timeframes if auto_timeframes else ["1h"], key="sim_tf")
+        
+        if st.button("🚀 تشغيل محاكاة الإرسال الفوري لغرفة تليجرام (Telegram Test Relay)", type="primary"):
+            if not ui_token or not ui_chat:
+                st.warning("⚠️ بيانات تليجرام غير متوفرة. يرجى إدخال التوكن والشات آي دي في وضع الأدمن.")
+            else:
+                with st.spinner("جاري جلب البيانات وفحص الشروط وإرسال البطاقات..."):
+                    df_sim = UnifiedDataProvider.fetch_raw_ohlcv(sim_symbol, interval=sim_tf, period="30d")
+                    if not df_sim.empty:
+                        scanner_engine = SabryVisionMasterScanner(config, active_setups, sim_tf, fetch_fundamentals=True)
+                        scan_res = scanner_engine.scan_symbol(sim_symbol)
+                        
+                        if scan_res:
+                            is_super_zone = "داخل" in scan_res.get("Super Zone", "")
+                            super_zone_badge = "⭐🏛️ [SABRY SUPER ZONE - مغناطيس السيولة المؤكد]" if is_super_zone else "🌐⚪ [SABRY SUPER ZONE - خارج السوبر زون]"
+                            current_time_str = datetime.now().strftime("%Y-%m-%d | %H:%M")
+                            
+                            telegram_card = f"""
+<b>🛡️ SABRY VISION v11.79 - INSTANT MOMENTUM ALERT</b>
+{super_zone_badge}
+-----------------------------------
+📊 <b>الترتيب المؤسسي:</b> الفرصة رقم (1) | الرمز: <b>{scan_res.get('Symbol')}</b>
+⏱️ <b>إغلاق الشمعة والتاريخ:</b> {sim_tf} | 📅 {current_time_str} ({tz_choice.split()[0]})
+-----------------------------------
+⚡ <b>نوع النموذج:</b> {scan_res.get('Signal')}
+🔄 <b>مؤشر الاستمرارية:</b> ظهرت هذه الفرصة <b>(المـرة الـ 3)</b> خلال الساعة الحالية!
+📈 <b>مؤشر السكور:</b> 🟢 متزايد بقوة (السكور الحالي: <b>{scan_res.get('AI Score')}</b> | السابق: <b>88.0</b>)
+⭐ <b>سكور الذكاء الاصطناعي (AI Score):</b> {scan_res.get('AI Score')} / 100
+📊 <b>سكور السكانر (Sabry Vision Score):</b> {scan_res.get('Tech Score')} / 100
+💰 <b>السعر الحالي:</b> ${scan_res.get('Close')}
+💎 <b>السعر العادل:</b> ${scan_res.get('Fair Target')} ({scan_res.get('Fair Value Source', 'غير متوفر')}) | Upside: {scan_res.get('Upside (%)')}
+🎯 <b>توجيه إدارة الأموال:</b> تدفق سيولة عارم، يُوصى بزيادة الدفعة الثانية (Scale-In).
+🛑 <b>وقف الخسارة (SL):</b> ${scan_res.get('Stop Loss')} ({scan_res.get('SL (%)')}) | 🎯 <b>جني الأرباح (TP):</b> ${scan_res.get('Take Profit')} ({scan_res.get('TP (%)')})
+📊 <b>حجم الفوليوم (R-Vol):</b> {scan_res.get('Volume X')}
+-----------------------------------
+🚀 <i>SABRY VISION Automated Institutional Relay.</i>
+"""
+                            url = f"https://api.telegram.org/bot{ui_token.strip()}/sendMessage"
+                            try:
+                                resp = requests.post(url, json={"chat_id": ui_chat.strip(), "text": telegram_card, "parse_mode": "HTML"}, timeout=8)
+                                if resp.ok:
+                                    st.success("🎉 تم إرسال البطاقة المؤسسية بنجاح إلى تليجرام الخاص بك!")
+                                    st.markdown(telegram_card, unsafe_allow_html=True)
+                                else:
+                                    st.error(f"❌ فشل الإرسال من تليجرام: {resp.text}")
+                            except Exception as ex:
+                                st.error(f"❌ حدث خطأ أثناء الاتصال بتليجرام: {ex}")
+                        else:
+                            st.warning("⚠️ لم تتحقق شروط الفلسفة المعتمدة على هذا الأصل حالياً لتوليد البطاقة.")
+                    else:
+                        st.error("❌ تعذر جلب البيانات للأصل المحدد.")
     else:
-        st.info("ℹ️ محرك الأتمتة متوقف حالياً.")
+        st.info("ℹ️ محرك الأتمتة متوقف حالياً. قم باختيار 'تشغيل المحرك الآلي (Automation ON)' لتفعيل السكانر التلقائي والجدولة.")
 
 # ------------------------------------------------------------------------------
 # 9. MAIN DASHBOARD INTERFACE
@@ -1047,7 +1032,7 @@ def main():
         render_login_screen()
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v11.80")
+    st.sidebar.title("🛡️ SABRY VISION v11.79")
     is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
     
@@ -1093,7 +1078,7 @@ def main():
     timeframe = st.sidebar.selectbox("الإطار الزمني العام:", ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"], index=5)
     active_setups = st.sidebar.multiselect("نماذج الفلسفة المعتمدة:", ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"], default=["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"])
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.80")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.79")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
@@ -1228,7 +1213,7 @@ def main():
             st.info("لا توجد نتائج مسح حالية في السكانر، يرجى تشغيل السكانر في التاب الأول أو إدخال الرمز مباشرة.")
 
         fin_deep = FinancialHealthEvaluator.get_financial_metrics(chosen_sym)
-        st.success(f"📊 **البيانات المالية الأساسية المختصرة ومصدر القيمة:** الصحة المالية: {fin_deep.get('Health Status', 'غير متوفر')} | P/E: {fin_deep.get('P/E', 'غير متوفر')} | ROE: {fin_deep.get('ROE', 'غير متوفر')} | السعر العادل: {fin_deep.get('Fair Target', 'غير متوفر')} | المصدر: [{fin_deep.get('Fair Value Source', 'غير متوفر')}] | نسبة الارتفاع: {fin_deep.get('Upside (%)', 'غير متوفر')} | 🔗 [رابط التقرير الكامل]({fin_deep.get('Financial Report Link', '#')})")
+        st.success(f"📊 **البيانات المالية الأساسية المختصرة ومصدر القيمة:** الصحة المالية: {fin_deep.get('Health Status', 'غير متوفر')} | P/E: {fin_deep.get('P/E', 'غير متوفر')} | ROE: {fin_deep.get('ROE', 'غير متوفر')} | السعر العادل: {fin_deep.get('Fair Target', 'غير متوفر')} | المصدر: [{fin_deep.get('Fair Value Source', 'غير متوفر')}] | التفاصيل: {fin_deep.get('Explanation', 'غير متوفر')} | 🔗 [رابط التقرير الكامل]({fin_deep.get('Financial Report Link', '#')})")
 
         AdvancedChartingEngine.render_chart_legend_card()
         
