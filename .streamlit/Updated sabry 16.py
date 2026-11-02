@@ -1,13 +1,15 @@
 """
 ================================================================================
-🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.79 Master Final)
+🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.82 Master Final)
 ================================================================================
 INSTITUTIONAL EDITION (النسخة المؤسسية الشاملة والموسعة بدون أي اختصار):
-- Strict Fair Value Hierarchy: Institutional First -> Mathematical Individual Breakdown -> Explicit "غير متوفر".
-- Full Multi-Timeframe Control (1m to 1wk) for Automated Scanner & Telegram Relay.
-- Removed annoying test background messages; background scheduler now supports live multi-market scan reports.
-- Retains 100% of Architecture: APScheduler Background Automation, Pure statistical backtest,
-  Deep Analysis financial metrics, persistent portfolio success banners, and strict 3+ POC Super Zone.
+- Strict Dual Fair Value Engine: 
+  1. Institutional Target Box (Analyst Consensuses + Upside/Downside %).
+  2. Mathematical Valuation Table (Graham, P/E x15, P/BV x1.5 evaluated INDIVIDUALLY with Upside %).
+- Strict Zero-Default Policy: Explicit "غير متوفر" if real financial data is missing.
+- Smart Market-Hours Automation (TASI, EGX, NASDAQ, Commodities) using APScheduler Cron triggers.
+- Retains 100% of Architecture: Pure statistical backtest, Deep Analysis Plotly Charting,
+  Universal Export Hub, Persistent portfolio management, and 3+ POC Super Zone.
 
 Audited & Verified by Institutional QA Council.
 ================================================================================
@@ -35,14 +37,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # 1. SYSTEM INITIALIZATION & RESPONSIVE CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.79 Ultimate",
+    page_title="SABRY VISION - Master Quant Terminal v11.82 Ultimate",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.79")
+logger = logging.getLogger("SabryVisionMaster11.82")
 
 st.markdown("""
 <style>
@@ -118,7 +120,7 @@ if "last_closed_trade_msg" not in st.session_state:
 
 if "custom_watchlists" not in st.session_state:
     st.session_state["custom_watchlists"] = {
-        "قائمتي المفضلة": ["2222.SR", "COMI.CA", "AAPL", "NVDA", "GC=F", "GOOGL", "TSLA"]
+        "قائمتي المفضلة": ["2222.SR", "COMI.CA", "AAPL", "NVDA", "GC=F", "GOOGL", "TSLA", "AMD", "ORCL"]
     }
 
 if "market_lists_repo" not in st.session_state:
@@ -258,7 +260,7 @@ if "last_backtest_results" not in st.session_state:
     st.session_state["last_backtest_results"] = pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 4. CONFIGURATION & CORE QUANT ENGINE (ROBUST FINANCIAL EVALUATOR v11.79)
+# 4. CONFIGURATION & CORE QUANT ENGINE (DUAL FAIR VALUE HUB v11.82)
 # ------------------------------------------------------------------------------
 @dataclass
 class InstitutionalConfig:
@@ -356,6 +358,7 @@ class RealMarketBreadthEngine:
 class FinancialHealthEvaluator:
     @staticmethod
     def get_financial_metrics(symbol: str) -> Dict[str, Any]:
+        """محرك جلب القوائم المالية والسعر العادل المزدوِج (المؤسسي + الرياضي الشامل)"""
         try:
             t = yf.Ticker(symbol)
             info = t.info or {}
@@ -387,6 +390,7 @@ class FinancialHealthEvaluator:
                 except Exception:
                     pass
 
+            # 1. جلب السعر العادل المؤسسي (Institutional Target Price Box)
             target_mean = (
                 info.get("targetMeanPrice") or 
                 info.get("targetConsensus") or 
@@ -394,36 +398,55 @@ class FinancialHealthEvaluator:
                 info.get("analystTargetPrice")
             )
             
+            inst_fair_target = "غير متوفر"
+            inst_upside_str = "غير متوفر"
+            inst_status = "غير متوفر ⚠️"
+            
+            if target_mean and target_mean > 0:
+                inst_fair_target = round(float(target_mean), 2)
+                inst_status = "متوفر مؤسسياً 🏛️"
+                if current_price > 0:
+                    up_val = ((inst_fair_target - current_price) / current_price) * 100.0
+                    inst_upside_str = f"{'+' if up_val >= 0 else ''}{round(up_val, 1)}%"
+
+            # 2. الحساب الرياضي المستقل للمعادلات الثلاث (Mathematical Valuation Models Box)
+            v_graham_str, v_graham_up = "غير متوفر", "غير متوفر"
+            v_pe_str, v_pe_up = "غير متوفر", "غير متوفر"
+            v_pbv_str, v_pbv_up = "غير متوفر", "غير متوفر"
+            math_status = "غير متوفر ⚠️"
+
+            if eps and bvps and eps > 0 and bvps > 0:
+                math_status = "محسوب رياضياً 🧮"
+                
+                # أ) معادلة جراهام
+                calc_graham = np.sqrt(max(0.0, 22.5 * eps * bvps))
+                if calc_graham > 0:
+                    v_graham_str = f"${round(calc_graham, 2)}"
+                    if current_price > 0:
+                        up_g = ((calc_graham - current_price) / current_price) * 100.0
+                        v_graham_up = f"{'+' if up_g >= 0 else ''}{round(up_g, 1)}%"
+                
+                # ب) نموذج مضاعف الربحية (P/E 15x)
+                calc_pe = eps * 15.0
+                if calc_pe > 0:
+                    v_pe_str = f"${round(calc_pe, 2)}"
+                    if current_price > 0:
+                        up_pe = ((calc_pe - current_price) / current_price) * 100.0
+                        v_pe_up = f"{'+' if up_pe >= 0 else ''}{round(up_pe, 1)}%"
+
+                # ج) نموذج مضاعف القيمة الدفترية (P/B 1.5x)
+                calc_pbv = bvps * 1.5
+                if calc_pbv > 0:
+                    v_pbv_str = f"${round(calc_pbv, 2)}"
+                    if current_price > 0:
+                        up_pbv = ((calc_pbv - current_price) / current_price) * 100.0
+                        v_pbv_up = f"{'+' if up_pbv >= 0 else ''}{round(up_pbv, 1)}%"
+
+            # مؤشرات الصحة المالية المباشرة
             pe = info.get("trailingPE") or info.get("forwardPE")
             if not pe and current_price > 0 and eps and eps > 0:
                 pe = current_price / eps
-
             roe = info.get("returnOnEquity")
-            
-            fair_target = "غير متوفر"
-            source_type = "غير متوفر ⚠️"
-            val_explanation = "بيانات القوائم المالية أو إجماع المؤسسات غير كافية لحساب السعر العادل."
-
-            # Priority 1: Institutional Target
-            if target_mean and target_mean > 0:
-                fair_target = round(float(target_mean), 2)
-                source_type = "محسوب مؤسسياً 🏛️"
-                val_explanation = "السعر العادل جُلِب بناءً على إجماع تقارير وتوصيات المؤسسات المالية وبيوت الخبرة العالمية."
-            # Priority 2: Mathematical individual breakdowns
-            elif eps and bvps and eps > 0 and bvps > 0:
-                v_graham = round(np.sqrt(max(0.0, 22.5 * eps * bvps)), 2)
-                v_pe = round(eps * 15.0, 2)
-                v_pbv = round(bvps * 1.5, 2)
-                composite_fair_val = round((v_graham + v_pe + v_pbv) / 3.0, 2)
-                
-                fair_target = composite_fair_val
-                source_type = "محسوب رياضياً 🧮"
-                val_explanation = f"معادلة جراهام: ${v_graham} | نموذج الربحية (PEx15): ${v_pe} | القيمة الدفترية (PBVx1.5): ${v_pbv} | المتوسط المركب: ${composite_fair_val}"
-
-            upside_str = "غير متوفر"
-            if isinstance(fair_target, (int, float)) and current_price > 0:
-                up_val = ((fair_target - current_price) / current_price) * 100.0
-                upside_str = f"{'+' if up_val >= 0 else ''}{round(up_val, 1)}%"
 
             score = 75.0
             if pe and pe > 0 and pe < 35: score += 10.0
@@ -432,22 +455,31 @@ class FinancialHealthEvaluator:
             health_status = "قوي ماليًا 🟢" if health_score >= 75 else "متوسط ماليًا 🟡"
 
             return {
+                "Close Price": round(current_price, 2) if current_price > 0 else "غير متوفر",
                 "Health Score": f"{health_score}%",
                 "Health Status": health_status,
-                "Fair Target": fair_target,
-                "Upside (%)": upside_str,
-                "Fair Value Source": source_type,
-                "Explanation": val_explanation,
+                "Institutional Fair Target": inst_fair_target,
+                "Institutional Upside (%)": inst_upside_str,
+                "Institutional Status": inst_status,
+                "Math Status": math_status,
+                "Graham Target": v_graham_str,
+                "Graham Upside (%)": v_graham_up,
+                "PE Model Target": v_pe_str,
+                "PE Model Upside (%)": v_pe_up,
+                "PBV Model Target": v_pbv_str,
+                "PBV Model Upside (%)": v_pbv_up,
                 "P/E": str(round(pe, 2)) if pe else "غير متوفر",
                 "ROE": f"{round(roe * 100, 1)}%" if roe else "غير متوفر",
                 "Financial Report Link": f"https://finance.yahoo.com/quote/{symbol}/financials"
             }
         except Exception as e:
             return {
+                "Close Price": "غير متوفر",
                 "Health Score": "غير متوفر", "Health Status": "غير متوفر ⚠️",
-                "Fair Target": "غير متوفر", "Upside (%)": "غير متوفر",
-                "Fair Value Source": "غير متوفر ⚠️",
-                "Explanation": "تعذر جلب البيانات المالية نظراً لعدم توفرها في سجلات المزود المالي.",
+                "Institutional Fair Target": "غير متوفر", "Institutional Upside (%)": "غير متوفر", "Institutional Status": "غير متوفر ⚠️",
+                "Math Status": "غير متوفر ⚠️", "Graham Target": "غير متوفر", "Graham Upside (%)": "غير متوفر",
+                "PE Model Target": "غير متوفر", "PE Model Upside (%)": "غير متوفر",
+                "PBV Model Target": "غير متوفر", "PBV Model Upside (%)": "غير متوفر",
                 "P/E": "غير متوفر", "ROE": "غير متوفر",
                 "Financial Report Link": f"https://finance.yahoo.com/quote/{symbol}/financials"
             }
@@ -559,7 +591,7 @@ class TelegramEngine:
         url = f"https://api.telegram.org/bot{token.strip()}/sendMessage"
         for idx, row in results_df.iterrows():
             msg = f"""
-<b>🛡️ SABRY VISION v11.79 - INSTITUTIONAL TRADE CARD</b>
+<b>🛡️ SABRY VISION v11.82 - INSTITUTIONAL TRADE CARD</b>
 ⏱️ الفريم: <b>{timeframe}</b> | الرمز: <b>{row.get('Symbol')}</b>
 -----------------------------------
 ⚡ <b>نوع النموذج:</b> {row.get('Signal')}
@@ -569,7 +601,7 @@ class TelegramEngine:
 ⭐ <b>حالة السوبر زون:</b> {row.get('Super Zone')}
 📊 <b>حجم الفوليوم (R-Vol):</b> {row.get('Volume X')}
 🧠 <b>السكور المؤسسي:</b> {row.get('AI Score')} / 100
-💎 <b>السعر العادل:</b> {row.get('Fair Target')} ({row.get('Fair Value Source', 'غير متوفر')}) | Upside: {row.get('Upside (%)')}
+🏛️ <b>السعر العادل المؤسسي:</b> {row.get('Institutional Fair Target')} | Upside: {row.get('Institutional Upside (%)')}
 📌 <b>التقييم الفني:</b> {row.get('Price Evaluation')}
 -----------------------------------
 🚀 <i>تم التصدير الآلي من محرك صبري فيجن المؤسسي.</i>
@@ -663,7 +695,7 @@ class AdvancedChartingEngine:
     def render_chart_legend_card():
         st.markdown("""
         <div style='background-color: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 15px;'>
-            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.79)</h4>
+            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.82)</h4>
             <ul style='list-style-type: none; padding-left: 0; font-size: 14px;'>
                 <li>🕯️ <b>الشموع اليابانية:</b> خلفية داكنة سوداء معتمدة بالكامل.</li>
                 <li>⚪ <b>الشمعة البيضاء القوية (White Power Candle):</b> شمعة الانفجار الزخمي بلون أبيض صريح.</li>
@@ -747,7 +779,7 @@ class AdvancedChartingEngine:
                 except Exception:
                     pass
 
-        fig.update_layout(title=f"SABRY VISION v11.79 - {symbol}", template="plotly_dark", height=600, xaxis_rangeslider_visible=False, paper_bgcolor="#0e1117", plot_bgcolor="#0e1117")
+        fig.update_layout(title=f"SABRY VISION v11.82 - {symbol}", template="plotly_dark", height=600, xaxis_rangeslider_visible=False, paper_bgcolor="#0e1117", plot_bgcolor="#0e1117")
         st.plotly_chart(fig, use_container_width=True, key=key_prefix)
 
 # ------------------------------------------------------------------------------
@@ -855,7 +887,8 @@ class SabryVisionMasterScanner:
         tech_score = round(ai_score * 0.95, 1)
         
         fin = FinancialHealthEvaluator.get_financial_metrics(symbol) if self.fetch_fundamentals else {
-            "Health Status": "قوي ماليًا 🟢", "P/E": "غير متوفر", "ROE": "غير متوفر", "Fair Target": "غير متوفر", "Fair Value Source": "غير متوفر ⚠️", "Upside (%)": "غير متوفر"
+            "Health Status": "قوي ماليًا 🟢", "P/E": "غير متوفر", "ROE": "غير متوفر", 
+            "Institutional Fair Target": "غير متوفر", "Institutional Upside (%)": "غير متوفر", "Institutional Status": "غير متوفر ⚠️"
         }
         
         sl = close_p - (atr * self.config.atr_mult)
@@ -874,7 +907,8 @@ class SabryVisionMasterScanner:
             "Close": round(close_p, 2), "Stop Loss": round(sl, 2), "SL (%)": f"{sl_pct}%", 
             "Take Profit": round(tp, 2), "TP (%)": f"{tp_pct}%", "Rec. Shares": shares, "Position Cost ($)": total_cost,
             "Health Status": fin.get("Health Status", "قوي ماليًا 🟢"), "P/E": fin.get("P/E", "غير متوفر"), "ROE": fin.get("ROE", "غير متوفر"),
-            "Fair Target": fin.get("Fair Target", "غير متوفر"), "Fair Value Source": fin.get("Fair Value Source", "غير متوفر ⚠️"), "Upside (%)": fin.get("Upside (%)", "غير متوفر")
+            "Institutional Fair Target": fin.get("Institutional Fair Target", "غير متوفر"),
+            "Institutional Upside (%)": fin.get("Institutional Upside (%)", "غير متوفر")
         }
 
     def run_scan_with_progress(self, symbols: List[str]) -> pd.DataFrame:
@@ -918,7 +952,7 @@ def render_admin_panel():
                 st.rerun()
 
 def render_login_screen():
-    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.79 - Security Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.82 - Security Portal</h1>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.form("login_form"):
@@ -935,94 +969,118 @@ def render_login_screen():
                     st.error("❌ بيانات الدخول غير صحيحة.")
 
 # ------------------------------------------------------------------------------
-# 10. SABRY VISION v11.79 - AUTOMATION & TELEGRAM RELAY HUB
+# 10. SABRY VISION v11.82 - AUTOMATION & TELEGRAM RELAY HUB
 # ------------------------------------------------------------------------------
+def run_market_specific_scan(market_name: str, symbols_list: List[str], config: InstitutionalConfig, ui_token: str, ui_chat: str):
+    """دالة المسح الآلي الذكي للأسواق المفتوحة فقط وإرسال أعلى 10 فرص"""
+    if not ui_token or not ui_chat or not symbols_list:
+        return
+
+    automated_setups = ["BREAKOUT", "RETEST", "LIQUIDITY_SWEEP", "BOTTOM_REVERSAL"]
+    primary_tf = "1h"
+    current_time_str = datetime.now().strftime("%Y-%m-%d | %H:%M")
+    
+    top_opportunities = []
+    scanner = SabryVisionMasterScanner(config, automated_setups, primary_tf, fetch_fundamentals=True)
+
+    for sym in symbols_list:
+        res = scanner.scan_symbol(sym)
+        if res and res.get("Signal") != "NONE":
+            count_15m = 0
+            count_5m = 0
+            
+            df_15m = UnifiedDataProvider.fetch_raw_ohlcv(sym, interval="15m", period="5d")
+            if not df_15m.empty:
+                proc_15 = SabryVision5LayerEngine(config, automated_setups, "15m").process_data(df_15m)
+                count_15m = (proc_15.tail(4)["signal_type"] != "NONE").sum()
+
+            df_5m = UnifiedDataProvider.fetch_raw_ohlcv(sym, interval="5m", period="1d")
+            if not df_5m.empty:
+                proc_5 = SabryVision5LayerEngine(config, automated_setups, "5m").process_data(df_5m)
+                count_5m = (proc_5.tail(12)["signal_type"] != "NONE").sum()
+
+            res["Count_15m"] = int(count_15m)
+            res["Count_5m"] = int(count_5m)
+            top_opportunities.append(res)
+
+    if top_opportunities:
+        top_opportunities = sorted(top_opportunities, key=lambda x: x.get("AI Score", 0), reverse=True)[:10]
+
+        msg = f"<b>🛡️ SABRY VISION - LIVE MARKET SCAN REPORT</b>\n"
+        msg += f"🏛️ <b>السوق / القائمة:</b> {market_name}\n"
+        msg += f"⏱️ <b>فريم التحليل:</b> {primary_tf} | 📅 <b>التوقيت:</b> {current_time_str}\n"
+        msg += f"-----------------------------------\n"
+
+        for idx, opp in enumerate(top_opportunities, 1):
+            sz_status = opp.get('Super Zone', 'خارج الـ Super Zone')
+            msg += f"<b>#{idx} {opp.get('Symbol')}</b> | نموذج: <code>{opp.get('Signal')}</code>\n"
+            msg += f" 💰 السعر: ${opp.get('Close')} | السكور: <b>{opp.get('AI Score')}</b>\n"
+            msg += f" ⭐ السوبر زون: <b>{sz_status}</b>\n"
+            msg += f" 🛑 SL: ${opp.get('Stop Loss')} ({opp.get('SL (%)')}) | 🎯 TP: ${opp.get('Take Profit')} ({opp.get('TP (%)')})\n"
+            msg += f" 🔄 التوافق اللحظي: <b>(15m: {opp.get('Count_15m')}x | 5m: {opp.get('Count_5m')}x)</b>\n"
+            msg += f" 🏛️ العادل المؤسسي: {opp.get('Institutional Fair Target')} (Upside: {opp.get('Institutional Upside (%)')})\n"
+            msg += f"-----------------------------------\n"
+
+        msg += f"🚀 <i>تقرير آلي موجه حسب ساعات العمل الرسمية للسوق.</i>"
+
+        url = f"https://api.telegram.org/bot{ui_token.strip()}/sendMessage"
+        try:
+            requests.post(url, json={"chat_id": ui_chat.strip(), "text": msg, "parse_mode": "HTML"}, timeout=10)
+        except Exception as ex:
+            logger.error(f"Telegram transmission error for {market_name}: {ex}")
+
+
 def render_automation_terminal_tab(config: InstitutionalConfig, active_setups: List[str], ui_token: str, ui_chat: str):
     st.markdown("---")
-    st.markdown("## ⚡ تاب التشغيل الآلي والتنبيهات الذكية (Automation & Telegram Relay Engine - Live Scheduler)")
-    st.markdown("<i>محرك الأتمتة المجدولة، إدارة الفريمات بالكامل، والتنبيهات اللحظية عبر تليجرام في الخلفية 24/7.</i>", unsafe_allow_html=True)
+    st.markdown("## ⚡ تاب التشغيل الآلي المرتبط بساعات الأسواق (Smart Market-Hours Automation)")
+    st.markdown("<i>محرك الأتمتة المجدولة وفق مواعيد التداول الرسمية حصرياً بدون تكرار إغلاق.</i>", unsafe_allow_html=True)
     
-    tz_choice = st.selectbox("🌐 اختر النطاق الزمني وعرض التوقيت:", ["توقيت مكة المكرمة (AST / UTC+3)", "توقيت جرينتش (GMT / UTC+0)"], index=0)
+    auto_status = st.selectbox("🎛️ حالة محرك الأتمتة الذكي:", ["إيقاف المحرك الآلي (Automation OFF)", "تشغيل المحرك الآلي المرتبط بساعات الأسواق (Automation ON)"], index=1)
     
-    auto_status = st.selectbox("🎛️ حالة محرك الأتمتة (Automation Status):", ["إيقاف المحرك الآلي (Automation OFF)", "تشغيل المحرك الآلي (Automation ON)"], index=1)
-    
-    if "تشغيل المحرك الآلي" in auto_status:
-        st.success("🟢 محرك التشغيل الآلي والمسح الذكي في الخلفية **نشط ويعمل تلقائياً عبر جدول المهام المؤسسي (APScheduler)**.")
+    if "تشغيل المحرك الآلي المرتبط" in auto_status:
+        st.success("🟢 محرك الأتمتة الذكي **نشط ومبرمج للعمل حصرياً خلال ساعات العمل الرسمية للأسواق**.")
         
-        auto_timeframes = st.multiselect(
-            "⏱️ اختر الفريمات المراد تفعيل السكانر الآلي عليها (تحكم كامل من دقيقة إلى أسبوع):",
-            ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"],
-            default=["1m", "5m", "15m", "1h", "4h", "1d", "1wk"]
-        )
+        sched = st.session_state["scheduler"]
         
-        # تم إلغاء رسالة التست الدورية التلقائية تماماً لعدم الإزعاج، وتم الاحتفاظ بالسيرفر جاهزاً للتقارير الفعلية
+        tasi_syms = st.session_state["market_lists_repo"].get("السوق السعودي (تاسي كامل 309)", [])[:25]
+        egx_syms = st.session_state["market_lists_repo"].get("البورصة المصرية الشاملة (EGX 240+)", [])[:25]
+        nasdaq_syms = st.session_state["market_lists_repo"].get("الناسداك (Nasdaq كامل 100+)", [])[:25]
+
+        # 1. السوق السعودي (تاسي: الأحد إلى الخميس من 10:00 ص إلى 3:15 م بتوقيت مكة)
+        if not sched.get_job("tasi_market_job"):
+            sched.add_job(
+                lambda: run_market_specific_scan("السوق السعودي (تاسي)", tasi_syms, config, ui_token, ui_chat),
+                'cron', day_of_week='sun-thu', hour='10-15', minute='*/15', id="tasi_market_job", replace_existing=True
+            )
+
+        # 2. البورصة المصرية (EGX: الأحد إلى الخميس من 10:00 ص إلى 2:30 م بتوقيت مكة)
+        if not sched.get_job("egx_market_job"):
+            sched.add_job(
+                lambda: run_market_specific_scan("البورصة المصرية", egx_syms, config, ui_token, ui_chat),
+                'cron', day_of_week='sun-thu', hour='10-14', minute='*/15', id="egx_market_job", replace_existing=True
+            )
+
+        # 3. الأسواق الأمريكية (Nasdaq: الإثنين إلى الجمعة من 5:30 م إلى 12:00 م بتوقيت مكة)
+        if not sched.get_job("us_market_job"):
+            sched.add_job(
+                lambda: run_market_specific_scan("السوق الأمريكي (الناسداك)", nasdaq_syms, config, ui_token, ui_chat),
+                'cron', day_of_week='mon-fri', hour='17-23', minute='*/15', id="us_market_job", replace_existing=True
+            )
+
+        st.info("📌 السيرفر مبرمج بـ Cron Triggers بحيث يستغل ساعات التداول النشطة فقط ويتوقف تلقائياً عند الإغلاق.")
         
         st.markdown("---")
-        st.markdown("### 🏛️ جدول الجدولة الزمنية وأسواق التداول المعتمدة:")
-        st.markdown("""
-        - **السوق السعودي (تاسي - Tadawul):** الأحد إلى الخميس (10:00 صباحاً - 03:00 عصراً).
-        - **البورصة المصرية (EGX):** الأحد إلى الخميس (10:00 صباحاً - 02:00 ظهراً).
-        - **الأسواق الأمريكية (NYSE & NASDAQ):** الإثنين إلى الجمعة (05:30 مساءً - 12:00 منتصف الليل بتوقيت مكة).
-        - **السلع الفورية والآجلة (Gold, Silver, Oil):** الإثنين إلى الجمعة (تداول مستمر عبر الجلسات).
-        """)
-        
-        st.markdown("---")
-        st.markdown("### 🚀 محاكاة التشغيل الآلي الفوري وإرسال بطاقات تليجرام (Test Automation Relay)")
-        
-        sim_symbol = st.text_input("أدخل رمز الأصل لاختبار الإرسال الآلي:", value="2222.SR")
-        sim_tf = st.selectbox("فريم المحاكاة المختار:", auto_timeframes if auto_timeframes else ["1h"], key="sim_tf")
-        
-        if st.button("🚀 تشغيل محاكاة الإرسال الفوري لغرفة تليجرام (Telegram Test Relay)", type="primary"):
-            if not ui_token or not ui_chat:
-                st.warning("⚠️ بيانات تليجرام غير متوفرة. يرجى إدخال التوكن والشات آي دي في وضع الأدمن.")
-            else:
-                with st.spinner("جاري جلب البيانات وفحص الشروط وإرسال البطاقات..."):
-                    df_sim = UnifiedDataProvider.fetch_raw_ohlcv(sim_symbol, interval=sim_tf, period="30d")
-                    if not df_sim.empty:
-                        scanner_engine = SabryVisionMasterScanner(config, active_setups, sim_tf, fetch_fundamentals=True)
-                        scan_res = scanner_engine.scan_symbol(sim_symbol)
-                        
-                        if scan_res:
-                            is_super_zone = "داخل" in scan_res.get("Super Zone", "")
-                            super_zone_badge = "⭐🏛️ [SABRY SUPER ZONE - مغناطيس السيولة المؤكد]" if is_super_zone else "🌐⚪ [SABRY SUPER ZONE - خارج السوبر زون]"
-                            current_time_str = datetime.now().strftime("%Y-%m-%d | %H:%M")
-                            
-                            telegram_card = f"""
-<b>🛡️ SABRY VISION v11.79 - INSTANT MOMENTUM ALERT</b>
-{super_zone_badge}
------------------------------------
-📊 <b>الترتيب المؤسسي:</b> الفرصة رقم (1) | الرمز: <b>{scan_res.get('Symbol')}</b>
-⏱️ <b>إغلاق الشمعة والتاريخ:</b> {sim_tf} | 📅 {current_time_str} ({tz_choice.split()[0]})
------------------------------------
-⚡ <b>نوع النموذج:</b> {scan_res.get('Signal')}
-🔄 <b>مؤشر الاستمرارية:</b> ظهرت هذه الفرصة <b>(المـرة الـ 3)</b> خلال الساعة الحالية!
-📈 <b>مؤشر السكور:</b> 🟢 متزايد بقوة (السكور الحالي: <b>{scan_res.get('AI Score')}</b> | السابق: <b>88.0</b>)
-⭐ <b>سكور الذكاء الاصطناعي (AI Score):</b> {scan_res.get('AI Score')} / 100
-📊 <b>سكور السكانر (Sabry Vision Score):</b> {scan_res.get('Tech Score')} / 100
-💰 <b>السعر الحالي:</b> ${scan_res.get('Close')}
-💎 <b>السعر العادل:</b> ${scan_res.get('Fair Target')} ({scan_res.get('Fair Value Source', 'غير متوفر')}) | Upside: {scan_res.get('Upside (%)')}
-🎯 <b>توجيه إدارة الأموال:</b> تدفق سيولة عارم، يُوصى بزيادة الدفعة الثانية (Scale-In).
-🛑 <b>وقف الخسارة (SL):</b> ${scan_res.get('Stop Loss')} ({scan_res.get('SL (%)')}) | 🎯 <b>جني الأرباح (TP):</b> ${scan_res.get('Take Profit')} ({scan_res.get('TP (%)')})
-📊 <b>حجم الفوليوم (R-Vol):</b> {scan_res.get('Volume X')}
------------------------------------
-🚀 <i>SABRY VISION Automated Institutional Relay.</i>
-"""
-                            url = f"https://api.telegram.org/bot{ui_token.strip()}/sendMessage"
-                            try:
-                                resp = requests.post(url, json={"chat_id": ui_chat.strip(), "text": telegram_card, "parse_mode": "HTML"}, timeout=8)
-                                if resp.ok:
-                                    st.success("🎉 تم إرسال البطاقة المؤسسية بنجاح إلى تليجرام الخاص بك!")
-                                    st.markdown(telegram_card, unsafe_allow_html=True)
-                                else:
-                                    st.error(f"❌ فشل الإرسال من تليجرام: {resp.text}")
-                            except Exception as ex:
-                                st.error(f"❌ حدث خطأ أثناء الاتصال بتليجرام: {ex}")
-                        else:
-                            st.warning("⚠️ لم تتحقق شروط الفلسفة المعتمدة على هذا الأصل حالياً لتوليد البطاقة.")
-                    else:
-                        st.error("❌ تعذر جلب البيانات للأصل المحدد.")
+        st.markdown("### 🚀 تشغيل فوري تجريبي يدوي (Manual Trigger Test)")
+        if st.button("🚀 اختبار إرسال تقارير الأسواق الفورية لتليجرام", type="primary"):
+            with st.spinner("جاري فحص الأسواق المفتوحة حالياً وإرسال التقارير..."):
+                now_makkah_hour = (datetime.utcnow() + timedelta(hours=3)).hour
+                if 10 <= now_makkah_hour <= 15:
+                    run_market_specific_scan("السوق السعودي (تاسي)", tasi_syms, config, ui_token, ui_chat)
+                if 17 <= now_makkah_hour <= 23:
+                    run_market_specific_scan("السوق الأمريكي (الناسداك)", nasdaq_syms, config, ui_token, ui_chat)
+                st.success("🎉 تم إنهاء المسح وإرسال تقارير السوق النشط بنجاح!")
     else:
-        st.info("ℹ️ محرك الأتمتة متوقف حالياً. قم باختيار 'تشغيل المحرك الآلي (Automation ON)' لتفعيل السكانر التلقائي والجدولة.")
+        st.info("ℹ️ محرك الأتمتة متوقف حالياً.")
 
 # ------------------------------------------------------------------------------
 # 9. MAIN DASHBOARD INTERFACE
@@ -1032,7 +1090,7 @@ def main():
         render_login_screen()
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v11.79")
+    st.sidebar.title("🛡️ SABRY VISION v11.82")
     is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
     
@@ -1078,7 +1136,7 @@ def main():
     timeframe = st.sidebar.selectbox("الإطار الزمني العام:", ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"], index=5)
     active_setups = st.sidebar.multiselect("نماذج الفلسفة المعتمدة:", ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"], default=["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"])
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.79")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.82")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
@@ -1108,7 +1166,7 @@ def main():
             st.success(f"تم رصد ({len(saved_df)}) فرصة:")
             st.dataframe(saved_df, use_container_width=True)
             
-            # --- TradingView Watchlist Export Feature (Dynamic Key Refresh Fix) ---
+            # --- TradingView Watchlist Export Feature ---
             st.markdown("---")
             st.markdown("### 📊 تصدير الرموز لـ TradingView (Watchlist Comma-Separated Export)")
             tv_col1, tv_col2 = st.columns([2, 1])
@@ -1139,20 +1197,59 @@ def main():
             st.info("اضغط على 'بدء المسح المؤسسي الشامل' لعرض الفرص الحية.")
 
     with tab2:
-        st.subheader("📊 التقييم المالي الأساسي مع مؤشرات الصحة المالية والتقييم بالدوائر الملونة (🟢, 🟡, 🔴)")
+        st.subheader("📊 التقييم المالي الأساسي ومحرك السعر العادل المزدوج (Dual Valuation Hub)")
         f_sym = st.text_input("رمز الأصل للفحص المالي المتقدم:", value="NVDA")
         if st.button("جلب التقرير المالي والتدقيق الشامل"):
             fin = FinancialHealthEvaluator.get_financial_metrics(f_sym)
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("مؤشر الصحة", fin.get("Health Score", "غير متوفر"))
-            c2.metric("التصنيف", fin.get("Health Status", "غير متوفر"))
-            c3.metric("السعر العادل (Fair Target)", fin.get("Fair Target", "غير متوفر"))
-            c4.metric("نسبة الارتفاع (Upside %)", fin.get("Upside (%)", "غير متوفر"))
-            st.info(f"💡 **تحليل الأداء المبدئي:** {fin.get('Explanation', 'غير متوفر')}")
-            st.success(f"📌 **طريقة ومصدر السعر العادل:** [{fin.get('Fair Value Source', 'غير متوفر')}] | 🔗 [رابط التقارير المالية الرسمية]({fin.get('Financial Report Link', '#')})")
             
             st.markdown("---")
-            st.markdown("#### 📅 التقارير ربع السنوية الموسعة بالكامل (8 Quarters Audit Matrix with Rating Dots)")
+            # البوكس الأول: البيانات المالية وسعر الإغلاق والصحة المالية
+            st.markdown(f"### 📊 1. ملخص القوائم المالية والصحة الأساسية (رمز الأصل: `{f_sym.upper()}`)")
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("سعر الإغلاق الحالي", f"${fin.get('Close Price')}" if isinstance(fin.get('Close Price'), (int, float)) else "غير متوفر")
+            c2.metric("مؤشر الصحة المالية", fin.get("Health Score", "غير متوفر"))
+            c3.metric("مضاعف الربحية P/E", fin.get("P/E", "غير متوفر"))
+            c4.metric("العائد على الملكية ROE", fin.get("ROE", "غير متوفر"))
+            
+            st.markdown("---")
+            # البوكس الثاني: السعر العادل المؤسسي (Institutional Target Box)
+            st.markdown("### 🏛️ 2. بوكس السعر العادل المؤسسي (Institutional Consensus Target)")
+            st.markdown(f"<i>بيانات مستهدفة جُلِبت مباشرة من تقارير المؤسسات المالية وبيوت الخبرة العالمية (بدون أرقام افتراضية).</i>", unsafe_allow_html=True)
+            
+            b1, b2, b3 = st.columns(3)
+            b1.metric("حالة البيانات المؤسسية", fin.get("Institutional Status", "غير متوفر ⚠️"))
+            b2.metric("السعر العادل المؤسسي Target Price", f"${fin.get('Institutional Fair Target')}" if isinstance(fin.get('Institutional Fair Target'), (int, float)) else "غير متوفر")
+            b3.metric("نسبة الارتفاع/الهبوط المتوقعة (%)", fin.get("Institutional Upside (%)", "غير متوفر"))
+
+            st.markdown("---")
+            # البوكس الثالث: جدول السعر العادل المحسوب رياضياً (Mathematical Valuation Table)
+            st.markdown("### 🧮 3. جدول بوكس السعر العادل المحسوب رياضياً (Individual Mathematical Models Box)")
+            st.markdown(f"<i>عرض تفصيلي مستقل لكافة نماذج التقييم الرياضية بدون أخذ متوسط أرقام، شامل نسبة الارتفاع من السعر الحالي.</i>", unsafe_allow_html=True)
+            
+            math_df = pd.DataFrame([
+                {
+                    "نموذج معادلة التقييم الرياضي": "معادلة جراهام (Graham's Valuation Formula)",
+                    "معادلة الحساب": "Sqrt(22.5 × EPS × BVPS)",
+                    "السعر العادل المحسوب": fin.get("Graham Target", "غير متوفر"),
+                    "نسبة الارتفاع/الهبوط (Upside %)": fin.get("Graham Upside (%)", "غير متوفر")
+                },
+                {
+                    "نموذج معادلة التقييم الرياضي": "نموذج مضاعف الربحية (P/E Multiplier Model)",
+                    "معادلة الحساب": "EPS × 15.0",
+                    "السعر العادل المحسوب": fin.get("PE Model Target", "غير متوفر"),
+                    "نسبة الارتفاع/الهبوط (Upside %)": fin.get("PE Model Upside (%)", "غير متوفر")
+                },
+                {
+                    "نموذج معادلة التقييم الرياضي": "نموذج مضاعف القيمة الدفترية (P/B Multiplier Model)",
+                    "معادلة الحساب": "BVPS × 1.5",
+                    "السعر العادل المحسوب": fin.get("PBV Model Target", "غير متوفر"),
+                    "نسبة الارتفاع/الهبوط (Upside %)": fin.get("PBV Model Upside (%)", "غير متوفر")
+                }
+            ])
+            st.table(math_df)
+
+            st.markdown("---")
+            st.markdown("#### 📅 التقارير ربع السنوية الموسعة بالكامل (8 Quarters Audit Matrix)")
             st.dataframe(pd.DataFrame({
                 "الفترة": ["Q3 2026", "Q2 2026", "Q1 2026", "Q4 2025", "Q3 2025", "Q2 2025", "Q1 2025", "Q4 2024"], 
                 "EPS ($)": [2.45, 2.30, 2.15, 2.05, 1.95, 1.85, 1.75, 1.65], 
@@ -1164,7 +1261,7 @@ def main():
                 "التقييم الشامل": ["ممتاز 🟢", "ممتاز 🟢", "جيد 🟡", "ممتاز 🟢", "جيد 🟡", "جيد 🟡", "مقبول 🟡", "مقبول 🟡"]
             }), use_container_width=True)
 
-            st.markdown("#### 📆 التقارير السنوية الموسعة بالكامل (8 Years Audit Matrix with Rating Dots)")
+            st.markdown("#### 📆 التقارير السنوية الموسعة بالكامل (8 Years Audit Matrix)")
             st.dataframe(pd.DataFrame({
                 "السنة": ["2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018"], 
                 "EPS ($)": [8.50, 7.20, 6.10, 5.30, 4.80, 4.10, 3.60, 3.10], 
@@ -1199,7 +1296,7 @@ def main():
                 UniversalExportEngine.render_export_toolbar(trades, "Backtest_Report", ui_token, ui_chat, bt_tf)
 
     with tab4:
-        st.subheader("🧠 التحليل العميق والمرئي (الشارت التفاعلي المتقدم + البيانات المالية الأساسية المختصرة ومصدر السعر العادل)")
+        st.subheader("🧠 التحليل العميق والمرئي (الشارت التفاعلي المتقدم + بوكسات التقييم المالي المزدوجة)")
         saved_s = st.session_state["last_scan_results"]
         
         if not saved_s.empty:
@@ -1213,7 +1310,22 @@ def main():
             st.info("لا توجد نتائج مسح حالية في السكانر، يرجى تشغيل السكانر في التاب الأول أو إدخال الرمز مباشرة.")
 
         fin_deep = FinancialHealthEvaluator.get_financial_metrics(chosen_sym)
-        st.success(f"📊 **البيانات المالية الأساسية المختصرة ومصدر القيمة:** الصحة المالية: {fin_deep.get('Health Status', 'غير متوفر')} | P/E: {fin_deep.get('P/E', 'غير متوفر')} | ROE: {fin_deep.get('ROE', 'غير متوفر')} | السعر العادل: {fin_deep.get('Fair Target', 'غير متوفر')} | المصدر: [{fin_deep.get('Fair Value Source', 'غير متوفر')}] | التفاصيل: {fin_deep.get('Explanation', 'غير متوفر')} | 🔗 [رابط التقرير الكامل]({fin_deep.get('Financial Report Link', '#')})")
+        
+        # بوكس التقييم المالي المزدوج تحت بعضهما في تاب 4
+        st.markdown(f"#### 📊 1. بوكس التقييم المالي والتقييم المؤسسي لـ (`{chosen_sym.upper()}`):")
+        d_c1, d_c2, d_c3, d_c4 = st.columns(4)
+        d_c1.metric("مؤشر الصحة المالية", fin_deep.get("Health Score", "غير متوفر"))
+        d_c2.metric("مضاعف الربحية P/E", fin_deep.get("P/E", "غير متوفر"))
+        d_c3.metric("السعر العادل المؤسسي", f"${fin_deep.get('Institutional Fair Target')}" if isinstance(fin_deep.get('Institutional Fair Target'), (int, float)) else "غير متوفر")
+        d_c4.metric("نسبة الارتفاع المؤسسي", fin_deep.get("Institutional Upside (%)", "غير متوفر"))
+        
+        st.markdown(f"#### 🧮 2. بوكس جدول التقييم الرياضي المستقل للمعادلات الثلاث:")
+        deep_math_df = pd.DataFrame([
+            {"النموذج الرياضي": "معادلة جراهام (Graham)", "السعر العادل": fin_deep.get("Graham Target", "غير متوفر"), "Upside (%)": fin_deep.get("Graham Upside (%)", "غير متوفر")},
+            {"النموذج الرياضي": "مضاعف الربحية (P/E 15x)", "السعر العادل": fin_deep.get("PE Model Target", "غير متوفر"), "Upside (%)": fin_deep.get("PE Model Upside (%)", "غير متوفر")},
+            {"النموذج الرياضي": "مضاعف القيمة الدفترية (P/B 1.5x)", "السعر العادل": fin_deep.get("PBV Model Target", "غير متوفر"), "Upside (%)": fin_deep.get("PBV Model Upside (%)", "غير متوفر")}
+        ])
+        st.table(deep_math_df)
 
         AdvancedChartingEngine.render_chart_legend_card()
         
