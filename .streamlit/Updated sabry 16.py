@@ -1,11 +1,10 @@
 """
 ================================================================================
-🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.82 Master Final)
+🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.83 Master Final)
 ================================================================================
 INSTITUTIONAL EDITION (النسخة المؤسسية الشاملة والموسعة بدون أي اختصار):
-- Strict Dual Fair Value Engine: 
-  1. Institutional Target Box (Analyst Consensuses + Upside/Downside %).
-  2. Mathematical Valuation Table (Graham, P/E x15, P/BV x1.5 evaluated INDIVIDUALLY with Upside %).
+- Fixed scope and variable passing for Automation Terminal Tab & Telegram Relay.
+- Strict Dual Fair Value Engine: Institutional Target Box & Individual Math Models.
 - Strict Zero-Default Policy: Explicit "غير متوفر" if real financial data is missing.
 - Smart Market-Hours Automation (TASI, EGX, NASDAQ, Commodities) using APScheduler Cron triggers.
 - Retains 100% of Architecture: Pure statistical backtest, Deep Analysis Plotly Charting,
@@ -37,14 +36,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # 1. SYSTEM INITIALIZATION & RESPONSIVE CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.82 Ultimate",
+    page_title="SABRY VISION - Master Quant Terminal v11.83 Ultimate",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.82")
+logger = logging.getLogger("SabryVisionMaster11.83")
 
 st.markdown("""
 <style>
@@ -260,7 +259,7 @@ if "last_backtest_results" not in st.session_state:
     st.session_state["last_backtest_results"] = pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 4. CONFIGURATION & CORE QUANT ENGINE (DUAL FAIR VALUE HUB v11.82)
+# 4. CONFIGURATION & CORE QUANT ENGINE (DUAL FAIR VALUE HUB v11.83)
 # ------------------------------------------------------------------------------
 @dataclass
 class InstitutionalConfig:
@@ -591,7 +590,7 @@ class TelegramEngine:
         url = f"https://api.telegram.org/bot{token.strip()}/sendMessage"
         for idx, row in results_df.iterrows():
             msg = f"""
-<b>🛡️ SABRY VISION v11.82 - INSTITUTIONAL TRADE CARD</b>
+<b>🛡️ SABRY VISION v11.83 - INSTITUTIONAL TRADE CARD</b>
 ⏱️ الفريم: <b>{timeframe}</b> | الرمز: <b>{row.get('Symbol')}</b>
 -----------------------------------
 ⚡ <b>نوع النموذج:</b> {row.get('Signal')}
@@ -695,7 +694,7 @@ class AdvancedChartingEngine:
     def render_chart_legend_card():
         st.markdown("""
         <div style='background-color: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 15px;'>
-            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.82)</h4>
+            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.83)</h4>
             <ul style='list-style-type: none; padding-left: 0; font-size: 14px;'>
                 <li>🕯️ <b>الشموع اليابانية:</b> خلفية داكنة سوداء معتمدة بالكامل.</li>
                 <li>⚪ <b>الشمعة البيضاء القوية (White Power Candle):</b> شمعة الانفجار الزخمي بلون أبيض صريح.</li>
@@ -779,7 +778,7 @@ class AdvancedChartingEngine:
                 except Exception:
                     pass
 
-        fig.update_layout(title=f"SABRY VISION v11.82 - {symbol}", template="plotly_dark", height=600, xaxis_rangeslider_visible=False, paper_bgcolor="#0e1117", plot_bgcolor="#0e1117")
+        fig.update_layout(title=f"SABRY VISION v11.83 - {symbol}", template="plotly_dark", height=600, xaxis_rangeslider_visible=False, paper_bgcolor="#0e1117", plot_bgcolor="#0e1117")
         st.plotly_chart(fig, use_container_width=True, key=key_prefix)
 
 # ------------------------------------------------------------------------------
@@ -952,7 +951,7 @@ def render_admin_panel():
                 st.rerun()
 
 def render_login_screen():
-    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.82 - Security Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.83 - Security Portal</h1>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.form("login_form"):
@@ -969,7 +968,7 @@ def render_login_screen():
                     st.error("❌ بيانات الدخول غير صحيحة.")
 
 # ------------------------------------------------------------------------------
-# 10. SABRY VISION v11.82 - AUTOMATION & TELEGRAM RELAY HUB
+# 10. SABRY VISION v11.83 - AUTOMATION & TELEGRAM RELAY HUB
 # ------------------------------------------------------------------------------
 def run_market_specific_scan(market_name: str, symbols_list: List[str], config: InstitutionalConfig, ui_token: str, ui_chat: str):
     """دالة المسح الآلي الذكي للأسواق المفتوحة فقط وإرسال أعلى 10 فرص"""
@@ -1046,21 +1045,18 @@ def render_automation_terminal_tab(config: InstitutionalConfig, active_setups: L
         egx_syms = st.session_state["market_lists_repo"].get("البورصة المصرية الشاملة (EGX 240+)", [])[:25]
         nasdaq_syms = st.session_state["market_lists_repo"].get("الناسداك (Nasdaq كامل 100+)", [])[:25]
 
-        # 1. السوق السعودي (تاسي: الأحد إلى الخميس من 10:00 ص إلى 3:15 م بتوقيت مكة)
         if not sched.get_job("tasi_market_job"):
             sched.add_job(
                 lambda: run_market_specific_scan("السوق السعودي (تاسي)", tasi_syms, config, ui_token, ui_chat),
                 'cron', day_of_week='sun-thu', hour='10-15', minute='*/15', id="tasi_market_job", replace_existing=True
             )
 
-        # 2. البورصة المصرية (EGX: الأحد إلى الخميس من 10:00 ص إلى 2:30 م بتوقيت مكة)
         if not sched.get_job("egx_market_job"):
             sched.add_job(
                 lambda: run_market_specific_scan("البورصة المصرية", egx_syms, config, ui_token, ui_chat),
                 'cron', day_of_week='sun-thu', hour='10-14', minute='*/15', id="egx_market_job", replace_existing=True
             )
 
-        # 3. الأسواق الأمريكية (Nasdaq: الإثنين إلى الجمعة من 5:30 م إلى 12:00 م بتوقيت مكة)
         if not sched.get_job("us_market_job"):
             sched.add_job(
                 lambda: run_market_specific_scan("السوق الأمريكي (الناسداك)", nasdaq_syms, config, ui_token, ui_chat),
@@ -1072,13 +1068,13 @@ def render_automation_terminal_tab(config: InstitutionalConfig, active_setups: L
         st.markdown("---")
         st.markdown("### 🚀 تشغيل فوري تجريبي يدوي (Manual Trigger Test)")
         if st.button("🚀 اختبار إرسال تقارير الأسواق الفورية لتليجرام", type="primary"):
-            with st.spinner("جاري فحص الأسواق المفتوحة حالياً وإرسال التقارير..."):
-                now_makkah_hour = (datetime.utcnow() + timedelta(hours=3)).hour
-                if 10 <= now_makkah_hour <= 15:
+            if not ui_token or not ui_chat:
+                st.warning("⚠️ بيانات تليجرام غير متوفرة. يرجى تفعيل وضع الأدمن وإدخال التوكن والشات آي دي.")
+            else:
+                with st.spinner("جاري فحص الأسواق المفتوحة حالياً وإرسال التقارير..."):
                     run_market_specific_scan("السوق السعودي (تاسي)", tasi_syms, config, ui_token, ui_chat)
-                if 17 <= now_makkah_hour <= 23:
                     run_market_specific_scan("السوق الأمريكي (الناسداك)", nasdaq_syms, config, ui_token, ui_chat)
-                st.success("🎉 تم إنهاء المسح وإرسال تقارير السوق النشط بنجاح!")
+                    st.success("🎉 تم إنهاء المسح وإرسال تقارير السوق النشط بنجاح!")
     else:
         st.info("ℹ️ محرك الأتمتة متوقف حالياً.")
 
@@ -1090,7 +1086,7 @@ def main():
         render_login_screen()
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v11.82")
+    st.sidebar.title("🛡️ SABRY VISION v11.83")
     is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
     
@@ -1136,7 +1132,7 @@ def main():
     timeframe = st.sidebar.selectbox("الإطار الزمني العام:", ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"], index=5)
     active_setups = st.sidebar.multiselect("نماذج الفلسفة المعتمدة:", ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"], default=["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL", "LIQUIDITY_SWEEP"])
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.82")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.83")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
@@ -1203,7 +1199,6 @@ def main():
             fin = FinancialHealthEvaluator.get_financial_metrics(f_sym)
             
             st.markdown("---")
-            # البوكس الأول: البيانات المالية وسعر الإغلاق والصحة المالية
             st.markdown(f"### 📊 1. ملخص القوائم المالية والصحة الأساسية (رمز الأصل: `{f_sym.upper()}`)")
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("سعر الإغلاق الحالي", f"${fin.get('Close Price')}" if isinstance(fin.get('Close Price'), (int, float)) else "غير متوفر")
@@ -1212,7 +1207,6 @@ def main():
             c4.metric("العائد على الملكية ROE", fin.get("ROE", "غير متوفر"))
             
             st.markdown("---")
-            # البوكس الثاني: السعر العادل المؤسسي (Institutional Target Box)
             st.markdown("### 🏛️ 2. بوكس السعر العادل المؤسسي (Institutional Consensus Target)")
             st.markdown(f"<i>بيانات مستهدفة جُلِبت مباشرة من تقارير المؤسسات المالية وبيوت الخبرة العالمية (بدون أرقام افتراضية).</i>", unsafe_allow_html=True)
             
@@ -1222,7 +1216,6 @@ def main():
             b3.metric("نسبة الارتفاع/الهبوط المتوقعة (%)", fin.get("Institutional Upside (%)", "غير متوفر"))
 
             st.markdown("---")
-            # البوكس الثالث: جدول السعر العادل المحسوب رياضياً (Mathematical Valuation Table)
             st.markdown("### 🧮 3. جدول بوكس السعر العادل المحسوب رياضياً (Individual Mathematical Models Box)")
             st.markdown(f"<i>عرض تفصيلي مستقل لكافة نماذج التقييم الرياضية بدون أخذ متوسط أرقام، شامل نسبة الارتفاع من السعر الحالي.</i>", unsafe_allow_html=True)
             
@@ -1311,7 +1304,6 @@ def main():
 
         fin_deep = FinancialHealthEvaluator.get_financial_metrics(chosen_sym)
         
-        # بوكس التقييم المالي المزدوج تحت بعضهما في تاب 4
         st.markdown(f"#### 📊 1. بوكس التقييم المالي والتقييم المؤسسي لـ (`{chosen_sym.upper()}`):")
         d_c1, d_c2, d_c3, d_c4 = st.columns(4)
         d_c1.metric("مؤشر الصحة المالية", fin_deep.get("Health Score", "غير متوفر"))
@@ -1469,3 +1461,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
