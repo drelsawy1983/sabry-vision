@@ -1,7 +1,7 @@
 # ==============================================================================
-# SABRY VISION - INSTITUTIONAL QUANT TERMINAL & BACKTESTING ENGINE (v11.52)
+# SABRY VISION - INSTITUTIONAL QUANT TERMINAL & BACKTESTING ENGINE (v11.53)
 # ==============================================================================
-# ULTIMATE MASTER EDITION (النسخة الشاملة المحدثة والمحسنة للسرعة والأداء):
+# ULTIMATE MASTER EDITION (النسخة النهائية المستقرة والمحسنة للأداء والسرعة):
 # - 100% Unmodified Complete Asset Repositories (TASI 309, EGX 240+, S&P 500, Nasdaq, ETFs, Commodities).
 # - Advanced Financial Health Matrix: P/E, ROE, Cash Flows, EPS with Item-by-Item Evaluation & Quarterly/Annual Tables.
 # - Transparent Fair Value Source Disclosure (Institutional Analyst Estimates via Yahoo Finance API).
@@ -33,14 +33,14 @@ import plotly.express as px
 # 1. SYSTEM INITIALIZATION & PAGE CONFIGURATION
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.52",
+    page_title="SABRY VISION - Master Quant Terminal v11.53",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.52")
+logger = logging.getLogger("SabryVisionMaster11.53")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE MANAGEMENT & 100% COMPLETE REPO
@@ -179,7 +179,7 @@ if "last_backtest_results" not in st.session_state:
     st.session_state["last_backtest_results"] = pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 3. INSTITUTIONAL CONFIGURATION & ENGINES (v11.52)
+# 3. INSTITUTIONAL CONFIGURATION & ENGINES (v11.53)
 # ------------------------------------------------------------------------------
 @dataclass
 class InstitutionalConfig:
@@ -273,7 +273,7 @@ class TelegramEngine:
         clean_token = token.strip()
         clean_chat_id = chat_id.strip()
         url = f"https://api.telegram.org/bot{clean_token}/sendMessage"
-        header_msg = f"<b>🚨 SABRY VISION v11.52 - INSTITUTIONAL SCAN REPORT</b>\n⏱️ الإطار الزمني: <b>{timeframe}</b>\n📊 عدد الفرص المرصودة: <b>{len(results_df)}</b>\n-----------------------------------\n"
+        header_msg = f"<b>🚨 SABRY VISION v11.53 - INSTITUTIONAL SCAN REPORT</b>\n⏱️ الإطار الزمني: <b>{timeframe}</b>\n📊 عدد الفرص المرصودة: <b>{len(results_df)}</b>\n-----------------------------------\n"
         
         cards_sent = 0
         for idx, row in results_df.iterrows():
@@ -297,7 +297,7 @@ class TelegramEngine:
         return True
 
 # ------------------------------------------------------------------------------
-# 5. UNIFIED DATA & ADVANCED PLOTLY CHARTING ENGINE (v11.52)
+# 5. UNIFIED DATA & ADVANCED PLOTLY CHARTING ENGINE (v11.53)
 # ------------------------------------------------------------------------------
 class UnifiedDataProvider:
     @staticmethod
@@ -321,7 +321,7 @@ class AdvancedChartingEngine:
     def render_chart_legend_card():
         st.markdown("""
         <div style='background-color: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 15px;'>
-            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.52)</h4>
+            <h4 style='color: #58a6ff; margin-top: 0;'>🗺️ مفتاح الخريطة والدليل اللوني والخطوط (Sabry Vision Legend v11.53)</h4>
             <ul style='list-style-type: none; padding-left: 0; font-size: 14px;'>
                 <li>🕯️ <b>الشموع اليابانية (Candlestick):</b> أخضر (صاعد) وأحمر (هابط).</li>
                 <li>📈 <b>خط السعر (Line Chart):</b> خط متصل باللون الأخضر الفاتح (<code>#00CC96</code>).</li>
@@ -459,7 +459,7 @@ class AdvancedChartingEngine:
                 fig.add_trace(go.Scatter(x=exit_dates, y=exit_prices, mode='markers', name="خروج الصفقة", marker=dict(symbol='triangle-down', size=12, color=exit_colors)))
 
         fig.update_layout(
-            title=dict(text=f"SABRY VISION v11.52 Institutional Terminal - {symbol}", font=dict(size=18)),
+            title=dict(text=f"SABRY VISION v11.53 Institutional Terminal - {symbol}", font=dict(size=18)),
             xaxis=dict(title="التاريخ الزمني", rangeslider=dict(visible=False), showgrid=True, tickformat="%Y-%m-%d %H:%M"),
             yaxis=dict(title="السعر ($)", showgrid=True),
             template="plotly_dark",
@@ -692,7 +692,7 @@ class SabryVisionMasterScanner:
             for fut in as_completed(futures):
                 completed += 1
                 bar.progress(int((completed / total) * 100))
-                status.markdown(f"⏳ **جاري الفحص المؤسسي السريع v11.52... المكتمل: {completed} / {total}**")
+                status.markdown(f"⏳ **جاري الفحص المؤسسي السريع v11.53... المكتمل: {completed} / {total}**")
                 res = fut.result()
                 if res: results.append(res)
         bar.empty(); status.empty()
@@ -702,7 +702,7 @@ class SabryVisionMasterScanner:
 # 7. SECURITY & LOGIN SCREEN
 # ------------------------------------------------------------------------------
 def render_login_screen():
-    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.52 - Security & Access Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.53 - Security & Access Portal</h1>", unsafe_allow_html=True)
     st.markdown("<h4 style='text-align: center;'>بوابة الدخول المؤسسية الآمنة وإدارة الصلاحيات</h4>", unsafe_allow_html=True)
     st.markdown("---")
     
@@ -733,14 +733,14 @@ def render_login_screen():
                     st.error("❌ اسم المستخدم غير موجود.")
 
 # ------------------------------------------------------------------------------
-# 8. DASHBOARD & INTERFACE (v11.52)
+# 8. DASHBOARD & INTERFACE (v11.53)
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
         render_login_screen()
         return
 
-    st.sidebar.title(f"🛡️ SABRY VISION v11.52")
+    st.sidebar.title(f"🛡️ SABRY VISION v11.53")
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}** | {'👑 (أدمن)' if st.session_state['is_admin'] else '👤 (مستخدم عادي)'}")
     
     if st.sidebar.button("🚪 تسجيل الخروج"):
@@ -848,7 +848,7 @@ def main():
     timeframe = st.sidebar.selectbox("الإطار الزمني العام:", ["5m", "15m", "1h", "1d"], index=2)
     active_setups = st.sidebar.multiselect("نماذج الفلسفة الأربعة المفعلة:", ["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL"], default=["BREAKOUT", "RETEST", "SETUP", "BOTTOM_REVERSAL"])
 
-    st.title("🛡️ SABRY VISION - Master Secure Quant Terminal v11.52 (Optimized & Fast)")
+    st.title("🛡️ SABRY VISION - Master Secure Quant Terminal v11.53")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -938,7 +938,7 @@ def main():
             UniversalExportEngine.render_export_toolbar(fin_df, "Financial_Report", ui_token, ui_chat, timeframe)
  
     with tab3:
-        st.subheader("🔬 محرك الباك تيست والرسوم التفاعلية (Plotly v11.52)")
+        st.subheader("🔬 محرك الباك تيست والرسوم التفاعلية (Plotly v11.53)")
         bt_sym = st.text_input("رمز الأصل للباك تيست والتشارت التفاعلي:", value="SPY")
         bt_period = st.selectbox("الفترة التاريخية:", ["6 أشهر", "سنة", "سنتين", "5 سنوات", "الماكسيمم (Max)"])
         
