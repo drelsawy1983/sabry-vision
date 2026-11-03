@@ -1,5 +1,5 @@
 # ==============================================================================
-# SABRY VISION - MASTER QUANT TERMINAL v11.54 (Ultra-Fast & Optimized Edition)
+# SABRY VISION - MASTER QUANT TERMINAL v11.55 (Mobile-Stable Edition)
 # ==============================================================================
 
 import os
@@ -24,14 +24,14 @@ import plotly.express as px
 # 1. SYSTEM INITIALIZATION & PAGE CONFIGURATION
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.54",
+    page_title="SABRY VISION - Master Quant Terminal v11.55",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.54")
+logger = logging.getLogger("SabryVisionMaster11.55")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE MANAGEMENT & ASSET REPO
@@ -189,7 +189,7 @@ class UnifiedDataProvider:
             return pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 4. TECHNICAL & QUANT ANALYTICS ENGINE (v11.54 Optimized)
+# 4. TECHNICAL & QUANT ANALYTICS ENGINE (v11.55 Mobile-Stable)
 # ------------------------------------------------------------------------------
 class TechnicalConfluenceEngine:
     @staticmethod
@@ -338,7 +338,7 @@ class InstitutionalScannerEngine:
             for fut in as_completed(futures):
                 completed += 1
                 bar.progress(int((completed / total) * 100))
-                status.markdown(f"⏳ **جاري الفحص المؤسسي السريع v11.54... المكتمل: {completed} / {total}**")
+                status.markdown(f"⏳ **جاري الفحص المؤسسي السريع v11.55... المكتمل: {completed} / {total}**")
                 res = fut.result()
                 if res and res["Score"] >= min_score:
                     results.append(res)
@@ -456,7 +456,7 @@ class RealisticBacktestEngine:
 # 5. SECURITY & LOGIN SCREEN
 # ------------------------------------------------------------------------------
 def render_login_screen():
-    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.54 - Security Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.55 - Security Portal</h1>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.form("login"):
@@ -479,7 +479,7 @@ def main():
         render_login_screen()
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v11.54")
+    st.sidebar.title("🛡️ SABRY VISION v11.55")
     if st.sidebar.button("🚪 Logout"):
         st.session_state["authenticated"] = False; st.rerun()
 
@@ -489,12 +489,12 @@ def main():
     global_tf = st.sidebar.selectbox("الإطار الزمني للفحص:", ["5m", "15m", "1h", "1d"], index=2)
     min_score_input = st.sidebar.slider("الحد الأدنى للسكور المؤسسي للاستبقاء:", 50.0, 90.0, 65.0, 5.0)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.54 (Ultra-Fast)")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.55 (Mobile Stable)")
     st.markdown("---")
 
     tab1, tab2, tab3 = st.tabs([
-        "🚀 1. السكانر المؤسسي فائق السرعة والجدول الغني",
-        "🧠 2. التحليل الفني العميق وتوافق الفريمات (Multi-TF Matrix)",
+        "🚀 1. السكانر المؤسسي السريع",
+        "🧠 2. التحليل الفني العميق وتوافق الفريمات",
         "🔬 3. الباك تيست الواقعي مع Chandler ATR"
     ])
 
@@ -507,7 +507,7 @@ def main():
         saved_scan = st.session_state["last_scan_results"]
         if not saved_scan.empty:
             st.success(f"تم رصد ({len(saved_scan)}) فرصة عالية الجودة ومطابقة لمعايير المصداقية:")
-            st.dataframe(saved_scan[["Symbol", "Timeframe", "Close Price ($)", "Score", "Expected Win Rate (%)", "RVOL", "White Candle", "Liquidity Sweep", "BOS / CHoCH", "Stop Loss ($)", "Take Profit ($)"]], use_container_width=True)
+            st.table(saved_scan[["Symbol", "Timeframe", "Close Price ($)", "Score", "Expected Win Rate (%)", "RVOL", "Stop Loss ($)", "Take Profit ($)"]])
         else:
             st.info("اضغط على 'تشغيل المسح المؤسسي' لاستيراد الفرص الحية.")
 
@@ -544,12 +544,12 @@ def main():
                         {"المؤشر / المدرسة الفنية": "مؤشر RSI والدايفرجنس", "الحالة والنتيجة": analysis.get("RSI & Divergence")},
                         {"المؤشر / المدرسة الفنية": "مؤشر MACD والدايفرجنس", "الحالة والنتيجة": analysis.get("MACD & Divergence")}
                     ])
-                    st.dataframe(ind_table, use_container_width=True)
+                    st.table(ind_table)
                     
                     st.markdown("---")
                     st.markdown("### 🌐 مصفوفة توافق الفريمات (Multi-Timeframe Confluence Matrix):")
                     matrix_df = MultiTimeframeMatrixEngine.run_matrix(deep_sym)
-                    st.dataframe(matrix_df, use_container_width=True)
+                    st.table(matrix_df)
 
     with tab3:
         st.subheader("🔬 محرك الباك تيست الواقعي مع تفعيل Chandler ATR")
@@ -578,7 +578,7 @@ def main():
                     st.markdown("---")
                     st.markdown("### 📋 سجل الصفقات التاريخية المنفذة:")
                     if not trades_df.empty:
-                        st.dataframe(trades_df, use_container_width=True)
+                        st.table(trades_df)
                     else:
                         st.warning("لم يتم رصد صفقات كافية للشروط الصارمة خلال هذه الفترة.")
 
