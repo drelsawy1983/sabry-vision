@@ -1,5 +1,5 @@
 # ==============================================================================
-# SABRY VISION - MASTER QUANT TERMINAL v11.51 (Clean & Bug-Free Edition)
+# SABRY VISION - MASTER QUANT TERMINAL v11.54 (Ultra-Fast & Optimized Edition)
 # ==============================================================================
 
 import os
@@ -24,14 +24,14 @@ import plotly.express as px
 # 1. SYSTEM INITIALIZATION & PAGE CONFIGURATION
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.51",
+    page_title="SABRY VISION - Master Quant Terminal v11.54",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.51")
+logger = logging.getLogger("SabryVisionMaster11.54")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE MANAGEMENT & ASSET REPO
@@ -168,7 +168,28 @@ if "last_scan_results" not in st.session_state:
     st.session_state["last_scan_results"] = pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 3. TECHNICAL & QUANT ANALYTICS ENGINE (v11.51 Clean)
+# 3. FAST UNIFIED DATA PROVIDER WITH CACHING
+# ------------------------------------------------------------------------------
+class UnifiedDataProvider:
+    @staticmethod
+    @st.cache_data(ttl=900, show_spinner=False)
+    def fetch_raw_ohlcv(symbol: str, interval: str = "1d", period: str = "max") -> pd.DataFrame:
+        try:
+            df = yf.download(symbol, period=period, interval=interval, progress=False, auto_adjust=True, timeout=6)
+            if df is None or df.empty: return pd.DataFrame()
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
+            df = df.rename(columns={"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"})
+            df = df[["open", "high", "low", "close", "volume"]].dropna()
+            if df.empty or len(df) < 10: return pd.DataFrame()
+            if df.index.tz is not None:
+                df.index = df.index.tz_localize(None)
+            return df
+        except Exception:
+            return pd.DataFrame()
+
+# ------------------------------------------------------------------------------
+# 4. TECHNICAL & QUANT ANALYTICS ENGINE (v11.54 Optimized)
 # ------------------------------------------------------------------------------
 class TechnicalConfluenceEngine:
     @staticmethod
@@ -312,12 +333,12 @@ class InstitutionalScannerEngine:
         status = st.empty()
         completed = 0
         
-        with ThreadPoolExecutor(max_workers=16) as executor:
+        with ThreadPoolExecutor(max_workers=8) as executor:
             futures = {executor.submit(InstitutionalScannerEngine._process_single, s, timeframe): s for s in symbols}
             for fut in as_completed(futures):
                 completed += 1
                 bar.progress(int((completed / total) * 100))
-                status.markdown(f"⏳ **جاري الفحص المؤسسي v11.51... المكتمل: {completed} / {total}**")
+                status.markdown(f"⏳ **جاري الفحص المؤسسي السريع v11.54... المكتمل: {completed} / {total}**")
                 res = fut.result()
                 if res and res["Score"] >= min_score:
                     results.append(res)
@@ -431,28 +452,11 @@ class RealisticBacktestEngine:
         }
         return metrics, pd.DataFrame(trades)
 
-class UnifiedDataProvider:
-    @staticmethod
-    def fetch_raw_ohlcv(symbol: str, interval: str = "1d", period: str = "max") -> pd.DataFrame:
-        try:
-            df = yf.download(symbol, period=period, interval=interval, progress=False, auto_adjust=True, timeout=10)
-            if df is None or df.empty: return pd.DataFrame()
-            if isinstance(df.columns, pd.MultiIndex):
-                df.columns = df.columns.get_level_values(0)
-            df = df.rename(columns={"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"})
-            df = df[["open", "high", "low", "close", "volume"]].dropna()
-            if df.empty or len(df) < 10: return pd.DataFrame()
-            if df.index.tz is not None:
-                df.index = df.index.tz_localize(None)
-            return df
-        except Exception:
-            return pd.DataFrame()
-
 # ------------------------------------------------------------------------------
-# 4. SECURITY & LOGIN SCREEN
+# 5. SECURITY & LOGIN SCREEN
 # ------------------------------------------------------------------------------
 def render_login_screen():
-    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.51 - Security Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.54 - Security Portal</h1>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.form("login"):
@@ -468,14 +472,14 @@ def render_login_screen():
                     st.error("Invalid credentials.")
 
 # ------------------------------------------------------------------------------
-# 5. MAIN DASHBOARD (3 POWERFUL TABS)
+# 6. MAIN DASHBOARD
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
         render_login_screen()
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v11.51")
+    st.sidebar.title("🛡️ SABRY VISION v11.54")
     if st.sidebar.button("🚪 Logout"):
         st.session_state["authenticated"] = False; st.rerun()
 
@@ -485,21 +489,18 @@ def main():
     global_tf = st.sidebar.selectbox("الإطار الزمني للفحص:", ["5m", "15m", "1h", "1d"], index=2)
     min_score_input = st.sidebar.slider("الحد الأدنى للسكور المؤسسي للاستبقاء:", 50.0, 90.0, 65.0, 5.0)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.51 (Pure Quant Edition)")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.54 (Ultra-Fast)")
     st.markdown("---")
 
     tab1, tab2, tab3 = st.tabs([
-        "🚀 1. السكانر المؤسسي فائق الجودة والجدول الغني",
+        "🚀 1. السكانر المؤسسي فائق السرعة والجدول الغني",
         "🧠 2. التحليل الفني العميق وتوافق الفريمات (Multi-TF Matrix)",
         "🔬 3. الباك تيست الواقعي مع Chandler ATR"
     ])
 
-    # ==============================================================================
-    # TAB 1: INSTITUTIONAL SCANNER
-    # ==============================================================================
     with tab1:
-        st.subheader(f"🚀 محرك السكانر فائق الجودة - السوق: {market_list_name} ({len(symbols_to_scan)} أصل)")
-        if st.button("🔥 تشغيل المسح المؤسسي عالي الدقة", type="primary"):
+        st.subheader(f"🚀 محرك السكانر السريع - السوق: {market_list_name} ({len(symbols_to_scan)} أصل)")
+        if st.button("🔥 تشغيل المسح المؤسسي عالي السرعة", type="primary"):
             res = InstitutionalScannerEngine.scan_symbols(symbols_to_scan, global_tf, min_score_input)
             st.session_state["last_scan_results"] = res
 
@@ -510,9 +511,6 @@ def main():
         else:
             st.info("اضغط على 'تشغيل المسح المؤسسي' لاستيراد الفرص الحية.")
 
-    # ==============================================================================
-    # TAB 2: DEEP TECHNICAL & MULTI-TIMEFRAME CONFLUENCE MATRIX
-    # ==============================================================================
     with tab2:
         st.subheader("🧠 التحليل الفني العميق ومصفوفة توافق الفريمات (Multi-Timeframe Confluence)")
         
@@ -553,9 +551,6 @@ def main():
                     matrix_df = MultiTimeframeMatrixEngine.run_matrix(deep_sym)
                     st.dataframe(matrix_df, use_container_width=True)
 
-    # ==============================================================================
-    # TAB 3: REALISTIC BACKTESTING ENGINE WITH CHANDLER ATR
-    # ==============================================================================
     with tab3:
         st.subheader("🔬 محرك الباك تيست الواقعي مع تفعيل Chandler ATR")
         
