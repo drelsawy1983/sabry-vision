@@ -1,15 +1,12 @@
 # ==============================================================================
-# SABRY VISION - MASTER QUANT TERMINAL v11.50 (Pure Technical & Quant Master Edition)
-# ==============================================================================
-# - Tab 1: High-Precision Institutional Scanner (Scoring Matrix & Rich Decision Table)
-# - Tab 2: Deep Technical & Multi-Timeframe Confluence Matrix (SMC, FVG, OB, Divergences, Ichimoku Angles)
-# - Tab 3: Realistic Backtesting Engine (Chandler ATR On/Off, True Entry/Exit Rules, Win Rate & Profit Factor)
+# SABRY VISION - MASTER QUANT TERMINAL v11.51 (Clean & Bug-Free Edition)
 # ==============================================================================
 
 import os
 import json
 import logging
 import io
+import math
 import requests
 from datetime import datetime, date, timedelta
 from dataclasses import dataclass, field
@@ -27,17 +24,17 @@ import plotly.express as px
 # 1. SYSTEM INITIALIZATION & PAGE CONFIGURATION
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.50",
+    page_title="SABRY VISION - Master Quant Terminal v11.51",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVisionMaster11.50")
+logger = logging.getLogger("SabryVisionMaster11.51")
 
 # ------------------------------------------------------------------------------
-# 2. SESSION STATE MANAGEMENT & 100% COMPLETE REPO
+# 2. SESSION STATE MANAGEMENT & ASSET REPO
 # ------------------------------------------------------------------------------
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
@@ -171,7 +168,7 @@ if "last_scan_results" not in st.session_state:
     st.session_state["last_scan_results"] = pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 3. TECHNICAL & QUANT ANALYTICS ENGINE (v11.50)
+# 3. TECHNICAL & QUANT ANALYTICS ENGINE (v11.51 Clean)
 # ------------------------------------------------------------------------------
 class TechnicalConfluenceEngine:
     @staticmethod
@@ -184,24 +181,20 @@ class TechnicalConfluenceEngine:
         tp = (f['high'] + f['low'] + f['close']) / 3.0
         f['vwap'] = (tp * f['volume']).cumsum() / f['volume'].cumsum().replace(0, np.nan)
         
-        # ATR 14
         tr = np.maximum(f['high'] - f['low'], np.maximum((f['high'] - f['close'].shift(1)).abs(), (f['low'] - f['close'].shift(1)).abs()))
         f['atr14'] = tr.rolling(14).mean()
         
-        # RSI 14
         delta = f['close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
         rs = gain / (loss + 1e-9)
         f['rsi'] = 100 - (100 / (1 + rs))
         
-        # MACD
         exp1 = f['close'].ewm(span=12, adjust=False).mean()
         exp2 = f['close'].ewm(span=26, adjust=False).mean()
         f['macd'] = exp1 - exp2
         f['macd_signal'] = f['macd'].ewm(span=9, adjust=False).mean()
         
-        # Ichimoku
         n9_h = f['high'].rolling(9).max(); n9_l = f['low'].rolling(9).min()
         f['tenkan'] = (n9_h + n9_l) / 2.0
         n26_h = f['high'].rolling(26).max(); n26_l = f['low'].rolling(26).min()
@@ -224,42 +217,34 @@ class TechnicalConfluenceEngine:
         vol_sma = f['volume'].rolling(20).mean().iloc[-1]
         rvol = latest['volume'] / (vol_sma + 1e-9)
         
-        # White Power Candle
         bar_range = latest['high'] - latest['low']
         is_white_candle = (latest['volume'] >= vol_sma * 1.5) and (bar_range > 0) and ((close - latest['low']) >= bar_range * 0.66)
         
-        # Liquidity Sweep Check (broke previous low and rebounded)
         prev_low_10 = f['low'].iloc[-11:-1].min()
         is_liq_sweep = (latest['low'] < prev_low_10) and (close > prev_low_10) and (rvol >= 1.2)
         
-        # SMC / BOS / CHoCH / FVG approximation
         recent_high_20 = f['high'].iloc[-21:-1].max()
         is_bos = close > recent_high_20
-        is_fvg = (latest['low'] > f['high'].iloc[-2]) # Fair Value Gap up
+        is_fvg = (latest['low'] > f['high'].iloc[-2])
         
-        # Ichimoku cloud position & Tenkan/Kijun angle
         cloud_top = max(latest['senkou_a'] if not np.isnan(latest['senkou_a']) else close, latest['senkou_b'] if not np.isnan(latest['senkou_b']) else close)
         cloud_bottom = min(latest['senkou_a'] if not np.isnan(latest['senkou_a']) else close, latest['senkou_b'] if not np.isnan(latest['senkou_b']) else close)
         
         price_vs_cloud = "أعلى السحابة (إيجابي صاعد)" if close > cloud_top else ("داخل السحابة (منطقة حيادية/تردد)" if close >= cloud_bottom else "أسفل السحابة (سلبي هابط)")
         
-        # Tenkan & Kijun angle calculation
         t_diff = latest['tenkan'] - prev['tenkan']
         t_angle = math.degrees(math.atan(t_diff / (close * 0.01 + 1e-9))) * 10
         tk_converged = abs(latest['tenkan'] - latest['kijun']) / close < 0.005 and t_angle > 60
         
-        # MA alignments & crosses
         ma_aligned = (latest['EMA20'] > latest['EMA50']) and (latest['EMA50'] > latest['EMA200'])
         price_above_ema200 = close > latest['EMA200']
         retest_vwap = abs(latest['low'] - latest['vwap']) / close < 0.008
         
-        # RSI & MACD Divergence approximation
         rsi_val = latest['rsi']
         macd_val = latest['macd']; macd_sig = latest['macd_signal']
         rsi_div = "إيجابية صاعدة (Bullish Divergence)" if rsi_val < 40 and latest['close'] > prev['close'] and rsi_val > prev['rsi'] else "عادية / لا توجد دايفرجنس واضحة"
         macd_div = "إيجابي تقاطعي صاعد" if macd_val > macd_sig else "سلبي تقاطعي هابط"
         
-        # Scoring Matrix (0 - 100)
         score = 50.0
         if ma_aligned: score += 15.0
         if price_above_ema200: score += 10.0
@@ -290,7 +275,7 @@ class TechnicalConfluenceEngine:
 
 class MultiTimeframeMatrixEngine:
     @staticmethod
-    def run_matrix(symbol: symbol if 'symbol' in locals() else "SPY") -> pd.DataFrame:
+    def run_matrix(symbol: str = "SPY") -> pd.DataFrame:
         timeframes = ["1m", "5m", "15m", "1h", "1d", "1w"]
         matrix_rows = []
         for tf in timeframes:
@@ -317,9 +302,6 @@ class MultiTimeframeMatrixEngine:
             })
         return pd.DataFrame(matrix_rows)
 
-# ------------------------------------------------------------------------------
-# 4. SCANNER & BACKTESTING ENGINES
-# ------------------------------------------------------------------------------
 class InstitutionalScannerEngine:
     @staticmethod
     def scan_symbols(symbols: List[str], timeframe: str, min_score: float) -> pd.DataFrame:
@@ -335,7 +317,7 @@ class InstitutionalScannerEngine:
             for fut in as_completed(futures):
                 completed += 1
                 bar.progress(int((completed / total) * 100))
-                status.markdown(f"⏳ **جاري الفحص المؤسسي v11.50... المكتمل: {completed} / {total}**")
+                status.markdown(f"⏳ **جاري الفحص المؤسسي v11.51... المكتمل: {completed} / {total}**")
                 res = fut.result()
                 if res and res["Score"] >= min_score:
                     results.append(res)
@@ -393,16 +375,13 @@ class RealisticBacktestEngine:
             rsi = float(row['rsi'])
             atr = float(row['atr14'])
             
-            # Real entry condition: MA alignment + RSI pullback + volume
             is_entry = (ema20 > ema50) and (40 < rsi < 60) and (row['volume'] > f['volume'].rolling(20).mean().iloc[i] * 1.2)
             
             if is_entry:
                 entry_date = f.index[i]
                 entry_price = close
                 
-                # Chandler ATR vs Standard ATR Stop Loss
                 if use_chandler_atr:
-                    # Chandler ATR uses higher multiplier & period for stricter trailing stop
                     stop_loss = entry_price - (atr * 3.0)
                 else:
                     stop_loss = entry_price - (atr * 1.5)
@@ -470,10 +449,10 @@ class UnifiedDataProvider:
             return pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 5. SECURITY & LOGIN SCREEN
+# 4. SECURITY & LOGIN SCREEN
 # ------------------------------------------------------------------------------
 def render_login_screen():
-    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.50 - Security Portal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.51 - Security Portal</h1>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.form("login"):
@@ -489,14 +468,14 @@ def render_login_screen():
                     st.error("Invalid credentials.")
 
 # ------------------------------------------------------------------------------
-# 6. MAIN DASHBOARD (3 POWERFUL TABS)
+# 5. MAIN DASHBOARD (3 POWERFUL TABS)
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
         render_login_screen()
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v11.50")
+    st.sidebar.title("🛡️ SABRY VISION v11.51")
     if st.sidebar.button("🚪 Logout"):
         st.session_state["authenticated"] = False; st.rerun()
 
@@ -506,7 +485,7 @@ def main():
     global_tf = st.sidebar.selectbox("الإطار الزمني للفحص:", ["5m", "15m", "1h", "1d"], index=2)
     min_score_input = st.sidebar.slider("الحد الأدنى للسكور المؤسسي للاستبقاء:", 50.0, 90.0, 65.0, 5.0)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.50 (Pure Quant Edition)")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.51 (Pure Quant Edition)")
     st.markdown("---")
 
     tab1, tab2, tab3 = st.tabs([
@@ -537,7 +516,6 @@ def main():
     with tab2:
         st.subheader("🧠 التحليل الفني العميق ومصفوفة توافق الفريمات (Multi-Timeframe Confluence)")
         
-        # Determine symbol source
         saved_s = st.session_state["last_scan_results"]
         symbol_options = saved_s["Symbol"].tolist() if not saved_s.empty else symbols_to_scan[:15]
         deep_sym = st.selectbox("اختر الأصل للتحليل الفني العميق:", symbol_options, key="deep_sym_select")
