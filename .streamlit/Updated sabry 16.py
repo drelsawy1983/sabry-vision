@@ -1,17 +1,17 @@
 """
 ================================================================================
-🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.16 Master Ultimate)
+🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v11.20 Master Supreme)
 ================================================================================
-INSTITUTIONAL EDITION (النسخة النهائية الشاملة، الموسعة والمصححة بالكامل بلا أي اختصار):
+INSTITUTIONAL SUPREME EDITION (النسخة الكبرى والأشمل والأقوى على الإطلاق):
 - All 7 Dashboard Tabs Fully Active & Restored to Complete Operational Capacity.
-- Full Market Repositories (TASI 309+, EGX 240+, S&P 500 503+, Nasdaq 100+, ADX, DFM, Commodities).
+- Full Market Repositories (TASI 309+, EGX 240+, S&P 500 503+, Nasdaq 100+, ADX, DFM, Commodities, ETFs).
 - Tab 1: Instant Comprehensive Scanner, TradingView Watchlist Generator, Universal Export Hub.
 - Tab 2: Growth-Adjusted Graham & PEG Fair Pricing, 8 Quarters Audit Matrix, Global Platform Links.
-- Tab 3: Full Backtest Engine with Dual Tables (Model Summary Statistics & Trade-by-Trade Log).
+- Tab 3: Full Backtest Engine with Dual Tables (Model Summary Statistics & Detailed Trade-by-Trade Log).
 - Tab 4: Deep Technical Analysis with Plotly Dark Chart & Institutional Diagnostic Box 
   (Bollinger Squeeze, Exact EMA Structure & Crosses, Ichimoku Tenkan/Kijun Alignment, Super POCs, Dual VWAP).
 - Tab 5: Complete Custom Watchlist Manager with Dynamic Symbol Management & Deletion.
-- Tab 6: Portfolio & Live Trade Tracker with Risk Management & Remaining Quantities.
+- Tab 6: Portfolio & Live Trade Tracker with Risk Management & Capital Allocation.
 - Tab 7: Automated Market & Telegram Engine with Time-Window Market Detection & Consolidated Card.
 
 Audited & Verified by Institutional Quant Engineering Council.
@@ -40,14 +40,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # 1. SYSTEM INITIALIZATION & RESPONSIVE CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.16",
+    page_title="SABRY VISION - Master Quant Terminal v11.20 Supreme",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVision11.16")
+logger = logging.getLogger("SabryVision11.20")
 
 st.markdown("""
 <style>
@@ -663,7 +663,7 @@ class SabryVisionMasterScanner:
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.16 - Security Portal</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.20 - Security Portal</h1>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             with st.form("login_form"):
@@ -679,7 +679,7 @@ def main():
                         st.error("❌ بيانات الدخول غير صحيحة.")
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v11.16")
+    st.sidebar.title("🛡️ SABRY VISION v11.20")
     is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
     
@@ -701,7 +701,7 @@ def main():
     timeframe = st.sidebar.selectbox("الإطار الزمني العام:", ["1m", "5m", "15m", "1h", "4h", "1d"], index=3)
     active_setups = st.sidebar.multiselect("نماذج الفلسفة المعتمدة:", ["BREAKOUT", "RETEST", "LIQUIDITY_SWEEP", "BOTTOM_REVERSAL"], default=["BREAKOUT", "RETEST", "LIQUIDITY_SWEEP"])
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.16")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.20 Supreme")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
@@ -893,4 +893,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
