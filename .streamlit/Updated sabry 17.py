@@ -1,19 +1,12 @@
 """
 ================================================================================
-🛡️ SABRY VISION - INSTITUTIONAL QUANT TERMINAL (v16.00 Master Ultimate Edition)
+🛡️ SABRY VISION - INSTITUTIONAL QUANT TERMINAL (v16.10 Final Stable Edition)
 ================================================================================
 DEVELOPED BY: Dr. Mohamed Sabry & Institutional Quant Engineering Council
 --------------------------------------------------------------------------------
-FULL UNABRIDGED CUMULATIVE IMPLEMENTATION (NO SHORTCUTS - ALL 1000+ FEATURES):
-- TAB 1: Instant Multi-Timeframe Scanner with Live Progress Bar, Dual-Pattern Combo, 
-         SL/TP Pct Columns, Top 10 Telegram Card & Background Auto-Streamer (ON/OFF).
-- TAB 2: Professional TradingView-Grade Chart (EMA 20/50/100/200, Bollinger Bands, 
-         Dual VWAP & SD, Ichimoku Cloud & Lines, Super POCs, SMC BOS/CHoCH, FVG/OB), 
-         Dedicated Subplots for RSI & MACD, Comprehensive Institutional Diagnostic Box, 
-         and Multi-Timeframe Consensus Matrix.
-- TAB 3: Comprehensive Financial Audit with Colored Institutional Target Pct, 
-         Graham & Growth PEG Models, 4-Quarters & 4-Years Matrices with Visual Dots.
-- TAB 4 & 5: Live Portfolio Tracker & Dynamic Custom Watchlist Manager.
+BUG FIXES IN v16.10:
+- Updated Pandas fillna syntax to ensure 100% compatibility with modern environments.
+- Maintained all TradingView-grade charts, SMC indicators, Progress Bar, and Tables.
 ================================================================================
 """
 
@@ -39,14 +32,14 @@ from plotly.subplots import make_subplots
 # 1. SYSTEM INITIALIZATION & RESPONSIVE STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v16.00",
+    page_title="SABRY VISION - Master Quant Terminal v16.10",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVision16.00")
+logger = logging.getLogger("SabryVision16.10")
 
 st.markdown("""
 <style>
@@ -87,7 +80,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# 2. COMPLETE MARKET REPOSITORIES (WITHOUT ADX & DFM)
+# 2. COMPLETE MARKET REPOSITORIES
 # ------------------------------------------------------------------------------
 class UnifiedDataProvider:
     @staticmethod
@@ -282,7 +275,7 @@ market_lists = {
 }
 
 # ------------------------------------------------------------------------------
-# 3. ADVANCED QUANT, TECHNICAL & SMC ENGINES
+# 3. ADVANCED QUANT, TECHNICAL & SMC ENGINES (FIXED FILLNA)
 # ------------------------------------------------------------------------------
 @dataclass
 class InstitutionalConfig:
@@ -355,7 +348,8 @@ class SuperPOCEngine:
         f['macd_signal'] = f['macd'].ewm(span=9).mean()
         f['macd_hist'] = f['macd'] - f['macd_signal']
         
-        return f.fillna(method='bfill').fillna(method='ffill')
+        # FIXED FILLNA COMPATIBILITY
+        return f.bfill().ffill()
 
     @staticmethod
     def detect_fvg_and_order_blocks(df: pd.DataFrame) -> Tuple[List[Dict], List[Dict]]:
@@ -534,7 +528,7 @@ class SabryVisionMasterScanner:
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v16.00 - Quant Portal</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v16.10 - Quant Portal</h1>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             with st.form("login_form"):
@@ -549,7 +543,7 @@ def main():
                     else: st.error("❌ بيانات الدخول غير صحيحة.")
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v16.00")
+    st.sidebar.title("🛡️ SABRY VISION v16.10")
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
     if st.sidebar.button("🚪 تسجيل الخروج"):
         st.session_state["authenticated"] = False
@@ -562,7 +556,7 @@ def main():
     selected_symbols = market_lists.get(market_choice, st.session_state["custom_watchlists"].get(market_choice, []))
     config = InstitutionalConfig()
 
-    st.title("🛡️ SABRY VISION - Institutional Quant Terminal v16.00")
+    st.title("🛡️ SABRY VISION - Institutional Quant Terminal v16.10")
     st.markdown("---")
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -638,7 +632,6 @@ def main():
         deep_sym = st.text_input("أدخل رمز السهم يدوياً:", value="NVDA").upper() if chart_source == "إدخال رمز يدوي" else chart_source
         deep_tf = st.selectbox("الإطار الزمني للتحليل:", ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"], index=3, key="t2_tf")
 
-        # Controls for indicators
         c_i1, c_i2, c_i3, c_i4 = st.columns(4)
         show_emas = c_i1.selectbox("المتوسطات EMA (20/50/100/200):", ["إظهار 🟢", "إخفاء 🔴"], index=0)
         show_bb = c_i2.selectbox("بولينجر باند (Bollinger):", ["إظهار 🟢", "إخفاء 🔴"], index=0)
@@ -651,55 +644,37 @@ def main():
             poc_res = SuperPOCEngine.calculate_multi_pocs(deep_df)
             fvgs, obs = SuperPOCEngine.detect_fvg_and_order_blocks(deep_df)
 
-            # Create Subplots: Row 1 = Main Chart (Candles & Overlays), Row 2 = RSI, Row 3 = MACD Histogram
             fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.03, row_heights=[0.65, 0.175, 0.175])
 
-            # High-Delta Candle Color Assignment
-            vol_mean = deep_df['volume'].rolling(20, min_periods=1).mean()
-            colors = []
-            for idx, row in deep_df.iterrows():
-                is_green = row['close'] >= row['open']
-                is_high_vol = row['volume'] > (vol_mean.loc[idx] * 1.5 if idx in vol_mean else row['volume'])
-                if is_high_vol and is_green: colors.append('#FFFFFF') # White
-                elif is_high_vol and not is_green: colors.append('#FF4500') # Orange
-                else: colors.append('#00FF7F' if is_green else '#FF0000')
-
-            # Main Candlestick
             fig.add_trace(go.Candlestick(
                 x=deep_df.index, open=deep_df['open'], high=deep_df['high'], low=deep_df['low'], close=deep_df['close'],
                 increasing_line_color='#00FF7F', decreasing_line_color='#FF0000', name="الشموع اليابانية"
             ), row=1, col=1)
 
-            # EMAs
             if show_emas == "إظهار 🟢":
                 fig.add_trace(go.Scatter(x=deep_df.index, y=deep_df['ema20'], line=dict(color='#00BFFF', width=1), name="EMA 20"), row=1, col=1)
                 fig.add_trace(go.Scatter(x=deep_df.index, y=deep_df['ema50'], line=dict(color='#FFA500', width=1), name="EMA 50"), row=1, col=1)
                 fig.add_trace(go.Scatter(x=deep_df.index, y=deep_df['ema200'], line=dict(color='#FF1493', width=1.5), name="EMA 200"), row=1, col=1)
 
-            # Bollinger Bands
             if show_bb == "إظهار 🟢":
                 fig.add_trace(go.Scatter(x=deep_df.index, y=deep_df['bb_upper'], line=dict(color='rgba(200,200,200,0.5)', width=1, dash='dot'), name="BB Upper"), row=1, col=1)
                 fig.add_trace(go.Scatter(x=deep_df.index, y=deep_df['bb_lower'], line=dict(color='rgba(200,200,200,0.5)', width=1, dash='dot'), name="BB Lower", fill='tonexty', fillcolor='rgba(200,200,200,0.05)'), row=1, col=1)
 
-            # VWAP
             if show_vwap == "إظهار 🟢":
                 fig.add_trace(go.Scatter(x=deep_df.index, y=deep_df['vwap'], line=dict(color='#FFD700', width=1.5), name="VWAP"), row=1, col=1)
                 fig.add_trace(go.Scatter(x=deep_df.index, y=deep_df['vwap_sd1_p'], line=dict(color='#7CFC00', width=1, dash='dash'), name="VWAP +1SD"), row=1, col=1)
                 fig.add_trace(go.Scatter(x=deep_df.index, y=deep_df['vwap_sd1_m'], line=dict(color='#FF6347', width=1, dash='dash'), name="VWAP -1SD"), row=1, col=1)
 
-            # Super POC Zone
             if poc_res["super_zone"] and poc_res["zone_range"]:
                 fig.add_hrect(
                     y0=poc_res["zone_range"][0], y1=poc_res["zone_range"][1],
                     fillcolor="green", opacity=0.15, line_width=0, annotation_text="Super POC Zone", row=1, col=1
                 )
 
-            # RSI Subplot
             fig.add_trace(go.Scatter(x=deep_df.index, y=deep_df['rsi'], line=dict(color='#00FFFF', width=1.5), name="RSI (14)"), row=2, col=1)
             fig.add_hline(y=70, line_dash="dash", line_color="red", row=2, col=1)
             fig.add_hline(y=30, line_dash="dash", line_color="green", row=2, col=1)
 
-            # MACD Subplot
             fig.add_trace(go.Bar(x=deep_df.index, y=deep_df['macd_hist'], marker_color=np.where(deep_df['macd_hist'] >= 0, '#00FF7F', '#FF0000'), name="MACD Hist"), row=3, col=1)
             fig.add_trace(go.Scatter(x=deep_df.index, y=deep_df['macd'], line=dict(color='#1E90FF', width=1), name="MACD Line"), row=3, col=1)
             fig.add_trace(go.Scatter(x=deep_df.index, y=deep_df['macd_signal'], line=dict(color='#FF8C00', width=1), name="Signal Line"), row=3, col=1)
@@ -707,7 +682,6 @@ def main():
             fig.update_layout(template="plotly_dark", height=700, paper_bgcolor="#0E1117", plot_bgcolor="#0E1117", xaxis_rangeslider_visible=False)
             st.plotly_chart(fig, use_container_width=True)
 
-            # Institutional Diagnostic Box & Multi-Timeframe Consensus
             st.markdown("### 📋 بطاقة التشخيص الفني العميق والتوافق المتعدد")
             curr_rsi = float(deep_df['rsi'].iloc[-1])
             d1, d2, d3 = st.columns(3)
@@ -828,4 +802,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
