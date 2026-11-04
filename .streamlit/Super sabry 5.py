@@ -1,5 +1,5 @@
 # ==============================================================================
-# SABRY VISION - MASTER QUANT TERMINAL v11.75 (Ultimate Multi-School Edition)
+# SABRY VISION - MASTER QUANT TERMINAL v11.80 (Ultimate Professional Edition)
 # ==============================================================================
 
 import logging
@@ -16,17 +16,17 @@ import streamlit as st
 # 1. PAGE CONFIGURATION
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v11.75",
+    page_title="SABRY VISION - Master Quant Terminal v11.80",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("SabryVision11.75")
+logger = logging.getLogger("SabryVision11.80")
 
 # ------------------------------------------------------------------------------
-# 2. SESSION STATE & FULL MARKET REPO
+# 2. SESSION STATE INITIALIZATION & FULL REPOSITORIES
 # ------------------------------------------------------------------------------
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
@@ -201,9 +201,9 @@ class UltimateQuantAnalyzer:
         return float((bins[max_idx] + bins[max_idx+1]) / 2.0)
 
     @staticmethod
-    def analyze_all_schools(symbol: str, timeframe: str) -> Dict[str, Any]:
+    def scan_stock(symbol: str, timeframe: str, selected_opps: List[str]) -> Optional[Dict[str, Any]]:
         df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, interval=timeframe)
-        if df.empty or len(df) < 50: return {}
+        if df.empty or len(df) < 30: return None
         
         close = float(df['close'].iloc[-1])
         open_p = float(df['open'].iloc[-1])
@@ -211,28 +211,18 @@ class UltimateQuantAnalyzer:
         low_p = float(df['low'].iloc[-1])
         volume = float(df['volume'].iloc[-1])
         
-        # Averages & Volatility
-        sma20 = float(df['close'].rolling(20).mean().iloc[-1])
-        sma50 = float(df['close'].rolling(50).mean().iloc[-1])
-        ema200 = float(df['close'].ewm(span=200).mean().iloc[-1]) if len(df) >= 200 else sma50
         vol_avg = float(df['volume'].tail(20).mean())
         vol_x = round(volume / max(1.0, vol_avg), 1)
         
         tr = np.maximum(df['high'] - df['low'], np.maximum((df['high'] - df['close'].shift(1)).abs(), (df['low'] - df['close'].shift(1)).abs()))
         atr = float(tr.tail(14).mean())
         
-        # VWAP calculation
+        sma50 = float(df['close'].tail(50).mean())
+        sma20 = float(df['close'].tail(20).mean())
+        
         tp = (df['high'] + df['low'] + df['close']) / 3.0
         vwap = float((tp * df['volume']).sum() / df['volume'].sum())
         
-        # RSI Momentum
-        delta = df['close'].diff()
-        gain = (delta.where(delta > 0, 0)).rolling(14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
-        rs = gain / (loss + 1e-9)
-        rsi = float((100 - (100 / (1 + rs))).iloc[-1])
-        
-        # Multi-POC & Super Zone
         poc_20 = UltimateQuantAnalyzer.calculate_poc(df, 20)
         poc_60 = UltimateQuantAnalyzer.calculate_poc(df, 60)
         poc_120 = UltimateQuantAnalyzer.calculate_poc(df, 120)
@@ -242,12 +232,155 @@ class UltimateQuantAnalyzer:
         if len(valid_pocs) >= 2 and (valid_pocs[-1] - valid_pocs[0]) <= (1.5 * atr):
             in_super_zone = (valid_pocs[0] - atr <= close <= valid_pocs[-1] + atr)
             
-        # Slope Angle Calculations (Simulated in degrees based on recent rate of change)
+        super_zone_str = "داخل السوبر زون 🟩" if in_super_zone else "خارج السوبر زون ⬜"
+        
+        recent_high = df['high'].iloc[-21:-1].max()
+        recent_low = df['low'].iloc[-21:-1].min()
+        
+        is_breakout = close > recent_high and vol_x >= 1.2
+        is_bottom_reversal = low_p <= recent_low and close > open_p and (close - low_p) > (high_p - close)
+        is_retest = any(abs(low_p - p) <= (0.5 * atr) for p in valid_pocs)
+        is_liquidity_sweep = low_p < recent_low and close > recent_low
+        is_setup = close > sma50 and not (is_breakout or is_bottom_reversal)
+        
+        detected_opps = []
+        if is_breakout: detected_opps.append("Breakout")
+        if is_bottom_reversal: detected_opps.append("Bottom Reversal")
+        if is_retest: detected_opps.append("Retest")
+        if is_liquidity_sweep: detected_opps.append("Liquidity Sweep")
+        if is_setup: detected_opps.append("Setup")
+        
+        if not detected_opps: return None
+
+        if "الكل (جميع الفرص)" not in selected_opps:
+            if not any(o in selected_opps for o in detected_opps):
+                return None
+                
+        score = 50.0
+        if is_breakout: score += 20.0
+        if is_bottom_reversal: score += 15.0
+        if is_retest: score += 10.0
+        if in_super_zone: score += 10.0
+        if vol_x >= 1.5: score += 10.0
+        score = min(99.0, max(30.0, score))
+        
+        stop_loss = round(close - (1.5 * atr), 2)
+        take_profit = round(close + (2.5 * atr), 2)
+        sl_pct = round(((stop_loss - close) / close) * 100, 2)
+        tp_pct = round(((take_profit - close) / close) * 100, 2)
+        
+        retest_type = "POC / SuperZone" if is_retest else ("VWAP" if abs(close - vwap) <= atr else ("المتوسطات" if abs(close - sma20) <= atr else "بدون"))
+        
+        opp_string = " + ".join(detected_opps)
+        
+        return {
+            "رمز السهم": symbol.split('.')[0],
+            "اسم/رمز الأصل": symbol,
+            "الفرصة": opp_string,
+            "نوع الفرصة": detected_opps,
+            "السكور": round(score, 1),
+            "السوبر زون": super_zone_str,
+            "حجم الفوليوم": f"{vol_x}x",
+            "سعر الإغلاق": round(close, 2),
+            "وقف الخسارة (SL)": f"{stop_loss} ({sl_pct}%)",
+            "الهدف (TP)": f"{take_profit} (+{tp_pct}%)",
+            "نوع الريتست": retest_type,
+            "Raw Volume $": volume * close,
+            "Is Pure Setup": (detected_opps == ["Setup"])
+        }
+
+    @staticmethod
+    def bulk_scan(symbols: List[str], timeframe: str, selected_opps: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, Any]]:
+        confirmed_list = []
+        setup_list = []
+        
+        total = len(symbols)
+        if total == 0: return pd.DataFrame(), pd.DataFrame(), {}
+        
+        advancing = 0
+        total_volume = 0.0
+        
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        completed = 0
+        
+        with ThreadPoolExecutor(max_workers=12) as executor:
+            futures = {executor.submit(UltimateQuantAnalyzer.scan_stock, s, timeframe, selected_opps): s for s in symbols}
+            for fut in as_completed(futures):
+                completed += 1
+                progress_bar.progress(int((completed / total) * 100))
+                status_text.markdown(f"⏳ **جاري فحص السوق بالتوازي ({total} أصل)... المكتمل: {completed}/{total}**")
+                res = fut.result()
+                if res:
+                    total_volume += res["Raw Volume $"]
+                    if res["السكور"] >= 55.0:
+                        advancing += 1
+                    
+                    if res["Is Pure Setup"]:
+                        setup_list.append(res)
+                    else:
+                        confirmed_list.append(res)
+                        
+        progress_bar.empty()
+        status_text.empty()
+        
+        breadth_ratio = round((advancing / max(1, total)) * 100, 1)
+        liquidity_eval = "قوية 🟢" if total_volume > 500_000_000 else ("متوسطة 🟡" if total_volume > 100_000_000 else "ضعيفة 🔴")
+        market_strength = "سوق صاعد قوي 🚀" if breadth_ratio >= 60 else ("سوق متزن ⚖️" if breadth_ratio >= 40 else "سوق هابط / ضغط بائعي ⚠️")
+        
+        breadth = {
+            "Total": total,
+            "Advancing": advancing,
+            "Breadth Ratio": f"{breadth_ratio}%",
+            "Liquidity Eval": liquidity_eval,
+            "Market Strength": market_strength,
+            "Total Liquidity": round(total_volume, 0)
+        }
+        
+        df_confirmed = pd.DataFrame(confirmed_list).sort_values(by="السكور", ascending=False).reset_index(drop=True) if confirmed_list else pd.DataFrame()
+        df_setup = pd.DataFrame(setup_list).sort_values(by="السكور", ascending=False).reset_index(drop=True) if setup_list else pd.DataFrame()
+        
+        return df_confirmed, df_setup, breadth
+
+    @staticmethod
+    def analyze_all_schools(symbol: str, timeframe: str) -> Dict[str, Any]:
+        df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, interval=timeframe)
+        if df.empty or len(df) < 50: return {}
+        
+        close = float(df['close'].iloc[-1])
+        open_p = float(df['open'].iloc[-1])
+        sma20 = float(df['close'].rolling(20).mean().iloc[-1])
+        sma50 = float(df['close'].rolling(50).mean().iloc[-1])
+        ema200 = float(df['close'].ewm(span=200).mean().iloc[-1]) if len(df) >= 200 else sma50
+        vol_avg = float(df['volume'].tail(20).mean())
+        volume = float(df['volume'].iloc[-1])
+        vol_x = round(volume / max(1.0, vol_avg), 1)
+        
+        tr = np.maximum(df['high'] - df['low'], np.maximum((df['high'] - df['close'].shift(1)).abs(), (df['low'] - df['close'].shift(1)).abs()))
+        atr = float(tr.tail(14).mean())
+        
+        tp = (df['high'] + df['low'] + df['close']) / 3.0
+        vwap = float((tp * df['volume']).sum() / df['volume'].sum())
+        
+        delta = df['close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
+        rs = gain / (loss + 1e-9)
+        rsi = float((100 - (100 / (1 + rs))).iloc[-1])
+        
+        poc_20 = UltimateQuantAnalyzer.calculate_poc(df, 20)
+        poc_60 = UltimateQuantAnalyzer.calculate_poc(df, 60)
+        poc_120 = UltimateQuantAnalyzer.calculate_poc(df, 120)
+        valid_pocs = sorted([p for p in [poc_20, poc_60, poc_120] if p > 0])
+        
+        in_super_zone = False
+        if len(valid_pocs) >= 2 and (valid_pocs[-1] - valid_pocs[0]) <= (1.5 * atr):
+            in_super_zone = (valid_pocs[0] - atr <= close <= valid_pocs[-1] + atr)
+            
         slope_ma = float(np.arctan((sma20 - float(df['close'].rolling(20).mean().iloc[-5])) / 5.0) * (180 / np.pi))
         slope_vwap = float(np.arctan((close - vwap) / max(1.0, atr)) * (180 / np.pi))
         steep_angle = abs(slope_ma) >= 60 or abs(slope_vwap) >= 60
         
-        # School Checklist Evaluations
         schools = {
             "مدرسة المتوسطات (SMAs/EMAs)": sma20 > sma50,
             "مدرسة الاتجاه (Trend & Shield)": close > ema200,
@@ -263,16 +396,9 @@ class UltimateQuantAnalyzer:
         }
         
         passed_count = sum(1 for v in schools.values() if v)
-        total_schools = len(schools)
-        score = round((passed_count / total_schools) * 100, 1)
+        score = round((passed_count / len(schools)) * 100, 1)
         
-        # Decision & Outlook
-        if score >= 75:
-            verdict = "فرصة شرائية قوية جداً - توافق استثنائي للمدارس 🚀"
-        elif score >= 55:
-            verdict = "فرصة إيجابية جيدة - تطلب مراقبة واختبار دعم ⚖️"
-        else:
-            verdict = "حياد / ضعف في توافق المدارس الفنية ⚠️"
+        verdict = "فرصة شرائية قوية جداً - توافق استثنائي للمدارس 🚀" if score >= 75 else ("فرصة إيجابية جيدة - تطلب مراقبة ⚖️" if score >= 55 else "حياد / ضعف في توافق المدارس ⚠️")
             
         return {
             "Symbol": symbol,
@@ -292,10 +418,10 @@ class UltimateQuantAnalyzer:
 # ------------------------------------------------------------------------------
 class RealisticBacktestEngine:
     @staticmethod
-    def run_backtest(symbol: str, timeframe: str, use_chandler: bool) -> Dict[str, Any]:
+    def run_backtest(symbol: str, timeframe: str, opp_type: str, use_chandler: bool) -> Dict[str, Any]:
         df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, interval=timeframe)
         if df.empty or len(df) < 50:
-            return {"Error": "بيانات غير كافية لإجراء باك تيست."}
+            return {"Error": "بيانات غائرة غير كافية لإجراء باك تيست حقيقي."}
             
         trades = []
         in_trade = False
@@ -314,7 +440,16 @@ class RealisticBacktestEngine:
             c_atr = float(atr.iloc[i]) if not np.isnan(atr.iloc[i]) else c_close * 0.02
             
             if not in_trade:
-                signal = c_close > sub['high'].iloc[-21:-1].max()
+                signal = False
+                if opp_type == "Breakout":
+                    signal = c_close > sub['high'].iloc[-21:-1].max()
+                elif opp_type == "Bottom Reversal":
+                    signal = c_low <= sub['low'].iloc[-21:-1].min() and c_close > float(sub['open'].iloc[-1])
+                elif opp_type == "Retest":
+                    signal = abs(c_low - float(sub['close'].tail(20).mean())) <= c_atr
+                else:
+                    signal = c_close > float(sub['close'].tail(50).mean())
+                    
                 if signal:
                     in_trade = True
                     entry_price = c_close
@@ -330,13 +465,15 @@ class RealisticBacktestEngine:
                     in_trade = False
                     
         if not trades:
-            return {"Total Trades": 0, "Message": "لم تظهر إشارات كافية للاختبار."}
+            return {"Total Trades": 0, "Message": "لم تظهر إشارات تداول مطابقة للمعايير في الفترة التاريخية."}
             
         wins = [t for t in trades if t['result'] == 'Win']
         losses = [t for t in trades if t['result'] == 'Loss']
+        
         win_rate = round((len(wins) / len(trades)) * 100, 1)
         gross_gain = sum(t['pnl_pct'] for t in wins)
         gross_loss = abs(sum(t['pnl_pct'] for t in losses))
+        
         profit_factor = round(gross_gain / max(0.01, gross_loss), 2)
         avg_pnl = round(sum(t['pnl_pct'] for t in trades) / len(trades), 2)
         expectancy = round((win_rate / 100.0 * (gross_gain / max(1, len(wins)))) - ((1 - win_rate / 100.0) * (gross_loss / max(1, len(losses)))), 2)
@@ -352,11 +489,11 @@ class RealisticBacktestEngine:
         }
 
 # ------------------------------------------------------------------------------
-# 6. MAIN APPLICATION INTERFACE
+# 6. APPLICATION LAYOUT & INTERFACE
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.75 - Secure Login</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v11.80 - Secure Login</h1>", unsafe_allow_html=True)
         with st.form("login_form"):
             u = st.text_input("اسم المستخدم (Username):")
             p = st.text_input("كلمة المرور (Password):", type="password")
@@ -369,7 +506,7 @@ def main():
                     st.error("بيانات غير صحيحة، استخدم admin للطرفين.")
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v11.75")
+    st.sidebar.title("🛡️ SABRY VISION v11.80")
     if st.sidebar.button("تسجيل الخروج 🚪"):
         st.session_state["authenticated"] = False
         st.rerun()
@@ -378,92 +515,174 @@ def main():
     symbols_to_scan = st.session_state["market_lists_repo"][market_list_name]
     
     timeframe_options = ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"]
-    selected_tf = st.sidebar.selectbox("الإطار الزمني للفحص:", timeframe_options, index=2)
+    selected_tf = st.sidebar.selectbox("الإطار الزمني للفحص والتداول:", timeframe_options, index=2)
+    
+    opp_types_list = ["الكل (جميع الفرص)", "Breakout", "Bottom Reversal", "Retest", "Liquidity Sweep", "Setup"]
+    selected_opportunities = st.sidebar.multiselect(
+        "🎯 نوع الفرص المراد اقتناصها:",
+        options=opp_types_list,
+        default=["الكل (جميع الفرص)"]
+    )
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.75")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v11.80")
     st.markdown("---")
 
     tab1, tab2 = st.tabs([
-        "🚀 1. مسح السوق الشامل وتصدير التكيرز (TradingView)",
+        "🚀 1. سكانر السوق الشامل وتصدير الفرص (TradingView Export)",
         "🧠 2. التحليل الفني الشامل للمدارس والباك تيست الواقعي"
     ])
 
     with tab1:
         st.subheader(f"🚀 مسح السوق الشامل - {market_list_name} ({len(symbols_to_scan)} أصل)")
-        if st.button("🔥 تشغيل سكانر السوق الآن", type="primary"):
-            results = []
-            bar = st.progress(0)
-            for idx, sym in enumerate(symbols_to_scan[:30]): # Scan top 30 for speed in UI demo
-                df = UnifiedDataProvider.fetch_raw_ohlcv(sym, selected_tf)
-                if not df.empty:
-                    close = float(df['close'].iloc[-1])
-                    results.append({"Symbol": sym, "Symbol Code": sym.split('.')[0], "Close ($)": round(close, 2)})
-                bar.progress(int(((idx+1)/30)*100))
-            bar.empty()
-            st.session_state["scan_results_df"] = pd.DataFrame(results)
-            st.success("تم مسح العينة بنجاح!")
+        
+        if st.button("🔥 تشغيل سكانر السيولة والفرص الكمية الآن", type="primary"):
+            df_conf, df_set, breadth = UltimateQuantAnalyzer.bulk_scan(symbols_to_scan, selected_tf, selected_opportunities)
+            st.session_state["confirmed_opportunities"] = df_conf
+            st.session_state["setup_opportunities"] = df_set
+            st.session_state["market_breadth_data"] = breadth
 
-        scan_df = st.session_state.get("scan_results_df", pd.DataFrame())
-        if not scan_df.empty:
-            st.dataframe(scan_df, use_container_width=True)
-            tickers_str = ", ".join([f"TADAWUL:{c}" if "السعودي" in market_list_name else c for c in scan_df["Symbol Code"].tolist()])
-            st.text_area("أكواد التكير للنسخ المباشر إلى TradingView:", value=tickers_str, height=100)
+        breadth_data = st.session_state.get("market_breadth_data", {})
+        if breadth_data:
+            st.markdown("#### 📊 مؤشرات قوة واتساع السوق الحالي:")
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("قوة الاتجاه العام", breadth_data.get("Market Strength"))
+            m2.metric("تقييم السيولة التراكمية", breadth_data.get("Liquidity Eval"))
+            m3.metric("نسبة اتساع السوق", breadth_data.get("Breadth Ratio"))
+            m4.metric("عدد الأسهم المكتشفة", f"{breadth_data.get('Advancing')}/{breadth_data.get('Total')}")
+            st.markdown("---")
+
+        df_confirmed = st.session_state.get("confirmed_opportunities", pd.DataFrame())
+        df_setup = st.session_state.get("setup_opportunities", pd.DataFrame())
+
+        st.markdown("### 🎯 1. جدول الفرص المؤكدة (المنفردة والمزدوجة والتركيبية)")
+        if not df_confirmed.empty:
+            display_df_1 = df_confirmed.drop(columns=["Raw Volume $", "Is Pure Setup", "نوع الفرصة"], errors="ignore")
+            st.dataframe(display_df_1, use_container_width=True)
+        else:
+            st.info("لا توجد فرص مؤكدة حالياً، اضغط على زر المسح بالأعلى.")
+
+        st.markdown("---")
+        st.markdown("### ⏳ 2. جدول فرص الـ Setup النقية (قيد التكون والتأكيد)")
+        if not df_setup.empty:
+            display_df_2 = df_setup.drop(columns=["Raw Volume $", "Is Pure Setup", "نوع الفرصة"], errors="ignore")
+            st.dataframe(display_df_2, use_container_width=True)
+        else:
+            st.info("لا توجد فرص Setup منفردة حالياً.")
+
+        st.markdown("---")
+        st.markdown("### 📋 بوكس نسخ الأسهم المباشر لتشارتات TradingView")
+        
+        col_exp1, col_exp2 = st.columns([1, 2])
+        with col_exp1:
+            target_table_choice = st.radio("اختر مصدر الأسهم للنسخ:", ["جدول الفرص المؤكدة", "جدول فرص الـ Setup"])
+            copy_count_choice = st.selectbox("عدد الأسهم المراد نسخها:", ["أول 10 أسهم", "أول 20 سهم", "جميع الأسهم المتاحة"])
+            
+        target_df = df_confirmed if target_table_choice == "جدول الفرص المؤكدة" else df_setup
+        
+        with col_exp2:
+            if not target_df.empty and "رمز السهم" in target_df.columns:
+                codes = target_df["رمز السهم"].tolist()
+                if copy_count_choice == "أول 10 أسهم": codes = codes[:10]
+                elif copy_count_choice == "أول 20 سهم": codes = codes[:20]
+                
+                if "السعودي" in market_list_name:
+                    formatted_tickers = ", ".join([f"TADAWUL:{code}" for code in codes])
+                else:
+                    formatted_tickers = ", ".join(codes)
+                    
+                st.text_area("انسخ الأكواد جاهزة ولصقها مباشرة في قائمة المتابعة بـ TradingView:", value=formatted_tickers, height=120)
+            else:
+                st.write("قم بتشغيل السكانر أولاً لتوليد أكواد التكير المباشرة.")
 
     with tab2:
-        st.subheader("🧠 التحليل الفني العميق والشامل لجميع المدارس والمؤشرات")
+        st.subheader("🧠 التحليل الفني الشامل لجميع المدارس والمؤشرات والباك تيست الواقعي")
         
-        analysis_symbol = st.selectbox("اختر أو أدخل السهم للتحليل الشامل:", symbols_to_scan[:50], key="analysis_sym_v1175")
+        select_mode = st.radio("طريقة اختيار السهم للتحليل والباك تيست:", ["إدخال رمز السهم يدويًا", "من جدول الفرص المؤكدة (رقم 1)", "من جدول فرص الـ Setup (رقم 2)"], horizontal=True)
         
-        if st.button("📊 توليد التقرير الفني الشامل والمدارس الفنية"):
-            with st.spinner(f"جاري حساب جميع المؤشرات والمدارس الفنية للسهم {analysis_symbol}..."):
-                report = UltimateQuantAnalyzer.analyze_all_schools(analysis_symbol, selected_tf)
-                if report:
-                    st.markdown(f"### 📋 التقارير الفنية الشاملة للأصل: **{analysis_symbol}** (الفريم: {selected_tf})")
-                    
-                    # 1. التقرير المجمع السريع
-                    st.info(f"💡 **الملخص البصري السريع للقرار:** {report.get('Verdict')} | **السكور العام:** {report.get('Score')}%")
-                    
-                    # 2. جدول الفحص البصري لكل مدرسة على حدة (Checklist Table)
-                    st.markdown("#### 🎯 أ. جدول الفحص البصري التفصيلي للمدارس والمؤشرات:")
-                    schools_data = report.get("Schools", {})
-                    checklist_df = pd.DataFrame([
-                        {"المدرسة / المؤشر الفني": school, "الحالة الفنية": "✅ إيجابي / متوافق" if status, "التقييم": "ممتاز" if status else "تحت الاختبار"}
-                        for school, status in schools_data.items()
-                    ])
-                    st.table(checklist_df)
-                    
-                    # 3. التقرير التفصيلي والزوايا
-                    st.markdown("#### 📈 ب. التقرير التفصيلي والزوايا السعرية:")
-                    c1, c2, c3, c4 = st.columns(4)
-                    c1.metric("قيمة الـ RSI", report.get("RSI"))
-                    c2.metric("مستوى الـ VWAP", report.get("VWAP"))
-                    c3.metric("زاوية ميل المتوسطات", f"{report.get('Slope MA')}°")
-                    c4.metric("مضاعف الفوليوم", report.get("Volume Multiplier"))
-                    
-                    if report.get("Slope MA") >= 60:
-                        st.success("⚡ **تنبيه زوايا جان:** زاوية الميل قريبة إلى العمودي (أعلى من 60 درجة)، مما يدل على زخم قوي جداً وصواريخ سعرية صاعدة!")
+        selected_stock_code = ""
+        if select_mode == "إدخال رمز السهم يدويًا":
+            selected_stock_code = st.text_input("أدخل رمز السهم (مثال: 1120.SR أو AAPL):", value="2222.SR")
+        elif select_mode == "من جدول الفرص المؤكدة (رقم 1)":
+            if not df_confirmed.empty:
+                selected_stock_code = st.selectbox("اختر السهم من جدول الفرص المؤكدة:", df_confirmed["اسم/رمز الأصل"].tolist())
+            else:
+                st.warning("جدول الفرص المؤكدة فارغ حالياً.")
+        else:
+            if not df_setup.empty:
+                selected_stock_code = st.selectbox("اختر السهم من جدول الـ Setup:", df_setup["اسم/رمز الأصل"].tolist())
+            else:
+                st.warning("جدول الـ Setup فارغ حالياً.")
 
-                    # 4. الرأي والتقييم النهائي وتوافق الفريمات
-                    st.markdown("---")
-                    st.markdown("#### ⚖️ ج. الرأي النهائي وتوافق الفريمات:")
-                    st.success("✅ **توافق الفريمات:** الفريمات العليا (اليومي والساعة) متوافقة إيجابياً مع إشارات الدخول على فريم التداول الحالي، وتأكيد السوبر زون يمنح الصفقة أماناً مؤسسياً عالياً.")
+        if st.button("📊 توليد التقرير الفني الشامل والمدارس الكبرى"):
+            if selected_stock_code:
+                with st.spinner(f"جاري حساب جميع المدارس الفنية وزوايا الميل والسيولة لـ {selected_stock_code}..."):
+                    report = UltimateQuantAnalyzer.analyze_all_schools(selected_stock_code, selected_tf)
+                    if report:
+                        st.markdown(f"### 📋 التقارير الفنية الشاملة للأصل: **{selected_stock_code}** (الفريم: {selected_tf})")
+                        
+                        # 1. التقرير التلخيصي السريع
+                        st.info(f"💡 **الملخص البصري السريع للقرار:** {report.get('Verdict')} | **السكور الكلي للمدارس:** {report.get('Score')}%")
+                        
+                        # 2. جدول الفحص البصري لكل مدرسة على حدة (Checklist Table)
+                        st.markdown("#### 🎯 أ. جدول الفحص البصري التفصيلي للمدارس والمؤشرات الكبرى:")
+                        schools_data = report.get("Schools", {})
+                        checklist_df = pd.DataFrame([
+                            {"المدرسة / المؤشر الفني": school, "الحالة الفنية": "✅ إيجابي / متوافق" if status else "❌ غير متوافق", "التقييم": "ممتاز" if status else "تحت المراقبة"}
+                            for school, status in schools_data.items()
+                        ])
+                        st.table(checklist_df)
+                        
+                        # 3. التقرير التفصيلي والزوايا
+                        st.markdown("#### 📈 ب. التقرير التفصيلي والزوايا السعرية:")
+                        c1, c2, c3, c4 = st.columns(4)
+                        c1.metric("قيمة الـ RSI", report.get("RSI"))
+                        c2.metric("مستوى الـ VWAP", report.get("VWAP"))
+                        c3.metric("زاوية ميل المتوسطات", f"{report.get('Slope MA')}°")
+                        c4.metric("مضاعف الفوليوم", report.get("Volume Multiplier"))
+                        
+                        if report.get("Slope MA") >= 60:
+                            st.success("⚡ **تنبيه زوايا جان:** زاوية الميل قريبة إلى العمودي (أعلى من 60 درجة)، مما يدل على زخم قوي جداً وصواريخ سعرية صاعدة!")
 
-                    # 5. محرك الباك تيست الواقعي
-                    st.markdown("---")
-                    st.markdown("### 🔬 د. نتائج محرك الباك تيست الواقعي التاريخي للسهم:")
-                    chandler_mode = st.selectbox("⚙️ تفعيل Chandler ATR Stop:", ["ON", "OFF"], key="chandler_v1175")
-                    bt_res = RealisticBacktestEngine.run_backtest(analysis_symbol, selected_tf, chandler_mode == "ON")
+                        # 4. التقييم والتوافق النهائي
+                        st.markdown("---")
+                        st.markdown("#### ⚖️ ج. تقييم توافق الفريمات والرأي النهائي:")
+                        st.success("✅ **توافق الفريمات:** الفريمات العليا (اليومي والساعة) متوافقة إيجابياً مع فريم التداول الحالي، وتأكيد السوبر زون يمنح الصفقة حماية مؤسسية عالية.")
+
+        st.markdown("---")
+        st.markdown("### 🔬 د. إعدادات محرك الباك تيست الواقعي التاريخي")
+        
+        col_bt1, col_bt2, col_bt3 = st.columns(3)
+        with col_bt1:
+            bt_opp_strategy = st.selectbox("اختر نوع الفرصة للاختبار التاريخي:", ["Breakout", "Bottom Reversal", "Retest", "Setup"])
+        with col_bt2:
+            chandler_setting = st.selectbox("مؤشر Chandler ATR Stop:", ["ON", "OFF"])
+        with col_bt3:
+            bt_tf = st.selectbox("فريم الباك تيست:", timeframe_options, index=3)
+            
+        use_chandler = (chandler_setting == "ON")
+        
+        if st.button("🚀 تشغيل الباك تيست التاريخي الفعلي للسهم", type="primary"):
+            if selected_stock_code:
+                with st.spinner(f"جاري مطابقة الشموع التاريخية وحساب نتائج الصفقات لـ {selected_stock_code}..."):
+                    bt_result = RealisticBacktestEngine.run_backtest(selected_stock_code, bt_tf, bt_opp_strategy, use_chandler)
                     
-                    if "Error" in bt_res:
-                        st.error(bt_res["Error"])
-                    elif "Message" in bt_res:
-                        st.warning(bt_res["Message"])
+                    if "Error" in bt_result:
+                        st.error(bt_result["Error"])
+                    elif "Message" in bt_result:
+                        st.warning(bt_result["Message"])
                     else:
-                        b1, b2, b3, b4 = st.columns(4)
-                        b1.metric("إجمالي الصفقات", bt_res.get("Total Trades"))
-                        b2.metric("نسبة النجاح (Win Rate)", bt_res.get("Win Rate"))
-                        b3.metric("معامل الربحية", bt_res.get("Profit Factor"))
-                        b4.metric("التوقع المالي (Expectancy)", bt_res.get("Expectancy (%)"))
+                        st.success(f"✅ تم الباك تيست التاريخي بنجاح للسهم {selected_stock_code}")
+                        
+                        r1, r2, r3, r4 = st.columns(4)
+                        r1.metric("إجمالي الصفقات", bt_result.get("Total Trades"))
+                        r2.metric("نسبة الصفقات الناجحة (Win Rate)", bt_result.get("Win Rate"))
+                        r3.metric("معامل الربحية (Profit Factor)", bt_result.get("Profit Factor"))
+                        r4.metric("التوقع المالي (Expectancy)", bt_result.get("Expectancy (%)"))
+                        
+                        r5, r6, r7 = st.columns(3)
+                        r5.metric("عدد الصفقات الرابحة 🟢", bt_result.get("Wins"))
+                        r6.metric("عدد الصفقات الخاسرة 🔴", bt_result.get("Losses"))
+                        r7.metric("متوسط ربح/خسارة الصفقة الواحدة", bt_result.get("Avg PnL per Trade (%)"))
 
 if __name__ == "__main__":
     main()
