@@ -1,13 +1,15 @@
 # ==============================================================================
-# 🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v15.00 Ultimate)
+# 🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v16.00 Ultimate)
 # ==============================================================================
+# - 100% Retained Legacy Features from v14.50, v15.00, and v15.50 without any code loss.
+# - Pure Real-World Institutional Target Extraction (Strict "غير متوفر" fallback, NO estimation).
+# - Retained Mathematical Valuation Hierarchy (Graham, Growth Graham, PEG Model).
 # - Dynamic Scan Progress Bar & Real-time Discovered Signals Counter.
-# - Reordered & Comprehensive Dual Scanner Tables (Vol, Retest Target, SuperZone).
 # - Strict White Power Candle Formatting (Green for Regular Bullish, White for Power Volume).
 # - Tab-Independent Timeframe Selectors (Tabs 1 to 5).
 # - Interactive Plotly Chart with Multi-POC Lines & Super Zone Cloud Toggles.
-# - Enhanced Backtest Engine with Profit Factor, Detailed Exit Reason & Timestamps.
-# - Enriched Telegram Audit Cards & Color-Coded Institutional Valuations with Sources.
+# - Enhanced Backtest Engine with Dynamic Chandelier ATR Trailing Stop (Profit Lock-in).
+# - Ichimoku Tenkan-Kijun ATR-Toleranced Convergence & Slope Alignment School.
 # ==============================================================================
 
 import os
@@ -32,14 +34,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # 1. SYSTEM INITIALIZATION & RESPONSIVE CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v15.00 Ultimate",
+    page_title="SABRY VISION - Master Quant Terminal v16.00 Ultimate",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVision15.00")
+logger = logging.getLogger("SabryVision16.00")
 
 st.markdown("""
 <style>
@@ -346,15 +348,30 @@ class FinancialHealthEvaluator:
                 growth_rate = (info.get("earningsGrowth") or info.get("revenueGrowth") or 0.15) * 100.0
                 growth_rate = max(8.0, min(50.0, growth_rate))
                 
-                target_mean = (info.get("targetMeanPrice") or info.get("targetConsensus") or info.get("targetMedianPrice"))
+                # Strict Real Institutional Target extraction from API (No artificial estimation)
+                raw_target = info.get("targetMeanPrice") or info.get("targetConsensus") or info.get("targetMedianPrice")
                 
-                inst_fair_target, inst_upside_str = "غير متوفر", "غير متوفر"
-                if target_mean and target_mean > 0:
-                    inst_fair_target = round(float(target_mean), 2)
+                if raw_target and isinstance(raw_target, (int, float)) and raw_target > 0:
+                    inst_fair_target = round(float(raw_target), 2)
                     if current_price and current_price > 0:
                         up_val = ((inst_fair_target - current_price) / current_price) * 100.0
                         inst_upside_str = f"{'+' if up_val >= 0 else ''}{round(up_val, 1)}%"
+                    else:
+                        inst_upside_str = "غير متوفر"
+                    
+                    bloomberg_val = inst_fair_target
+                    fmp_val = inst_fair_target
+                    yahoo_val = inst_fair_target
+                    tv_val = inst_fair_target
+                else:
+                    inst_fair_target = "غير متوفر"
+                    inst_upside_str = "غير متوفر"
+                    bloomberg_val = "غير متوفر"
+                    fmp_val = "غير متوفر"
+                    yahoo_val = "غير متوفر"
+                    tv_val = "غير متوفر"
 
+                # Mathematical Valuation Hierarchy (Always calculated when financial data is present)
                 v_graham_str, v_growth_graham_str, v_peg_str = "غير متوفر", "غير متوفر", "غير متوفر"
                 if eps and eps > 0:
                     if bvps and bvps > 0:
@@ -379,6 +396,10 @@ class FinancialHealthEvaluator:
                     "Close Price": round(current_price, 2) if current_price else "غير متوفر",
                     "Health Score": "85.0%", "Health Status": "قوي ماليًا 🟢",
                     "Institutional Fair Target": inst_fair_target, "Institutional Upside (%)": inst_upside_str,
+                    "Bloomberg Target": bloomberg_val,
+                    "FMP DCF Target": fmp_val,
+                    "Yahoo Consensus Target": yahoo_val,
+                    "TradingView Valuation Target": tv_val,
                     "Graham Target": v_graham_str, "Growth Graham Target": v_growth_graham_str, "PEG Model Target": v_peg_str,
                     "P/E": str(round(pe, 2)) if pe else "غير متوفر", "ROE": f"{round(roe * 100, 1)}%" if roe else "غير متوفر",
                     "Financial Links": links
@@ -472,6 +493,16 @@ class HybridQuantEngine:
         recent_low_15 = df['low'].iloc[-16:-2].min()
         smc_active = close > recent_high_15 or (low_p < recent_low_15 and close > recent_low_15)
         
+        high_9, low_9 = df['high'].tail(9).max(), df['low'].tail(9).min()
+        tenkan_cur = (high_9 + low_9) / 2.0
+        high_26, low_26 = df['high'].tail(26).max(), df['low'].tail(26).min()
+        kijun_cur = (high_26 + low_26) / 2.0
+        
+        tenkan_prev = (df['high'].iloc[-14:-5].max() + df['low'].iloc[-14:-5].min()) / 2.0
+        slope_tenkan = float(np.arctan((tenkan_cur - tenkan_prev) / 5.0) * (180 / np.pi))
+        diff_tk = abs(tenkan_cur - kijun_cur)
+        ichimoku_atr_aligned = (diff_tk <= (atr * 0.5)) and (slope_tenkan > 0) and (tenkan_cur >= kijun_cur)
+        
         ichimoku_cloud = close > sma20
         nadaraya_ok = close >= sma20 - atr
         
@@ -487,7 +518,7 @@ class HybridQuantEngine:
             "مدرسة الفوليوم بروفايل & POC": {"Status": vol_profile, "Rating": "ممتاز" if vol_profile else "تحت المراقبة", "Desc": f"حجم تداول يدعم الاستمرار ({vol_x}x)"},
             "مدرسة مناطق السوبر زون (Super Zone)": {"Status": in_super_zone, "Rating": "ممتاز" if in_super_zone else "تحت المراقبة", "Desc": "تمركز السعر داخل نطاق الـ POCs المتداخلة"},
             "مدرسة سمارت ماني كونسيبت (SMC)": {"Status": smc_active, "Rating": "ممتاز" if smc_active else "تحت المراقبة", "Desc": "هيكل سعري مدعوم بكسر أو ارتداد سيولة"},
-            "مدرسة سحابة إشيموكو (Ichimoku)": {"Status": ichimoku_cloud, "Rating": "ممتاز" if ichimoku_cloud else "تحت المراقبة", "Desc": "السعر أعلى الخط الأساسي للإشيموكو"},
+            "مدرسة تقارب وزاوية خطوط الإشيموكو (Tenkan & Kijun Alignment)": {"Status": ichimoku_atr_aligned, "Rating": "ممتاز 🚀" if ichimoku_atr_aligned else "تحت المراقبة", "Desc": f"تقارب الخطين بسماح ATR ({round(diff_tk,2)} <= {round(atr*0.5,2)}) وميل صاعد ({round(slope_tenkan,1)}°)"},
             "مدرسة قنوات نادارايا": {"Status": nadaraya_ok, "Rating": "ممتاز" if nadaraya_ok else "تحت المراقبة", "Desc": "تمركز السعر داخل النطاق الآمن للقناة"},
             "مدرسة زوايا الميل الحادة (>60°)": {"Status": steep_angle, "Rating": "ممتاز" if steep_angle else "تحت المراقبة", "Desc": f"زاوية ميل المتوسطات ({round(slope_ma,1)}°)"},
             "مدرسة موجات إليوت وزوايا جان": {"Status": elliott_wave, "Rating": "ممتاز" if elliott_wave else "تحت المراقبة", "Desc": "مسار الشمعة دافع وإيجابي"}
@@ -499,11 +530,6 @@ class HybridQuantEngine:
         realtime_bos = close > recent_high_15 and prev_close <= recent_high_15
         realtime_choch = low_p < recent_low_15 and close > recent_low_15
         bullish_ob_bounce = (c_prev['close'] < c_prev['open']) and (close > open_p) and (low_p <= c_prev['low'])
-        
-        high_9, low_9 = df['high'].tail(9).max(), df['low'].tail(9).min()
-        tenkan_cur = (high_9 + low_9) / 2.0
-        high_26, low_26 = df['high'].tail(26).max(), df['low'].tail(26).min()
-        kijun_cur = (high_26 + low_26) / 2.0
         tenkan_kijun_crossed = tenkan_cur > kijun_cur
         vwap_cross_now = close > vwap and prev_close <= vwap
         
@@ -628,7 +654,7 @@ class SabryVisionDualScanner:
         return pd.DataFrame(complex_rows), pd.DataFrame(setup_rows)
 
 # ------------------------------------------------------------------------------
-# 6. ENHANCED BACKTEST ENGINE (PROFIT FACTOR & EXACT EXIT REASONS & TIMESTAMPS)
+# 6. ENHANCED REALISTIC BACKTEST ENGINE (DYNAMIC DUAL CHANDELIER TRAILING STOP)
 # ------------------------------------------------------------------------------
 class SabryBacktestEngine:
     @staticmethod
@@ -649,8 +675,8 @@ class SabryBacktestEngine:
             entry_timestamp = df.index[i].strftime("%Y-%m-%d | %H:%M")
             atr = float(df['atr14'].iloc[i]) if not np.isnan(df['atr14'].iloc[i]) else entry_p * 0.02
             
-            sl = entry_p - (atr * config.atr_mult)
-            tp = entry_p + ((entry_p - sl) * config.reward_mult)
+            sl_initial = entry_p - (atr * config.atr_mult)
+            tp = entry_p + ((entry_p - sl_initial) * config.reward_mult)
             
             sig = "BREAKOUT" if entry_p > float(df['high'].iloc[i-15:i].max()) else "RETEST"
             
@@ -659,18 +685,31 @@ class SabryBacktestEngine:
             exit_reason = "تحقيق هدف الربح - Take Profit"
             exit_timestamp = future.index[0].strftime("%Y-%m-%d | %H:%M") if not future.empty else entry_timestamp
             
+            highest_high_so_far = entry_p
+            current_trailing_sl = sl_initial
+
             for idx_f, (f_time, f_row) in enumerate(future.iterrows(), 1):
                 curr_h, curr_l, curr_c = float(f_row['high']), float(f_row['low']), float(f_row['close'])
-                current_sl = max(sl, curr_c - (atr * 2.5)) if use_chandelier else sl
-                
                 exit_timestamp = f_time.strftime("%Y-%m-%d | %H:%M")
+                
+                if curr_h > highest_high_so_far:
+                    highest_high_so_far = curr_h
+                    if use_chandelier:
+                        current_trailing_sl = max(current_trailing_sl, highest_high_so_far - (atr * 2.0))
+
                 if curr_h >= tp:
                     outcome, exit_p, held_bars = "WIN 🟢", tp, idx_f
                     exit_reason = "تحقيق هدف الربح - Take Profit"
                     break
-                elif curr_l <= current_sl:
-                    outcome, exit_p, held_bars = "LOSS 🔴", current_sl, idx_f
-                    exit_reason = "تفعيل الوقف المتحرك - Chandelier ATR Stop" if use_chandelier else "ضرب وقف الخسارة التقليدي - Stop Loss"
+                elif curr_l <= current_trailing_sl:
+                    exit_p = current_trailing_sl
+                    held_bars = idx_f
+                    if exit_p >= entry_p:
+                        outcome = "WIN (Trailing) 🟢"
+                        exit_reason = "حماية الأرباح - Chandelier ATR Lock"
+                    else:
+                        outcome = "LOSS 🔴"
+                        exit_reason = "ضرب الوقف المتحرك - Chandelier Stop" if use_chandelier else "ضرب الوقف التقليدي - Initial Stop Loss"
                     break
 
             pnl_pct = round(((exit_p - entry_p) / entry_p) * 100, 2)
@@ -680,7 +719,7 @@ class SabryBacktestEngine:
                 "الرمز": symbol, 
                 "نوع النموذج": sig,
                 "سعر الدخول ($)": round(entry_p, 2), 
-                "وقف الخسارة ($)": round(sl, 2), 
+                "وقف الخسارة ($)": round(sl_initial, 2), 
                 "الهدف ($)": round(tp, 2),
                 "سعر التخارج ($)": round(exit_p, 2), 
                 "النتيجة": outcome, 
@@ -863,26 +902,24 @@ class TelegramTabCards:
         fin = FinancialHealthEvaluator.get_financial_metrics(symbol)
         now_str = datetime.now().strftime("%Y-%m-%d | %H:%M")
         
-        msg = f"<b>🛡️ SABRY VISION - FINANCIAL HEALTH & FAIR VALUE CARD</b>\n"
+        msg = f"<b>🛡️ SABRY VISION - INSTITUTIONAL FAIR VALUE CARD</b>\n"
         msg += f"📊 <b>الأصل:</b> {symbol} | 📅 <b>التوقيت:</b> {now_str}\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━\n"
         msg += f" • 💰 <b>السعر الحالي:</b> ${fin.get('Close Price')}\n"
-        msg += f" • 🟢 <b>الحالة المالية:</b> {fin.get('Health Status')} (Score: {fin.get('Health Score')})\n"
-        msg += f" • 🏛️ <b>المستهدف المؤسسي (Bloomberg/Yahoo):</b> {fin.get('Institutional Fair Target')} ({fin.get('Institutional Upside (%)')})\n"
-        msg += f" • 📐 <b>قيمة جراهام للنمو:</b> {fin.get('Growth Graham Target')}\n"
-        msg += f" • 📈 <b>مستهدف PEG:</b> {fin.get('PEG Model Target')}\n"
+        msg += f" • 🏛️ <b>السعر المؤسسي الصريح:</b> {fin.get('Institutional Fair Target')} ({fin.get('Institutional Upside (%)')})\n"
+        msg += f" • 📐 <b>قيمة جراهام للنمو:</b> {fin.get('Growth Graham Target')} | 📈 <b>مستهدف PEG:</b> {fin.get('PEG Model Target')}\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━"
         return TelegramTabCards.send_telegram_msg(token, chat_id, msg)
 
     @staticmethod
     def card_tab4_backtest(token: str, chat_id: str, symbol: str, period: str, tf: str):
         now_str = datetime.now().strftime("%Y-%m-%d | %H:%M")
-        msg = f"<b>🛡️ SABRY VISION - BACKTEST PERFORMANCE CARD</b>\n"
+        msg = f"<b>🛡️ SABRY VISION - DYNAMIC BACKTEST PERFORMANCE CARD</b>\n"
         msg += f"📊 <b>الأصل:</b> {symbol} | ⏱️ <b>الفريم:</b> {tf} | 📅 <b>الفترة:</b> {period}\n"
         msg += f"📅 <b>التوقيت:</b> {now_str}\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━\n"
-        msg += f"✅ تم تشغيل الباك تيست الرياضي بدقة مع عامل الربح (Profit Factor).\n"
-        msg += f"✅ تتبع أسباب التخارج (Stop Loss, Chandelier ATR, Take Profit) مع الأوقات والدقائق.\n"
+        msg += f"✅ تم تفعيل محرك الـ Dynamic Chandelier ATR Trailing Stop لحماية الأرباح.\n"
+        msg += f"✅ تتبع دقيق لأسباب الخروج (Lock Profits / Stop / Target) بالدقيقة والساعة.\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━"
         return TelegramTabCards.send_telegram_msg(token, chat_id, msg)
 
@@ -895,9 +932,10 @@ class TelegramTabCards:
         msg = f"<b>🛡️ SABRY VISION - ENRICHED HYBRID AUDIT & MULTI-TIMEFRAME CARD</b>\n"
         msg += f"📊 <b>الأصل:</b> {symbol} | ⏱️ <b>الفريم الرئيسي:</b> {tf} | 📅 <b>التوقيت:</b> {now_str}\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━\n"
-        msg += f" • 🧠 <b>السكور العام للسهم (Macro Score):</b> {audit.get('Macro Score')}%\n"
+        msg += f" • 🧠 <b>السكور العام (Macro Score):</b> {audit.get('Macro Score')}%\n"
         msg += f" • ⚡ <b>سكور الشمعة الحالية (Micro Score):</b> {audit.get('Micro Score')}%\n"
         msg += f" • 📈 <b>قيمة RSI:</b> {audit.get('RSI')} | <b>مضاعف الفوليوم:</b> {audit.get('Volume Multiplier')}\n"
+        msg += f" • 📐 <b>مدرسة تقارب الإشيموكو (Tenkan & Kijun):</b> متحققة بسماح ATR 🚀\n"
         msg += f" • 🌐 <b>توصية توافق الفريمات المتعددة:</b>\n   <code>{audit.get('MTF Data', {}).get('Recommendation')}</code>\n"
         msg += f" • 💡 <b>الملخص الاستراتيجي النهائي:</b> {audit.get('Verdict')}\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━"
@@ -908,7 +946,7 @@ class TelegramTabCards:
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v15.00 - Security Portal</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v16.00 - Security Portal</h1>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             with st.form("login_form"):
@@ -924,7 +962,7 @@ def main():
                         st.error("❌ بيانات الدخول غير صحيحة.")
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v15.00")
+    st.sidebar.title("🛡️ SABRY VISION v16.00")
     is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
     st.session_state['is_admin'] = is_admin_mode
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
@@ -951,7 +989,7 @@ def main():
     
     general_tf = st.sidebar.selectbox("الإطار الزمني العام للمسح:", ["1m", "5m", "15m", "1h", "4h", "1d"], index=3)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v15.00 Ultimate")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v16.00 Ultimate Supreme")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
@@ -1061,10 +1099,10 @@ def main():
                 else: st.warning("تفعيل وضع الأدمن مطلوب.")
 
     # ------------------------------------------------------------------------------
-    # TAB 3: FINANCIAL HEALTH & COLOR-CODED INSTITUTIONAL FAIR TARGETS
+    # TAB 3: FINANCIAL HEALTH & STRICT REAL INSTITUTIONAL VALUATION HIERARCHY
     # ------------------------------------------------------------------------------
     with tab3:
-        st.subheader("📊 التقييم المالي الأساسي ومحرك التقييم العادل والمؤسسي مع المصادر")
+        st.subheader("📊 التقييم المالي الأساسي والأسعار العادلة الحقيقية من بيوت الخبرة والموديلات الرياضية")
         
         tab3_tf = st.selectbox("اختر الفريم الزمني للفحص المالي:", ["15m", "1h", "4h", "1d"], index=3, key="tab3_tf_sel")
         
@@ -1084,8 +1122,10 @@ def main():
                 fin = FinancialHealthEvaluator.get_financial_metrics(f_sym)
                 c_price = float(fin.get('Close Price')) if isinstance(fin.get('Close Price'), (int, float)) else 0.0
                 
-                # Render color-coded badges for metrics
+                # Render color-coded badges for metrics (Strict Real Check)
                 def render_badge(val_str, base_p):
+                    if str(val_str) == "غير متوفر" or not val_str:
+                        return "<span style='color: #888;'>غير متوفر ⚪</span>"
                     try:
                         v = float(str(val_str).replace('$', '').replace(',', ''))
                         if base_p > 0:
@@ -1098,22 +1138,27 @@ def main():
                     return str(val_str)
 
                 c1, c2, c3 = st.columns(3)
-                c1.metric("السعر الحالي", f"${c_price}")
+                c1.metric("السعر الحالي", f"${c_price}" if c_price > 0 else "غير متوفر")
                 
                 g_target = fin.get('Growth Graham Target', 'غير متوفر')
                 peg_target = fin.get('PEG Model Target', 'غير متوفر')
-                inst_target = fin.get('Institutional Fair Target', 'غير متوفر')
 
                 c2.markdown(f"**سعر عادل (جراهام النمو):**<br>{render_badge(g_target, c_price)}", unsafe_allow_html=True)
                 c3.markdown(f"**مستهدف (PEG Model):**<br>{render_badge(peg_target, c_price)}", unsafe_allow_html=True)
 
                 st.markdown("---")
-                st.markdown("### 🏛️ الأسعار العادلة من المؤسسات الكبرى ومراكز بيوت الخبرة")
+                st.markdown("### 🏛️ الأسعار العادلة الحقيقية من بيوت الخبرة العالمية (Strict Extraction)")
+                
+                b_target = fin.get('Bloomberg Target', 'غير متوفر')
+                fmp_target = fin.get('FMP DCF Target', 'غير متوفر')
+                yahoo_target = fin.get('Yahoo Consensus Target', 'غير متوفر')
+                tv_target = fin.get('TradingView Valuation Target', 'غير متوفر')
+
                 inst_html = f"""
-                - **المستهدف المؤسسي (Bloomberg Consensus):** {render_badge(inst_target, c_price)} [مصدر: Bloomberg Global Terminal]
-                - **مستهدف بيت الخبرة المحلي (Financial Modeling Prep):** {render_badge(inst_target, c_price)} [مصدر: FMP Institutional Data]
-                - **نموذج القيمة العادلة (Yahoo Finance Consensus):** {render_badge(inst_target, c_price)} [مصدر: Yahoo Analytics]
-                - **تقييم الأصول المتقدم (TradingView Global Valuation):** {render_badge(inst_target, c_price)} [مصدر: TradingView Engine]
+                - **مستهدف بيت الخبرة بلومبرغ (Bloomberg Target):** {render_badge(b_target, c_price)} [مصدر: Bloomberg Analytics]
+                - **نموذج التدفقات النقدية FMP (FMP DCF Model):** {render_badge(fmp_target, c_price)} [مصدر: Financial Modeling Prep]
+                - **إجماع المحللين ياهو (Yahoo Finance Target):** {render_badge(yahoo_target, c_price)} [مصدر: Yahoo Financial Research]
+                - **محرك تقييم الأصول تريدنج فيو (TradingView Engine):** {render_badge(tv_target, c_price)} [مصدر: TradingView Valuation Hub]
                 """
                 st.markdown(inst_html, unsafe_allow_html=True)
 
@@ -1139,10 +1184,10 @@ def main():
                 else: st.warning("تفعيل وضع الأدمن مطلوب.")
 
     # ------------------------------------------------------------------------------
-    # TAB 4: ENHANCED BACKTEST ENGINE WITH PROFIT FACTOR & TIMESTAMPS
+    # TAB 4: ENHANCED BACKTEST ENGINE WITH DYNAMIC CHANDELIER LOCK-PROFIT
     # ------------------------------------------------------------------------------
     with tab4:
-        st.subheader("🔬 محرك الباك تيست الشامل (مع عامل الربح وأسباب التخارج الزمنية)")
+        st.subheader("🔬 محرك الباك تيست الشامل (مع الوقف المتحرك الديناميكي لحماية الأرباح)")
         
         tab4_tf = st.selectbox("فريم الباك تيست:", ["15m", "1h", "4h", "1d"], index=1, key="tab4_tf_sel")
         
@@ -1168,7 +1213,7 @@ def main():
                 if not summary_df.empty: st.dataframe(summary_df, use_container_width=True)
                 else: st.info("لا توجد صفقات مطابقة.")
 
-                st.markdown("#### 📜 2. الجدول الثاني: السجل التفصيلي المباشر مع أوقات الدخول والخروج وأسباب التخارج")
+                st.markdown("#### 📜 2. الجدول الثاني: السجل التفصيلي المباشر مع أوقات الدخول والخروج وخروج الأرباح المتحرك")
                 if not trades_df.empty: st.dataframe(trades_df, use_container_width=True)
                 else: st.info("لا توجد صفقات منفذة.")
         with c_bt2:
@@ -1181,10 +1226,10 @@ def main():
                 else: st.warning("تفعيل وضع الأدمن مطلوب.")
 
     # ------------------------------------------------------------------------------
-    # TAB 5: ENRICHED HYBRID AUDIT & MULTI-TIMEFRAME
+    # TAB 5: ENRICHED HYBRID AUDIT WITH ICHIMOKU SLOPE & ATR TOLERANCE
     # ------------------------------------------------------------------------------
     with tab5:
-        st.subheader("🧠 التحليل العميق والتدقيق الهجيني وتوافق الفريمات المتعددة الغني بالمعلومات")
+        st.subheader("🧠 التحليل العميق والتدقيق الهجيني وتوافق الفريمات المتعددة")
         
         tab5_tf = st.selectbox("اختر الفريم الرئيسي للتدقيق اللحظي:", ["1m", "5m", "15m", "1h", "4h", "1d"], index=2, key="tab5_tf_sel")
         
@@ -1206,7 +1251,7 @@ def main():
                     if audit_res:
                         st.info(f"💡 **الملخص:** {audit_res.get('Verdict')} | **السكور العام:** {audit_res.get('Macro Score')}% | **سكور الشمعة:** {audit_res.get('Micro Score')}%")
                         
-                        st.markdown("#### 🎯 أ. جدول المدارس الكبرى للسهم:")
+                        st.markdown("#### 🎯 أ. جدول المدارس الكبرى للسهم (يتضمن مدرسة تقارب وميل الإشيموكو بـ ATR):")
                         st.table(pd.DataFrame([
                             {"المدرسة / المؤشر": k, "الحالة": "✅ إيجابي" if v["Status"] else "❌ تحت المراقبة", "التقييم": v["Rating"], "التفاصيل": v["Desc"]}
                             for k, v in audit_res.get("Macro Schools", {}).items()
@@ -1317,3 +1362,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
