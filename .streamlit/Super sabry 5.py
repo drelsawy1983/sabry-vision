@@ -244,7 +244,6 @@ class SuperZoneVolumeAnalyzer:
     def calculate_poc_for_window(df: pd.DataFrame, window: int) -> float:
         sub = df.tail(window)
         if sub.empty: return 0.0
-        # Fast price binning POC estimation
         low_p = sub['low'].min()
         high_p = sub['high'].max()
         if low_p == high_p: return low_p
@@ -266,11 +265,10 @@ class SuperZoneVolumeAnalyzer:
     def analyze_super_zone(df: pd.DataFrame) -> Dict[str, Any]:
         if len(df) < 50: return {}
         
-        # Calculate ATR for adaptive tolerance
-            tr = np.maximum(df['high'] - df['low'], np.maximum((df['high'] - df['close'].shift(1)).abs(), (df['low'] - df['close'].shift(1)).abs()))
+        # Fixed Indentation for ATR Calculation
+        tr = np.maximum(df['high'] - df['low'], np.maximum((df['high'] - df['close'].shift(1)).abs(), (df['low'] - df['close'].shift(1)).abs()))
         atr = float(tr.rolling(14).mean().iloc[-1])
         
-        # Calculate Multi-Window POCs: 20, 60, 120, 300
         poc_20 = SuperZoneVolumeAnalyzer.calculate_poc_for_window(df, 20)
         poc_60 = SuperZoneVolumeAnalyzer.calculate_poc_for_window(df, 60)
         poc_120 = SuperZoneVolumeAnalyzer.calculate_poc_for_window(df, 120)
@@ -279,12 +277,10 @@ class SuperZoneVolumeAnalyzer:
         pocs = [poc_20, poc_60, poc_120, poc_300]
         valid_pocs = [p for p in pocs if p > 0]
         
-        # Check Super Zone convergence (at least 3 out of 4 POCs within 1.5 * ATR tolerance)
         super_zone_active = False
         sz_min, sz_max = 0.0, 0.0
         if len(valid_pocs) >= 3:
             valid_pocs.sort()
-            # Check cluster span
             for i in range(len(valid_pocs) - 2):
                 cluster = valid_pocs[i:i+3]
                 if (cluster[-1] - cluster[0]) <= (1.5 * atr):
@@ -294,8 +290,6 @@ class SuperZoneVolumeAnalyzer:
                     break
         
         current_close = float(df['close'].iloc[-1])
-        
-        # Retest check: did price test the Super Zone or POC levels recently?
         recent_lows = df['low'].tail(5)
         recent_highs = df['high'].tail(5)
         
@@ -307,7 +301,6 @@ class SuperZoneVolumeAnalyzer:
             
         in_super_zone = super_zone_active and (sz_min <= current_close <= sz_max)
         
-        # Volume profile report text
         if super_zone_active:
             sz_status = f"✅ **تكونت منطقة السوبر زون بنجاح** (النطاق بين {round(sz_min, 2)} و {round(sz_max, 2)} بناءً على تقارب مستويات POC)."
         else:
