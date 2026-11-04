@@ -1,14 +1,13 @@
 # ==============================================================================
-# 🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v14.00 Ultimate Supreme)
+# 🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v14.50 Ultimate)
 # ==============================================================================
-# - 100% Comprehensive Asset Repositories (TASI 309, EGX 240+, US SPX 503+, Nasdaq, ADX, DFM, Commodities).
-# - Full 5-Layer Quant Engine & Multi-Timeframe Alignment Matrix.
-# - Strict Institutional Fair Value Hierarchy + Graham / Growth Graham / PEG Mathematical Models.
-# - Financial Health Matrix (8 Quarters & 8 Years Audit with Direct Global Platform Links).
-# - Interactive Plotly Dark Charts with Candlestick, Dynamic Trendlines, and White Power Candle (Colored White).
-# - Dual Backtest Tables (Model Summary Table + Trade-by-Trade Detailed Log Table).
-# - Dynamic TradingView Top N Export Box & Universal Export Hub (CSV, Notes, TSV).
-# - Tab-Specific Professional Telegram Cards (Tabs 1 to 5) with Admin-Only Authentication.
+# - Dynamic Scan Progress Bar & Real-time Discovered Signals Counter.
+# - Reordered & Comprehensive Dual Scanner Tables (Vol, Retest Target, SuperZone).
+# - Strict White Power Candle Formatting (Green for Regular Bullish, White for Power Volume).
+# - Tab-Independent Timeframe Selectors (Tabs 1 to 5).
+# - Interactive Plotly Chart with Multi-POC Lines (20, 60, 120, 300) & Super Zone Cloud Toggles.
+# - Enhanced 4-Source Institutional Financial Valuation & Fair Target Hierarchy.
+# - Realistic & Precise Backtest Calculations (v12 & v11.78 Compliant).
 # ==============================================================================
 
 import os
@@ -33,14 +32,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # 1. SYSTEM INITIALIZATION & RESPONSIVE CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v14.00 Ultimate",
+    page_title="SABRY VISION - Master Quant Terminal v14.50 Ultimate",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVision14.00")
+logger = logging.getLogger("SabryVision14.50")
 
 st.markdown("""
 <style>
@@ -64,7 +63,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# 2. UNIFIED DATA PROVIDER & FULL COMPREHENSIVE MARKET REPOS (100% COMPLETE)
+# 2. UNIFIED DATA PROVIDER & FULL COMPREHENSIVE MARKET REPOS
 # ------------------------------------------------------------------------------
 class UnifiedDataProvider:
     @staticmethod
@@ -524,23 +523,34 @@ class HybridQuantEngine:
         }
 
 # ------------------------------------------------------------------------------
-# 5. DUAL TABLE SCANNER ENGINE (COMPLEX & SETUP TABLES)
+# 5. DUAL SCANNER WITH PROGRESS BAR & REORDERED COLUMNS
 # ------------------------------------------------------------------------------
 class SabryVisionDualScanner:
     def __init__(self, config: InstitutionalConfig, timeframe: str):
         self.config = config
         self.timeframe = timeframe
 
-    def scan_symbols(self, symbols: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def scan_symbols_with_progress(self, symbols: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
         complex_rows = []
         setup_rows = []
         
-        for sym in symbols:
+        total_symbols = len(symbols)
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        discovered_count = 0
+        
+        for idx, sym in enumerate(symbols, 1):
+            status_text.markdown(f"⏳ **جاري فحص السهم [{idx}/{total_symbols}]:** `{sym}` | 🎯 **الفرص المكتشفة حتى الآن:** `{discovered_count}`")
+            progress_bar.progress(idx / total_symbols)
+            
             df = UnifiedDataProvider.fetch_raw_ohlcv(sym, self.timeframe)
             if df.empty or len(df) < 20: continue
             
             f = df.copy()
             f = SuperPOCEngine.calculate_dual_vwap(f)
+            poc_data = SuperPOCEngine.calculate_multi_pocs(f)
+            
             tr = np.maximum(f["high"] - f["low"], np.maximum((f["high"] - f["close"].shift(1)).abs(), (f["low"] - f["close"].shift(1)).abs()))
             f["atr14"] = tr.rolling(14, min_periods=1).mean()
             f["rvol"] = (f["volume"] / f["volume"].rolling(20, min_periods=1).mean().replace(0, np.nan)).fillna(1.0)
@@ -563,49 +573,72 @@ class SabryVisionDualScanner:
             if latest["low"] < low_20 and close_p > low_20: triggered_setups.append("BOTTOM_REVERSAL")
             if close_p <= pivot and close_p >= pivot * 0.95: triggered_setups.append("SETUP")
             
+            if not triggered_setups: continue
+            
+            discovered_count += 1
             fin = FinancialHealthEvaluator.get_financial_metrics(sym)
             sl = close_p - (atr * self.config.atr_mult)
+            sl_pct = round(((close_p - sl) / close_p) * 100, 2)
             tp = close_p + ((close_p - sl) * self.config.reward_mult)
+            tp_pct = round(((tp - close_p) / close_p) * 100, 2)
+            
             ai_score = min(98.0, max(60.0, 60.0 + (rvol * 10.0) + (len(triggered_setups) * 5.0)))
             
+            retest_target = "Pivot 20" if "RETEST" in triggered_setups else ("Super POC" if poc_data["is_super"] else "VWAP / Liquidity")
+            super_zone_status = "متحققة 🎯" if poc_data["is_super"] else "غير متحققة"
+            
             row_data = {
-                "Symbol": sym, "Timeframe": self.timeframe, "AI Score": round(ai_score, 1),
-                "Close": round(close_p, 2), "Stop Loss": round(sl, 2), "Take Profit": round(tp, 2),
-                "Institutional Fair Target": fin.get("Institutional Fair Target", "غير متوفر"),
-                "Institutional Upside (%)": fin.get("Institutional Upside (%)", "غير متوفر")
+                "الرمز": sym,
+                "الإطار الزمني": self.timeframe,
+                "حجم التداول RVOL": f"{round(rvol, 2)}x",
+                "نوع الفرصة": " + ".join(triggered_setups),
+                "منطقة Super Zone": super_zone_status,
+                "هدف الـ Retest": retest_target,
+                "تقييم الفرصة Score": round(ai_score, 1),
+                "سعر الإغلاق ($)": round(close_p, 2),
+                "وقف الخسارة ($)": round(sl, 2),
+                "نسبة الـ SL (%)": f"-{sl_pct}%",
+                "الهدف ($)": round(tp, 2),
+                "نسبة الـ TP (%)": f"+{tp_pct}%",
+                "السعر العادل المؤسسي": fin.get("Institutional Fair Target", "غير متوفر"),
+                "نسبة الصعود (Upside %)": fin.get("Institutional Upside (%)", "غير متوفر")
             }
             
             if "SETUP" in triggered_setups and len(triggered_setups) == 1:
                 setup_rows.append(row_data)
-            elif len(triggered_setups) > 0:
-                row_data["Active Models"] = " + ".join(triggered_setups)
-                row_data["Models Count"] = len(triggered_setups)
+            else:
                 complex_rows.append(row_data)
-                
+
+        progress_bar.empty()
+        status_text.empty()
         return pd.DataFrame(complex_rows), pd.DataFrame(setup_rows)
 
 # ------------------------------------------------------------------------------
-# 6. BACKTEST ENGINE (FULL DUAL TABLES IMPLEMENTATION)
+# 6. REALISTIC BACKTEST ENGINE (MATCHING v12 & v11.78 STRICT METRICS)
 # ------------------------------------------------------------------------------
 class SabryBacktestEngine:
     @staticmethod
     def run_full_backtest(symbol: str, period_str: str, timeframe: str, config: InstitutionalConfig, use_chandelier: bool) -> Tuple[pd.DataFrame, pd.DataFrame]:
         p_map = {"6 أشهر": "6mo", "سنة": "1y", "سنتين": "2y", "5 سنوات": "5y", "الماكسيمم (Max)": "max"}
         df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, interval=timeframe, period=p_map.get(period_str, "1y"))
-        if df.empty or len(df) < 15: return pd.DataFrame(), pd.DataFrame()
+        if df.empty or len(df) < 20: return pd.DataFrame(), pd.DataFrame()
         
         trades_list = []
         active_setups = ["BREAKOUT", "RETEST", "LIQUIDITY_SWEEP", "BOTTOM_REVERSAL", "SETUP"]
         model_stats = {setup: {"count": 0, "wins": 0, "losses": 0, "pnl_sum": 0.0} for setup in active_setups}
         
-        for i in range(10, len(df) - 5):
+        tr = np.maximum(df['high'] - df['low'], np.maximum((df['high'] - df['close'].shift(1)).abs(), (df['low'] - df['close'].shift(1)).abs()))
+        df['atr14'] = tr.rolling(14, min_periods=1).mean()
+        
+        for i in range(15, len(df) - 5):
             entry_p = float(df['close'].iloc[i])
             entry_date = df.index[i].strftime("%Y-%m-%d %H:%M")
-            atr = entry_p * 0.02
+            atr = float(df['atr14'].iloc[i]) if not np.isnan(df['atr14'].iloc[i]) else entry_p * 0.02
+            
             sl = entry_p - (atr * config.atr_mult)
             tp = entry_p + ((entry_p - sl) * config.reward_mult)
             
-            sig = "BREAKOUT" if entry_p > float(df['close'].iloc[i-1]) else "RETEST"
+            sig = "BREAKOUT" if entry_p > float(df['high'].iloc[i-15:i].max()) else "RETEST"
             
             future = df.iloc[i+1 : i+15]
             outcome, exit_p, held_bars = "WIN 🟢", tp, 1
@@ -651,12 +684,12 @@ class SabryBacktestEngine:
         return pd.DataFrame(summary_rows), pd.DataFrame(trades_list)
 
 # ------------------------------------------------------------------------------
-# 7. INTERACTIVE PLOTLY CHART ENGINE (BLACK BG & WHITE POWER CANDLES)
+# 7. ADVANCED PLOTLY CHART ENGINE (MULTI-POC, SUPER ZONE CLOUD, WHITE POWER CANDLES)
 # ------------------------------------------------------------------------------
 class SabryPlotlyChartEngine:
     @staticmethod
-    def render_interactive_chart(symbol: str, timeframe: str):
-        st.markdown(f"### 📈 الرسم البياني التفاعلي المؤسسي (TradingView Dark Style) - {symbol}")
+    def render_interactive_chart(symbol: str, timeframe: str, show_pocs: bool = True, show_super_zone: bool = True):
+        st.markdown(f"### 📈 الرسم البياني التفاعلي المؤسسي المتقدم (TradingView Dark) - {symbol}")
         df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, interval=timeframe, period="6mo")
         if df.empty or len(df) < 20:
             st.warning("لا توجد بيانات كافية لعرض الرسم البياني التفاعلي.")
@@ -666,37 +699,68 @@ class SabryPlotlyChartEngine:
         df['ema200'] = df['close'].ewm(span=200).mean()
         df['body_size'] = (df['close'] - df['open']).abs()
         df['avg_body'] = df['body_size'].rolling(20).mean()
+        df['vol_avg'] = df['volume'].rolling(20).mean()
         
-        # White Power Candle Identification & Coloring
-        df['is_white_power'] = (df['close'] > df['open']) & (df['body_size'] >= df['avg_body'] * 1.8)
+        # Strict White Power Candle Check: High Volume (RVOL >= 1.5) AND Large Body
+        df['is_white_power'] = (df['close'] > df['open']) & (df['volume'] >= df['vol_avg'] * 1.5) & (df['body_size'] >= df['avg_body'] * 1.5)
         
-        candle_colors = ['white' if wp else ('#26a69a' if c >= o else '#ef5350') for c, o, wp in zip(df['close'], df['open'], df['is_white_power'])]
-
         fig = go.Figure()
-        fig.add_trace(go.Candlestick(
-            x=df.index, open=df['open'], high=df['high'], low=df['low'], close=df['close'],
-            name="الشموع اليابانية",
-            increasing_line_color='white', increasing_fillcolor='white',
-            decreasing_line_color='#ef5350', decreasing_fillcolor='#ef5350'
-        ))
+
+        # Regular Bullish -> Green (#26a69a), Regular Bearish -> Red (#ef5350), White Power Candle -> Pure White (#ffffff)
+        for idx in range(len(df)):
+            row = df.iloc[idx]
+            dt = df.index[idx]
+            is_wp = row['is_white_power']
+            is_bull = row['close'] >= row['open']
+            
+            fill_c = 'white' if is_wp else ('#26a69a' if is_bull else '#ef5350')
+            line_c = 'white' if is_wp else ('#26a69a' if is_bull else '#ef5350')
+            
+            fig.add_trace(go.Candlestick(
+                x=[dt], open=[row['open']], high=[row['high']], low=[row['low']], close=[row['close']],
+                increasing_line_color=line_c, increasing_fillcolor=fill_c,
+                decreasing_line_color=line_c, decreasing_fillcolor=fill_c,
+                showlegend=False
+            ))
 
         fig.add_trace(go.Scatter(x=df.index, y=df['sma50'], line=dict(color='orange', width=1.5), name="SMA 50"))
         fig.add_trace(go.Scatter(x=df.index, y=df['ema200'], line=dict(color='#29b6f6', width=2), name="EMA 200 (الدرع المؤسسي)"))
 
+        poc_info = SuperPOCEngine.calculate_multi_pocs(df)
+        pocs = poc_info.get("pocs", {})
+        
+        # Draw Multi-POC Lines
+        if show_pocs and pocs:
+            colors = {20: "#ffeb3b", 60: "#ab47bc", 120: "#26c6da", 300: "#ff7043"}
+            for w, val in pocs.items():
+                fig.add_trace(go.Scatter(
+                    x=[df.index[0], df.index[-1]], y=[val, val],
+                    mode="lines", line=dict(color=colors.get(w, "yellow"), width=1.5, dash="dash"),
+                    name=f"POC ({w})"
+                ))
+
+        # Draw Super Zone Cloud Band
+        if show_super_zone and poc_info["is_super"] and poc_info["aligned_range"]:
+            low_b, high_b = poc_info["aligned_range"]
+            fig.add_hrect(
+                y0=low_b, y1=high_b, fillcolor="rgba(0, 230, 118, 0.2)", line_width=1,
+                annotation_text="🎯 Super Zone Band", annotation_position="top left"
+            )
+
         fig.update_layout(
-            title=f"شارت الأسعار المؤسسي مع شوامخ الشمعة البيضاء لـ {symbol}",
+            title=f"شارت الأسعار المؤسسي الداكن - الشمعة البيضاء وسحابة السوبر زون لـ {symbol}",
             xaxis_title="التاريخ / الوقت",
             yaxis_title="السعر ($)",
             template="plotly_dark",
             plot_bgcolor="black",
             paper_bgcolor="black",
-            height=580,
+            height=600,
             xaxis_rangeslider_visible=False
         )
         st.plotly_chart(fig, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# 8. TAB-SPECIFIC TELEGRAM CARDS & EXPORT ENGINES
+# 8. TAB-SPECIFIC TELEGRAM EXPORT HUB
 # ------------------------------------------------------------------------------
 class UniversalExportEngine:
     @staticmethod
@@ -738,14 +802,13 @@ class TelegramTabCards:
         msg += f"━━━━━━━━━━━━━━━━━━━━━\n"
         
         for idx, row in sub_df.iterrows():
-            msg += f"<b>#{idx+1} 📊 الرمز: {row.get('Symbol')}</b>\n"
-            if 'Active Models' in row:
-                msg += f" • 📌 <b>النماذج:</b> <code>{row.get('Active Models')}</code>\n"
-            else:
-                msg += f" • 📌 <b>النموذج:</b> <code>SETUP</code>\n"
-            msg += f" • 💰 <b>السعر:</b> ${row.get('Close')} | 🎯 <b>السكور:</b> {row.get('AI Score')}\n"
-            msg += f" • 🛑 <b>SL:</b> ${row.get('Stop Loss')} | 🎯 <b>TP:</b> ${row.get('Take Profit')}\n"
-            msg += f" • 🏛️ <b>السعر العادل:</b> {row.get('Institutional Fair Target')} (Upside: {row.get('Institutional Upside (%)')})\n"
+            msg += f"<b>#{idx+1} 📊 الرمز: {row.get('الرمز')}</b>\n"
+            msg += f" • 📌 <b>الفرصة:</b> <code>{row.get('نوع الفرصة')}</code>\n"
+            msg += f" • 🎯 <b>الـ Retest:</b> {row.get('هدف الـ Retest')} | SuperZone: {row.get('منطقة Super Zone')}\n"
+            msg += f" • 💰 <b>السعر:</b> ${row.get('سعر الإغلاق ($)')} | 🎯 <b>السكور:</b> {row.get('تقييم الفرصة Score')}\n"
+            msg += f" • 🛑 <b>SL:</b> ${row.get('وقف الخسارة ($)')} ({row.get('نسبة الـ SL (%)')})\n"
+            msg += f" • 🎯 <b>TP:</b> ${row.get('الهدف ($)')} ({row.get('نسبة الـ TP (%)')})\n"
+            msg += f" • 🏛️ <b>السعر العادل:</b> {row.get('السعر العادل المؤسسي')} (Upside: {row.get('نسبة الصعود (Upside %)')})\n"
             msg += f"━━━━━━━━━━━━━━━━━━━━━\n"
             
         return TelegramTabCards.send_telegram_msg(token, chat_id, msg)
@@ -757,8 +820,8 @@ class TelegramTabCards:
         msg += f"📊 <b>الأصل التحليلي:</b> {symbol} | ⏱️ <b>الفريم:</b> {tf}\n"
         msg += f"📅 <b>التوقيت:</b> {now_str}\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━\n"
-        msg += f"✅ تم تفعيل الشارت المؤسسي المظلم (TradingView Dark).\n"
-        msg += f"✅ تم إبراز شوامخ الشمعة البيضاء القوية (White Power Candles) مع درع EMA 200.\n"
+        msg += f"✅ تفعيل الشارت المؤسسي المظلم ومستويات الـ Multi-POCs.\n"
+        msg += f"✅ إبراز شوامخ الشمعة البيضاء القوية (White Power Candle) باللون الأبيض.\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━"
         return TelegramTabCards.send_telegram_msg(token, chat_id, msg)
 
@@ -785,8 +848,8 @@ class TelegramTabCards:
         msg += f"📊 <b>الأصل:</b> {symbol} | ⏱️ <b>الفريم:</b> {tf} | 📅 <b>الفترة:</b> {period}\n"
         msg += f"📅 <b>التوقيت:</b> {now_str}\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━\n"
-        msg += f"✅ تم تشغيل الباك تيست الرياضي بنجاح.\n"
-        msg += f"✅ تفعيل وقف الحركة الشانديلير ATR Stop مع السجل التفصيلي صفقة بصفقة.\n"
+        msg += f"✅ تم تشغيل الباك تيست الرياضي بدقة v12 & v11.78.\n"
+        msg += f"✅ الوقف المتحرك الشانديلير ATR Stop مدرج مع سجل الصفقات المباشر.\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━"
         return TelegramTabCards.send_telegram_msg(token, chat_id, msg)
 
@@ -801,17 +864,17 @@ class TelegramTabCards:
         msg += f"━━━━━━━━━━━━━━━━━━━━━\n"
         msg += f" • 🧠 <b>السكور العام (Macro):</b> {audit.get('Macro Score')}%\n"
         msg += f" • ⚡ <b>سكور الشمعة (Micro):</b> {audit.get('Micro Score')}%\n"
-        msg += f" • 🌐 <b>توصية توافق الفريمات:</b> {audit.get('MTF Data', {}).get('Recommendation')}\n"
-        msg += f" • 💡 <b>الملخص النهائي:</b> {audit.get('Verdict')}\n"
+        msg += f" • 🌐 <b>توصية الفريمات:</b> {audit.get('MTF Data', {}).get('Recommendation')}\n"
+        msg += f" • 💡 <b>الملخص:</b> {audit.get('Verdict')}\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━"
         return TelegramTabCards.send_telegram_msg(token, chat_id, msg)
 
 # ------------------------------------------------------------------------------
-# 9. MAIN DASHBOARD INTERFACE (FULL 8 TABS & TAB-SPECIFIC TELEGRAM CARDS)
+# 9. MAIN DASHBOARD INTERFACE WITH ALL REQUESTED REFINEMENTS
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v14.00 - Security Portal</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v14.50 - Security Portal</h1>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             with st.form("login_form"):
@@ -827,7 +890,7 @@ def main():
                         st.error("❌ بيانات الدخول غير صحيحة.")
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v14.00")
+    st.sidebar.title("🛡️ SABRY VISION v14.50")
     is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
     st.session_state['is_admin'] = is_admin_mode
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
@@ -849,12 +912,12 @@ def main():
     
     market_lists = st.session_state["market_lists_repo"]
     available_lists = list(market_lists.keys()) + list(st.session_state["custom_watchlists"].keys())
-    market_choice = st.sidebar.selectbox("اختر السوق أو القائمة:", available_lists)
+    market_choice = st.sidebar.selectbox("اختر السوق أو القائمة العامة:", available_lists)
     selected_symbols = market_lists.get(market_choice, st.session_state["custom_watchlists"].get(market_choice, []))
     
-    timeframe = st.sidebar.selectbox("الإطار الزمني العام:", ["1m", "5m", "15m", "1h", "4h", "1d"], index=3)
+    general_tf = st.sidebar.selectbox("الإطار الزمني العام للمسح:", ["1m", "5m", "15m", "1h", "4h", "1d"], index=3)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v14.00 Ultimate Supreme")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v14.50 Ultimate")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
@@ -864,21 +927,20 @@ def main():
     ])
     
     # ------------------------------------------------------------------------------
-    # TAB 1: DUAL SCANNER & TRADINGVIEW EXPORT & TELEGRAM TOP 10 CARD
+    # TAB 1: DUAL SCANNER & PROGRESS BAR
     # ------------------------------------------------------------------------------
     with tab1:
-        st.subheader(f"محرك السكانر اللحظي للجدولين (الفرص المركبة + الـ Setup) للقائمة: **{market_choice}**")
-        if st.button("بدء المسح المؤسسي الثنائي للجدولين الآن", type="primary"):
-            scanner = SabryVisionDualScanner(config, timeframe)
-            with st.spinner("جاري فحص الأسهم وتصنيفها بين الفرص المتقدمة والـ Setup..."):
-                complex_df, setups_df = scanner.scan_symbols(selected_symbols)
-                st.session_state["last_scan_complex"] = complex_df
-                st.session_state["last_scan_setups"] = setups_df
+        st.subheader(f"محرك السكانر اللحظي المتقدم للقائمة: **{market_choice}**")
+        if st.button("بدء المسح المؤسسي وتفعيل العداد اللحظي الآن", type="primary"):
+            scanner = SabryVisionDualScanner(config, general_tf)
+            complex_df, setups_df = scanner.scan_symbols_with_progress(selected_symbols)
+            st.session_state["last_scan_complex"] = complex_df
+            st.session_state["last_scan_setups"] = setups_df
                 
         c_df = st.session_state["last_scan_complex"]
         s_df = st.session_state["last_scan_setups"]
         
-        st.markdown("### 📊 الجدول الأول: الفرص المفرطة والمركبة والمزودة (Complex & Multiple Setups)")
+        st.markdown("### 📊 الجدول الأول: الفرص المفرطة والمركبة (Complex & Multiple Setups)")
         if not c_df.empty:
             st.dataframe(c_df, use_container_width=True)
         else:
@@ -891,23 +953,23 @@ def main():
             st.info("لا توجد فرص Setup مطابقة حالياً.")
 
         st.markdown("---")
-        st.markdown("### 📈 تصدير الرموز لـ TradingView وتصدير البطاقة الاحترافية لتليجرام")
+        st.markdown("### 📈 تصدير الرموز لـ TradingView والتليجرام")
         tc1, tc2 = st.columns(2)
         with tc1:
-            tv_source = st.selectbox("اختر مصدر الرموز لتصدير TradingView:", ["الجدول الأول (الفرص المركبة)", "الجدول الثاني (الـ Setup فقط)", "جميع الفرص (الجدولين معاً)"])
-            tv_limit = st.selectbox("عدد الرموز المصدرة:", ["أول 10 فرص", "أول 20 فرصة", "أول 30 فرصة", "جميع الفرص المتاحة"], index=0)
+            tv_source = st.selectbox("اختر مصدر الرموز لـ TradingView:", ["الجدول الأول (الفرص المركبة)", "الجدول الثاني (الـ Setup)", "جميع الفرص"])
+            tv_limit = st.selectbox("عدد الرموز:", ["أول 10 فرص", "أول 20 فرصة", "أول 30 فرصة", "جميع الفرص المتاحة"], index=0)
             
             target_df = c_df if "الفرص المركبة" in tv_source else (s_df if "الـ Setup" in tv_source else pd.concat([c_df, s_df], ignore_index=True))
             limit_val = 10 if "10" in tv_limit else (20 if "20" in tv_limit else (30 if "30" in tv_limit else len(target_df)))
             
             if not target_df.empty:
-                tv_string = ",".join(target_df["Symbol"].head(limit_val).tolist())
+                tv_string = ",".join(target_df["الرمز"].head(limit_val).tolist())
                 st.text_area("النص الجاهز لـ TradingView (Comma-Separated):", value=tv_string, height=80)
             else:
                 st.info("قم بتشغيل السكانر أولاً لتوليد الرموز.")
 
         with tc2:
-            st.markdown("#### 📱 تصدير بطاقة تليجرام (التاب الأول)")
+            st.markdown("#### 📱 تصدير بطاقة تليجرام (Tab 1)")
             tg_table_choice = st.selectbox("اختر الجدول للإرسال:", ["الجدول الأول (الفرص المركبة)", "الجدول الثاني (الـ Setup)"])
             tg_top_n = st.selectbox("عدد الفرص المرسلة:", [10, 20, 30], index=0)
             
@@ -926,53 +988,61 @@ def main():
             UniversalExportEngine.render_export_toolbar(pd.concat([c_df, s_df], ignore_index=True), "Dual_Scanner_Results")
 
     # ------------------------------------------------------------------------------
-    # TAB 2: INTERACTIVE CHART & TELEGRAM CARD
+    # TAB 2: INTERACTIVE CHART WITH MULTI-POC & SUPER ZONE TOGGLES
     # ------------------------------------------------------------------------------
     with tab2:
-        st.subheader("📈 قسم الرسم البياني التفاعلي المرئي (TradingView Dark Style + White Power Candles)")
+        st.subheader("📈 قسم الرسم البياني التفاعلي المرئي والمؤشرات المتقدمة")
+        
+        tab2_tf = st.selectbox("اختر الفريم الزمني للشارت:", ["1m", "5m", "15m", "1h", "4h", "1d"], index=3, key="tab2_tf_sel")
         
         source_opts = ["إدخال رمز يدوياً"]
         if not c_df.empty: source_opts.append("استيراد من جدول الفرص المركبة (الجدول الأول)")
         if not s_df.empty: source_opts.append("استيراد من جدول الـ Setup (الجدول الثاني)")
         
-        src_choice = st.selectbox("مصدر الرمز للرسم البياني:", source_opts)
+        src_choice = st.selectbox("مصدر الرمز للرسم البياني:", source_opts, key="tab2_src_choice")
         chart_sym = "NVDA"
         
         if "يدوياً" in src_choice:
-            chart_sym = st.text_input("أدخل رمز السهم:", value="NVDA")
+            chart_sym = st.text_input("أدخل رمز السهم:", value="NVDA", key="tab2_sym_in")
         elif "الجدول الأول" in src_choice and not c_df.empty:
-            chart_sym = st.selectbox("اختر الرمز من الفرص المركبة:", c_df["Symbol"].tolist())
+            chart_sym = st.selectbox("اختر الرمز من الفرص المركبة:", c_df["الرمز"].tolist(), key="tab2_sym_c")
         elif not s_df.empty:
-            chart_sym = st.selectbox("اختر الرمز من الـ Setup:", s_df["Symbol"].tolist())
+            chart_sym = st.selectbox("اختر الرمز من الـ Setup:", s_df["الرمز"].tolist(), key="tab2_sym_s")
             
+        c_p1, c_p2 = st.columns(2)
+        show_pocs_opt = c_p1.checkbox("إظهار خطوط الـ POC المتعددة (20, 60, 120, 300)", value=True)
+        show_sz_opt = c_p2.checkbox("إظهار نطاق سحابة منطقة السوبر زون (Super Zone Cloud)", value=True)
+
         c_ch1, c_ch2 = st.columns([4, 1])
         with c_ch1:
             if st.button("عرض الشارت التفاعلي المؤسسي"):
-                SabryPlotlyChartEngine.render_interactive_chart(chart_sym, timeframe)
+                SabryPlotlyChartEngine.render_interactive_chart(chart_sym, tab2_tf, show_pocs=show_pocs_opt, show_super_zone=show_sz_opt)
         with c_ch2:
             st.markdown("#### 📱 تليجرام الشارت")
             if st.button("🚀 إرسال بطاقة الشارت (Tab 2)"):
                 if is_admin_mode and ui_token and ui_chat:
-                    success = TelegramTabCards.card_tab2_chart(ui_token, ui_chat, chart_sym, timeframe)
+                    success = TelegramTabCards.card_tab2_chart(ui_token, ui_chat, chart_sym, tab2_tf)
                     if success: st.success("🎉 تم إرسال بطاقة الشارت بنجاح!")
                     else: st.error("❌ فشل الإرسال.")
                 else: st.warning("تفعيل وضع الأدمن مطلوب.")
 
     # ------------------------------------------------------------------------------
-    # TAB 3: FINANCIAL HEALTH & TELEGRAM CARD
+    # TAB 3: FINANCIAL HEALTH & 4-SOURCE FAIR TARGET HIERARCHY
     # ------------------------------------------------------------------------------
     with tab3:
         st.subheader("📊 التقييم المالي الأساسي ومحرك التقييم المعدل لأسهم النمو الكبرى")
         
+        tab3_tf = st.selectbox("اختر الفريم الزمني للفحص المالي:", ["15m", "1h", "4h", "1d"], index=3, key="tab3_tf_sel")
+        
         f_source_opts = ["إدخال الرمز يدوياً"]
         if not c_df.empty: f_source_opts.append("استيراد من جدول الفرص المركبة")
-        f_src = st.selectbox("مصدر الرمز للتقييم المالي:", f_source_opts)
+        f_src = st.selectbox("مصدر الرمز للتقييم المالي:", f_source_opts, key="tab3_src_choice")
         
         f_sym = "NVDA"
         if "يدوياً" in f_src:
             f_sym = st.text_input("رمز الأصل للفحص المالي:", value="NVDA", key="f_sym_input")
         elif not c_df.empty:
-            f_sym = st.selectbox("اختر الرمز للتقييم:", c_df["Symbol"].tolist(), key="f_sym_sel")
+            f_sym = st.selectbox("اختر الرمز للتقييم:", c_df["الرمز"].tolist(), key="f_sym_sel")
             
         c_fn1, c_fn2 = st.columns([4, 1])
         with c_fn1:
@@ -992,7 +1062,7 @@ def main():
                 }), use_container_width=True)
 
                 st.markdown("---")
-                st.markdown("### 🌐 روابط التقارير المالية المباشرة")
+                st.markdown("### 🌐 روابط التقارير المالية المباشرة (المصادر الأربعة العالمية)")
                 for p_name, p_url in fin.get("Financial Links", {}).items():
                     st.markdown(f"🔗 [{p_name} Financials]({p_url})")
         with c_fn2:
@@ -1005,29 +1075,30 @@ def main():
                 else: st.warning("تفعيل وضع الأدمن مطلوب.")
 
     # ------------------------------------------------------------------------------
-    # TAB 4: BACKTEST ENGINE & TELEGRAM CARD
+    # TAB 4: REALISTIC BACKTEST ENGINE WITH TIMEFRAME SELECTOR
     # ------------------------------------------------------------------------------
     with tab4:
-        st.subheader("🔬 محرك الباك تيست الشامل (جدول ملخص النماذج + سجل الصفقات التفصيلي)")
+        st.subheader("🔬 محرك الباك تيست الشامل (معادلات دقيقة مطابقة لـ v12 و v11.78)")
+        
+        tab4_tf = st.selectbox("فريم الباك تيست:", ["15m", "1h", "4h", "1d"], index=1, key="tab4_tf_sel")
         
         b_source_opts = ["إدخال رمز يدوياً"]
         if not c_df.empty: b_source_opts.append("استيراد من جدول الفرص المركبة")
-        b_src = st.selectbox("مصدر الرمز للباك تيست:", b_source_opts)
+        b_src = st.selectbox("مصدر الرمز للباك تيست:", b_source_opts, key="tab4_src_choice")
         
         bt_sym = "NVDA"
         if "يدوياً" in b_src:
             bt_sym = st.text_input("رمز الأصل للباك تيست:", value="NVDA", key="bt_sym_input")
         elif not c_df.empty:
-            bt_sym = st.selectbox("اختر الرمز للباك تيست:", c_df["Symbol"].tolist(), key="bt_sym_sel")
+            bt_sym = st.selectbox("اختر الرمز للباك تيست:", c_df["الرمز"].tolist(), key="bt_sym_sel")
             
         bt_period = st.selectbox("الفترة التاريخية:", ["6 أشهر", "سنة", "سنتين", "5 سنوات"])
-        bt_tf = st.selectbox("فريم الباك تيست:", ["15m", "1h", "4h", "1d"], index=1)
         use_ch = st.checkbox("تفعيل الوقف المتحرك للشانديلير ATR Stop", value=True)
 
         c_bt1, c_bt2 = st.columns([4, 1])
         with c_bt1:
             if st.button("تشغيل الباك تيست وإظهار الجدولين التفصيليين"):
-                summary_df, trades_df = SabryBacktestEngine.run_full_backtest(bt_sym, bt_period, bt_tf, config, use_chandelier=use_ch)
+                summary_df, trades_df = SabryBacktestEngine.run_full_backtest(bt_sym, bt_period, tab4_tf, config, use_chandelier=use_ch)
                 
                 st.markdown("#### 📊 1. الجدول الأول: إحصائيات وتجميع الصفقات حسب كل نموذج (Model Summary)")
                 if not summary_df.empty: st.dataframe(summary_df, use_container_width=True)
@@ -1040,32 +1111,34 @@ def main():
             st.markdown("#### 📱 تليجرام الباك تيست")
             if st.button("🚀 إرسال بطاقة الباك تيست (Tab 4)"):
                 if is_admin_mode and ui_token and ui_chat:
-                    success = TelegramTabCards.card_tab4_backtest(ui_token, ui_chat, bt_sym, bt_period, bt_tf)
+                    success = TelegramTabCards.card_tab4_backtest(ui_token, ui_chat, bt_sym, bt_period, tab4_tf)
                     if success: st.success("🎉 تم إرسال بطاقة الباك تيست بنجاح!")
                     else: st.error("❌ فشل الإرسال.")
                 else: st.warning("تفعيل وضع الأدمن مطلوب.")
 
     # ------------------------------------------------------------------------------
-    # TAB 5: HYBRID AUDIT, MULTI-TIMEFRAME & TELEGRAM CARD
+    # TAB 5: HYBRID AUDIT & MULTI-TIMEFRAME ALIGNMENT
     # ------------------------------------------------------------------------------
     with tab5:
         st.subheader("🧠 التحليل العميق والتدقيق الهجيني وتوافق الفريمات المتعددة")
         
+        tab5_tf = st.selectbox("اختر الفريم الرئيسي للتدقيق اللحظي:", ["1m", "5m", "15m", "1h", "4h", "1d"], index=2, key="tab5_tf_sel")
+        
         a_source_opts = ["إدخال رمز يدوياً"]
         if not c_df.empty: a_source_opts.append("استيراد من جدول الفرص المركبة")
-        a_src = st.selectbox("مصدر الرمز للتدقيق الهجيني:", a_source_opts)
+        a_src = st.selectbox("مصدر الرمز للتدقيق الهجيني:", a_source_opts, key="tab5_src_choice")
         
         audit_sym = "2222.SR"
         if "يدوياً" in a_src:
             audit_sym = st.text_input("أدخل رمز الأصل للتدقيق الهجيني الشامل:", value="2222.SR", key="audit_sym_input")
         elif not c_df.empty:
-            audit_sym = st.selectbox("اختر الرمز للتدقيق الهجيني:", c_df["Symbol"].tolist(), key="audit_sym_sel")
+            audit_sym = st.selectbox("اختر الرمز للتدقيق الهجيني:", c_df["الرمز"].tolist(), key="audit_sym_sel")
             
         c_au1, c_au2 = st.columns([4, 1])
         with c_au1:
             if st.button("📊 توليد التقرير الهجيني وتوافق الفريمات الشامل"):
                 with st.spinner("جاري إجراء التدقيق المؤسسي والفريمات المتعددة..."):
-                    audit_res = HybridQuantEngine.hybrid_full_audit(audit_sym, timeframe)
+                    audit_res = HybridQuantEngine.hybrid_full_audit(audit_sym, tab5_tf)
                     if audit_res:
                         st.info(f"💡 **الملخص:** {audit_res.get('Verdict')} | **السكور العام:** {audit_res.get('Macro Score')}% | **سكور الشمعة:** {audit_res.get('Micro Score')}%")
                         
@@ -1094,7 +1167,7 @@ def main():
             st.markdown("#### 📱 تليجرام التدقيق الهجيني")
             if st.button("🚀 إرسال بطاقة التدقيق (Tab 5)"):
                 if is_admin_mode and ui_token and ui_chat:
-                    success = TelegramTabCards.card_tab5_audit(ui_token, ui_chat, audit_sym, timeframe)
+                    success = TelegramTabCards.card_tab5_audit(ui_token, ui_chat, audit_sym, tab5_tf)
                     if success: st.success("🎉 تم إرسال بطاقة التدقيق الهجيني بنجاح!")
                     else: st.error("❌ فشل الإرسال.")
                 else: st.warning("تفعيل وضع الأدمن مطلوب.")
@@ -1169,7 +1242,7 @@ def main():
             if is_admin_mode and ui_token and ui_chat:
                 with st.spinner(f"جاري المسح التلقائي لـ {auto_market_name} وإرسال البطاقات لتليجرام..."):
                     scanner = SabryVisionDualScanner(config, "15m")
-                    comp_res, _ = scanner.scan_symbols(auto_symbols)
+                    comp_res, _ = scanner.scan_symbols_with_progress(auto_symbols)
                     if not comp_res.empty:
                         success = TelegramTabCards.card_tab1_scanner(ui_token, ui_chat, comp_res, "الفرص المركبة الآلية", 10)
                         if success: st.success("🎉 تم إرسال البطاقة المجمعة الاحترافية لتليجرام بنجاح تام!")
