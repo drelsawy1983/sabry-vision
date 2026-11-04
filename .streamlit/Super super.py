@@ -1,14 +1,14 @@
 # ==============================================================================
-# 🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v13.00 Ultimate Supreme)
+# 🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v13.50 Ultimate)
 # ==============================================================================
-# - 100% Comprehensive Asset Repositories (TASI 309, EGX 240+, US SPX 503+, Nasdaq, ADX, DFM, Gold/Commodities).
+# - 100% Full Comprehensive Market Repositories (TASI 309, EGX 240+, US SPX 503+, Nasdaq, ADX, DFM, Commodities).
 # - Full 5-Layer Quant Engine & Micro-Audit Matrix (Macro Schools + Realtime Candle Audit).
 # - Strict Institutional Fair Value Hierarchy + Graham / Growth Graham / PEG Mathematical Models.
 # - Financial Health Matrix (8 Quarters & 8 Years Audit with Direct Global Platform Links).
 # - Interactive Plotly Dark Charts with Candlestick, Dynamic Trendlines, and White Power Candle Markers.
 # - Dual Backtest Tables (Model Summary Table + Trade-by-Trade Detailed Log Table).
 # - Dynamic TradingView Top N Export Box & Universal Export Hub (CSV, Notes, TSV).
-# - Automated Telegram Relay & Background APScheduler Terminal with Smart Market Time-Windows.
+# - Admin-Only Secure Telegram Configuration & Professional Card Relay Terminal.
 # ==============================================================================
 
 import os
@@ -33,14 +33,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # 1. SYSTEM INITIALIZATION & RESPONSIVE CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v13.00 Ultimate",
+    page_title="SABRY VISION - Master Quant Terminal v13.50 Ultimate",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVision13.00")
+logger = logging.getLogger("SabryVision13.50")
 
 st.markdown("""
 <style>
@@ -64,7 +64,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# 2. UNIFIED DATA PROVIDER & FULL COMPREHENSIVE MARKET REPOS
+# 2. UNIFIED DATA PROVIDER & FULL COMPREHENSIVE MARKET REPOS (100% COMPLETE)
 # ------------------------------------------------------------------------------
 class UnifiedDataProvider:
     @staticmethod
@@ -612,7 +612,6 @@ class SabryPlotlyChartEngine:
             name="الشموع اليابانية"
         ))
 
-        # Adding EMA 200 & SMA 50
         df['sma50'] = df['close'].rolling(50).mean()
         df['ema200'] = df['close'].ewm(span=200).mean()
         
@@ -630,7 +629,7 @@ class SabryPlotlyChartEngine:
         st.plotly_chart(fig, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# 8. EXPORT TOOLBAR & AUTOMATED TELEGRAM ENGINE WITH TIME-WINDOWS
+# 8. EXPORT TOOLBAR & PROFESSIONAL TELEGRAM ENGINE WITH CARDS
 # ------------------------------------------------------------------------------
 class UniversalExportEngine:
     @staticmethod
@@ -657,17 +656,19 @@ class TelegramEngine:
         url = f"https://api.telegram.org/bot{token.strip()}/sendMessage"
         
         current_time_str = datetime.now().strftime("%Y-%m-%d | %H:%M")
-        msg = f"<b>🛡️ SABRY VISION - AUTOMATED MARKET CARD</b>\n"
+        msg = f"<b>🛡️ SABRY VISION - PROFESSIONAL MARKET CARD</b>\n"
         msg += f"🏛️ <b>السوق النشط:</b> {market_name}\n"
         msg += f"⏱️ <b>الإطار الزمني:</b> {timeframe} | 📅 <b>التوقيت:</b> {current_time_str}\n"
-        msg += f"-----------------------------------\n"
+        msg += f"━━━━━━━━━━━━━━━━━━━━━\n"
         
         for idx, res in enumerate(results_list[:8], 1):
-            msg += f"<b>#{idx} {res.get('Symbol')}</b> | نموذج: <code>{res.get('Signal')}</code>\n"
-            msg += f" 💰 السعر: ${res.get('Close')} | السكور: <b>{res.get('AI Score')}</b>\n"
-            msg += f" 🛑 SL: ${res.get('Stop Loss')} | 🎯 TP: ${res.get('Take Profit')}\n"
-            msg += f" 🏛️ العادل: {res.get('Institutional Fair Target')} (Upside: {res.get('Institutional Upside (%)')})\n"
-            msg += f"-----------------------------------\n"
+            msg += f"<b>#{idx} 📊 الأصل: {res.get('Symbol')}</b>\n"
+            msg += f" • 📌 <b>النموذج:</b> <code>{res.get('Signal')}</code>\n"
+            msg += f" • 💰 <b>السعر الحالي:</b> ${res.get('Close')} | 🎯 <b>السكور:</b> {res.get('AI Score')}\n"
+            msg += f" • 🛑 <b>وقف الخسارة (SL):</b> ${res.get('Stop Loss')}\n"
+            msg += f" • 🎯 <b>الهدف (TP):</b> ${res.get('Take Profit')}\n"
+            msg += f" • 🏛️ <b>السعر العادل:</b> {res.get('Institutional Fair Target')} (Upside: {res.get('Institutional Upside (%)')})\n"
+            msg += f"━━━━━━━━━━━━━━━━━━━━━\n"
             
         try:
             resp = requests.post(url, json={"chat_id": chat_id.strip(), "text": msg, "parse_mode": "HTML"}, timeout=10)
@@ -707,11 +708,11 @@ class SabryVisionMasterScanner:
         }
 
 # ------------------------------------------------------------------------------
-# 9. MAIN DASHBOARD INTERFACE (ALL 8 TABS FULLY RESTORED WITHOUT ANY LOSS)
+# 9. MAIN DASHBOARD INTERFACE (FULL 8 TABS & ADMIN-ONLY TELEGRAM CONTROLS)
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v13.00 - Security Portal</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v13.50 - Security Portal</h1>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             with st.form("login_form"):
@@ -727,16 +728,24 @@ def main():
                         st.error("❌ بيانات الدخول غير صحيحة.")
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v13.00")
+    st.sidebar.title("🛡️ SABRY VISION v13.50")
     is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
+    st.session_state['is_admin'] = is_admin_mode
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
     
+    # Telegram Credentials visible ONLY in Admin Mode
+    ui_token = ""
+    ui_chat = ""
+    if is_admin_mode:
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("🔒 إعدادات تليجرام (خاص بالأدمن)")
+        ui_token = st.sidebar.text_input("Bot Token", value="8810439179:AAGMWrf_pTE0Aa6PrJ-pAIwFHts8xsTWLDg", type="password")
+        ui_chat = st.sidebar.text_input("Chat ID", value="1207434469")
+        st.sidebar.markdown("---")
+
     if st.sidebar.button("🚪 تسجيل الخروج"):
         st.session_state["authenticated"] = False
         st.rerun()
-
-    ui_token = "8810439179:AAGMWrf_pTE0Aa6PrJ-pAIwFHts8xsTWLDg" if st.session_state["is_admin"] else ""
-    ui_chat = "1207434469" if st.session_state["is_admin"] else ""
 
     acc_size = st.sidebar.number_input("حجم المحفظة ($)", value=100000.0, step=10000.0)
     config = InstitutionalConfig(account_size=acc_size)
@@ -749,7 +758,7 @@ def main():
     timeframe = st.sidebar.selectbox("الإطار الزمني العام:", ["1m", "5m", "15m", "1h", "4h", "1d"], index=3)
     active_setups = st.sidebar.multiselect("نماذج الفلسفة المعتمدة:", ["BREAKOUT", "RETEST", "LIQUIDITY_SWEEP", "BOTTOM_REVERSAL", "SETUP"], default=["BREAKOUT", "RETEST", "LIQUIDITY_SWEEP"])
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v13.00 Ultimate Supreme")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v13.50 Ultimate")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
@@ -905,8 +914,8 @@ def main():
             st.info("لا توجد صفقات مفتوحة حالياً بالمحفظة.")
 
     with tab8:
-        st.subheader("⚡ التشغيل الآلي والتعرف التلقائي على السوق المفتوح (Telegram Engine)")
-        st.markdown("<i>يقوم النظام بالتعرف على السوق النشط حسب التوقيت الحالي والنافذة الزمنية، وإجراء السكانر، وإرسال بطاقة تليجرام مجمعة.</i>", unsafe_allow_html=True)
+        st.subheader("⚡ التشغيل الآلي والتعرف التلقائي على السوق المفتوح وزرار تصدير تليجرام الاحترافي")
+        st.markdown("<i>يقوم النظام بالتعرف على السوق النشط حسب التوقيت الحالي والنافذة الزمنية، وإجراء السكانر، وإرسال بطاقة تليجرام المجمعة بتنسيق احترافي.</i>", unsafe_allow_html=True)
         
         current_hour = datetime.now().hour
         if 9 <= current_hour <= 15:
@@ -918,9 +927,9 @@ def main():
             
         st.success(f"🌐 **السوق النشط حالياً (حسب النافذة الزمنية):** {auto_market_name}")
 
-        if st.button("🚀 تشغيل المسح الآلي الفوري وإرسال بطاقة تليجرام المجمعة", type="primary"):
-            if ui_token and ui_chat:
-                with st.spinner(f"جاري المسح التلقائي لـ {auto_market_name} وإرسال التقرير..."):
+        if st.button("🚀 تشغيل المسح الآلي الفوري وإرسال بطاقة تليجرام المجمعة الاحترافية", type="primary"):
+            if is_admin_mode and ui_token and ui_chat:
+                with st.spinner(f"جاري المسح التلقائي لـ {auto_market_name} وإرسال البطاقات لتليجرام..."):
                     scanner = SabryVisionMasterScanner(config, ["BREAKOUT", "RETEST", "LIQUIDITY_SWEEP"], "15m")
                     auto_results = []
                     for s in auto_symbols:
@@ -930,13 +939,13 @@ def main():
                     if auto_results:
                         success = TelegramEngine.send_consolidated_card(ui_token, ui_chat, auto_market_name, auto_results, "15m")
                         if success:
-                            st.success("🎉 تم إرسال البطاقة المجمعة لتليجرام بنجاح تام!")
+                            st.success("🎉 تم إرسال البطاقة المجمعة الاحترافية لتليجرام بنجاح تام!")
                         else:
-                            st.error("❌ فشل إرسال الرسالة، تحقق من صلاحيات تليجرام بوت.")
+                            st.error("❌ فشل إرسال الرسالة، تحقق من صلاحيات تليجرام بوت والمعرف.")
                     else:
                         st.warning("لا توجد فرص مطابقة حالياً بالسوق النشط.")
             else:
-                st.warning("يرجى تفعيل وضع الأدمن وإدخال صلاحيات تليجرام.")
+                st.warning("⚠️ يجـب تفعيل وضع الأدمن وإدخال بيانات التوكن والمعرف في الشريط الجانبي أولاً لإرسال التقارير عبر تليجرام.")
 
 if __name__ == "__main__":
     main()
