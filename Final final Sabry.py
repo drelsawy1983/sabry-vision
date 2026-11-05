@@ -1,7 +1,7 @@
 # ==============================================================================
-# 🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v19.75 Ultimate Complete Master)
+# 🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v19.80 Fixed Master)
 # ==============================================================================
-# - 100% Retained Legacy Features from v14.50 to v19.50 without any code loss.
+# - 100% Retained Legacy Features from v14.50 to v19.75 without any code loss.
 # - Complete Comprehensive Markets Repositories (TASI 309+, EGX 240+, S&P 500, Nasdaq, ADX, DFM, Commodities).
 # - Optimized Lightning-Fast Dual Scanner with ALL 5 Setup Models (Breakout, Setup, Bottom Reversal, Liquidity Sweep, Retest).
 # - InvestingPro Multi-Model Fair Value Engine (12 Models Average & Margin of Safety).
@@ -35,14 +35,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # 1. SYSTEM INITIALIZATION & RESPONSIVE CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v19.75 Ultimate Complete Master",
+    page_title="SABRY VISION - Master Quant Terminal v19.80 Fixed Master",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVision19.75")
+logger = logging.getLogger("SabryVision19.80")
 
 st.markdown("""
 <style>
@@ -685,7 +685,7 @@ class SabryPlotlyChartEngine:
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v19.75 - Security Portal</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v19.80 - Security Portal</h1>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             with st.form("login_form"):
@@ -700,7 +700,7 @@ def main():
                     else: st.error("❌ بيانات الدخول غير صحيحة.")
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v19.75 Master")
+    st.sidebar.title("🛡️ SABRY VISION v19.80 Master")
     is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
     st.session_state['is_admin'] = is_admin_mode
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
@@ -718,7 +718,7 @@ def main():
     selected_symbols = market_lists.get(market_choice, st.session_state["custom_watchlists"].get(market_choice, []))
     general_tf = st.sidebar.selectbox("الإطار الزمني العام للمسح:", ["1m", "5m", "15m", "1h", "4h", "1d"], index=3)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v19.75 (Complete Speed Master)")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v19.80 (Fixed Complete Master)")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
@@ -836,7 +836,7 @@ def main():
                     for k, v in audit_res.get("Macro Schools", {}).items()
                 ]))
 
-    # TAB 7: WATCHLISTS & PORTFOLIO
+    # TAB 7: WATCHLISTS & PORTFOLIO (Fixed Syntax Error Here)
     with tab7:
         st.subheader("📁 إدارة القوائم المخصصة والمحفظة")
         all_lists = {**st.session_state["market_lists_repo"], **st.session_state["custom_watchlists"]}
@@ -844,14 +844,14 @@ def main():
         st.markdown(f"عدد العناصر في القائمة: **{len(all_lists[chosen_l])}**")
         st.markdown("---")
         st.markdown("### 💼 صفقات المحفظة المفتوحة")
-        open_trades = [t for t in st.session_state["portfolio_trades"] if t.get("Status"] == "OPEN"]
+        open_trades = [t for t in st.session_state["portfolio_trades"] if t.get("Status") == "OPEN"]
         if open_trades: st.dataframe(pd.DataFrame(open_trades), use_container_width=True)
         else: st.info("لا توجد صفقات مفتوحة حالياً بالمحفظة.")
 
     # TAB 8: AUTOMATED SCHEDULER
     with tab8:
         st.subheader("⚡ التشغيل الآلي والإرسال المباشر لتليجرام")
-        st.success("🌐 **النظام يعمل بأقصى كفاءة وسرعة، وبكامل النماذج والميزات دون أي نقصان.**")
+        st.success("🌐 **النظام يعمل بأقصى كفاءة وسرعة، وتم إصلاح الخطأ البرمجي بنجاح تام.**")
 
 if __name__ == "__main__":
     main()
