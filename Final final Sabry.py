@@ -1,9 +1,10 @@
 # ==============================================================================
-# 🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v19.50 Ultimate Master Speed)
+# 🛡️ SABRY VISION - MASTER QUANT TERMINAL & PORTFOLIO ENGINE (v19.75 Ultimate Complete Master)
 # ==============================================================================
-# - 100% Retained Legacy Features from v14.50 to v18.50 without any code loss.
+# - 100% Retained Legacy Features from v14.50 to v19.50 without any code loss.
 # - Complete Comprehensive Markets Repositories (TASI 309+, EGX 240+, S&P 500, Nasdaq, ADX, DFM, Commodities).
-# - Optimized Lightning-Fast Scanner with Deferred Financial Fetching (InvestingPro 12 Models).
+# - Optimized Lightning-Fast Dual Scanner with ALL 5 Setup Models (Breakout, Setup, Bottom Reversal, Liquidity Sweep, Retest).
+# - InvestingPro Multi-Model Fair Value Engine (12 Models Average & Margin of Safety).
 # - TradingView Direct Dynamic Links (TADAWUL:, EGX:, DFM:, ADX:) & Formatted Watchlist Export Hub.
 # - Time Machine Monte Carlo Replay Simulation Engine for Probability and Win Rates.
 # - Strict White Power Candle Formatting & Multi-POC Lines with Super Zone Cloud Toggles.
@@ -34,14 +35,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # 1. SYSTEM INITIALIZATION & RESPONSIVE CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v19.50 Ultimate Master Speed",
+    page_title="SABRY VISION - Master Quant Terminal v19.75 Ultimate Complete Master",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("SabryVision19.50")
+logger = logging.getLogger("SabryVision19.75")
 
 st.markdown("""
 <style>
@@ -470,9 +471,6 @@ class HybridQuantEngine:
         df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, interval=timeframe)
         if df.empty or len(df) < 50: return {}
         close = float(df['close'].iloc[-1])
-        open_p = float(df['open'].iloc[-1])
-        low_p = float(df['low'].iloc[-1])
-        volume = float(df['volume'].iloc[-1])
         
         sma20 = float(df['close'].rolling(20).mean().iloc[-1])
         sma50 = float(df['close'].rolling(50).mean().iloc[-1])
@@ -512,7 +510,7 @@ class HybridQuantEngine:
         }
 
 # ------------------------------------------------------------------------------
-# 8. LIGHTNING-FAST DUAL SCANNER (DEFERRED FINANCIAL FETCHING)
+# 8. LIGHTNING-FAST DUAL SCANNER WITH ALL 5 SETUP MODELS
 # ------------------------------------------------------------------------------
 class SabryVisionFastScanner:
     def __init__(self, config: InstitutionalConfig, timeframe: str):
@@ -533,14 +531,31 @@ class SabryVisionFastScanner:
             if df.empty or len(df) < 20: continue
             
             close_p = float(df['close'].iloc[-1])
+            low_p = float(df['low'].iloc[-1])
             vol_avg = float(df['volume'].tail(20).mean())
             rvol = round(float(df['volume'].iloc[-1] / max(1.0, vol_avg)), 2)
+            
             pivot = float(df['high'].rolling(20, min_periods=1).max().iloc[-2])
+            low_20 = float(df['low'].rolling(20, min_periods=1).min().iloc[-2])
             
             triggered = []
-            if close_p > pivot and rvol >= 1.2: triggered.append("BREAKOUT")
-            elif close_p <= pivot and close_p >= pivot * 0.95: triggered.append("SETUP")
-            else: continue
+            # 1. Breakout Model
+            if close_p > pivot and rvol >= 1.2: 
+                triggered.append("BREAKOUT")
+            # 2. Retest Model
+            if close_p > pivot and low_p <= pivot * 0.99: 
+                triggered.append("RETEST")
+            # 3. Liquidity Sweep Model
+            if low_p < low_20 and close_p >= low_20 * 1.005: 
+                triggered.append("LIQUIDITY_SWEEP")
+            # 4. Bottom Reversal Model (انعكاس القاع)
+            if low_p < low_20 and close_p > low_20: 
+                triggered.append("BOTTOM_REVERSAL")
+            # 5. Setup Model
+            if close_p <= pivot and close_p >= pivot * 0.95: 
+                triggered.append("SETUP")
+            
+            if not triggered: continue
             
             tr = np.maximum(df['high'] - df['low'], np.maximum((df['high'] - df['close'].shift(1)).abs(), (df['low'] - df['close'].shift(1)).abs()))
             atr = float(tr.tail(14).mean())
@@ -558,7 +573,7 @@ class SabryVisionFastScanner:
                 "الهدف ($)": tp,
                 "رابط TradingView": TradingViewFormatter.get_tradingview_url(sym)
             }
-            if "SETUP" in triggered: setup_rows.append(row)
+            if "SETUP" in triggered and len(triggered) == 1: setup_rows.append(row)
             else: complex_rows.append(row)
             
         bar.empty()
@@ -670,7 +685,7 @@ class SabryPlotlyChartEngine:
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v19.50 - Security Portal</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v19.75 - Security Portal</h1>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             with st.form("login_form"):
@@ -685,7 +700,7 @@ def main():
                     else: st.error("❌ بيانات الدخول غير صحيحة.")
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v19.50 Master")
+    st.sidebar.title("🛡️ SABRY VISION v19.75 Master")
     is_admin_mode = st.sidebar.checkbox("👑 تفعيل وضع الأدمن", value=st.session_state['is_admin'])
     st.session_state['is_admin'] = is_admin_mode
     st.sidebar.info(f"👤 المستخدم: **{st.session_state['username']}**")
@@ -703,7 +718,7 @@ def main():
     selected_symbols = market_lists.get(market_choice, st.session_state["custom_watchlists"].get(market_choice, []))
     general_tf = st.sidebar.selectbox("الإطار الزمني العام للمسح:", ["1m", "5m", "15m", "1h", "4h", "1d"], index=3)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v19.50 (Speed & Full Master)")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v19.75 (Complete Speed Master)")
     st.markdown("---")
     
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
@@ -724,11 +739,10 @@ def main():
         c_df = st.session_state["last_scan_complex"]
         s_df = st.session_state["last_scan_setups"]
         
-        st.markdown("### 📊 الجدول الأول: الفرص المركبة والمكتشفة (Complex Setups)")
+        st.markdown("### 📊 الجدول الأول: الفرص المركبة والمكتشفة (Complex Setups - Breakout, Retest, Bottom Reversal, Liquidity Sweep)")
         if not c_df.empty:
             st.dataframe(c_df, use_container_width=True)
             
-            # زر ذكي لاحق لجلب تقييم InvestingPro للفرص الظاهرة فقط (سرعة فائقة)
             if st.button("📊 جلب تقييم InvestingPro للفرص الظاهرة في الجدول فقط"):
                 with st.spinner("جاري حساب القيم العادلة للفرص المكتشفة فقط..."):
                     for idx, row in c_df.iterrows():
@@ -830,14 +844,14 @@ def main():
         st.markdown(f"عدد العناصر في القائمة: **{len(all_lists[chosen_l])}**")
         st.markdown("---")
         st.markdown("### 💼 صفقات المحفظة المفتوحة")
-        open_trades = [t for t in st.session_state["portfolio_trades"] if t.get("Status") == "OPEN"]
+        open_trades = [t for t in st.session_state["portfolio_trades"] if t.get("Status"] == "OPEN"]
         if open_trades: st.dataframe(pd.DataFrame(open_trades), use_container_width=True)
         else: st.info("لا توجد صفقات مفتوحة حالياً بالمحفظة.")
 
     # TAB 8: AUTOMATED SCHEDULER
     with tab8:
         st.subheader("⚡ التشغيل الآلي والإرسال المباشر لتليجرام")
-        st.success("🌐 **النظام يعمل بأقصى كفاءة وسرعة، وجاهز للإرسال التلقائي والربط الكامل.**")
+        st.success("🌐 **النظام يعمل بأقصى كفاءة وسرعة، وبكامل النماذج والميزات دون أي نقصان.**")
 
 if __name__ == "__main__":
     main()
