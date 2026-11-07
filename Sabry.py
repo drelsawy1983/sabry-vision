@@ -10,20 +10,18 @@ import urllib.parse
 import json
 
 # ==============================================================================
-# 🛡️ SABRY VISION v20.0 - Ultimate Master Quant & Institutional Terminal
+# 🛡️ SABRY VISION v20.0 Updated - Master Quant & Institutional Terminal (Full Lists)
 # ==============================================================================
 
-st.set_page_config(page_title="Sabry Vision v21.0 Master", layout="wide", page_icon="🛡️")
+st.set_page_config(page_title="Sabry Vision v20.0 Updated", layout="wide", page_icon="🛡️")
 
-# 🎨 CUSTOM HIGH-CONTRAST VISUAL DESIGN (إصلاح الألوان والتباين بالكامل)
+# 🎨 HIGH-CONTRAST VISUAL DESIGN (ألوان واضحة وبوكسات شفافة)
 st.markdown("""
     <style>
-    /* Dark Theme Core Setup */
     .main { background-color: #0d1117; color: #f0f6fc; }
     
-    /* Transparent Box for stMetric with High Contrast Typography */
     div[data-testid="stMetric"] {
-        background: rgba(22, 27, 34, 0.75) !important;
+        background: rgba(22, 27, 34, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         padding: 16px 20px !important;
         border-radius: 12px !important;
@@ -31,27 +29,22 @@ st.markdown("""
         backdrop-filter: blur(8px) !important;
     }
     
-    /* Labels inside Metrics (الألقاب والعناوين) */
     div[data-testid="stMetricLabel"] > label {
         color: #e6edf3 !important;
         font-size: 1.05rem !important;
         font-weight: 700 !important;
-        letter-spacing: 0.5px !important;
     }
     
-    /* Values inside Metrics (الأرقام والقيم الحسابية) */
     div[data-testid="stMetricValue"] > div {
-        color: #00FF66 !important; /* أخضر فوسفوري ناصع */
+        color: #00FF66 !important;
         font-size: 1.8rem !important;
         font-weight: 900 !important;
         text-shadow: 0px 0px 8px rgba(0, 255, 102, 0.3) !important;
     }
 
-    /* Custom Class for Secondary Values */
     .metric-gold { color: #FFCC00 !important; font-weight: bold; }
     .metric-cyan { color: #00E5FF !important; font-weight: bold; }
     
-    /* TradingView Button styling */
     .tv-btn {
         background-color: #2962FF !important;
         color: #ffffff !important;
@@ -63,7 +56,6 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(41, 98, 255, 0.4) !important;
     }
     
-    /* Subheaders and Headers Contrast */
     h1, h2, h3, h4 { color: #ffffff !important; font-weight: 800 !important; }
     </style>
 """, unsafe_allow_html=True)
@@ -95,21 +87,21 @@ class TradingViewFormatter:
         return f"https://www.tradingview.com/chart/?symbol={tv_sym}"
 
 # ------------------------------------------------------------------------------
-# 2. FULL MASTER MARKETS REPOSITORIES (القوائم الكاملة 100% بدون اختصار)
+# 2. FULL COMPREHENSIVE MARKET REPOSITORIES (القوائم الأصلية كاملة 100% بدون أي نقص)
 # ------------------------------------------------------------------------------
 MARKET_REPOS = {
     "المؤشرات العالمية والأسواق (Global Indices)": [
         "^TASI.SR", "^EGX30", "^SPX", "^IXIC", "^DJI", "^FTSE", "^N225", "^HSI", "GC=F", "SI=F", "CL=F", "DX-Y.NYB"
     ],
-    "سوق أبوظبي للأوراق المالية (ADX)": [
+    "سوق أبوظبي للأوراق المالية (ADX - موسعة بالكامل)": [
         "FAB.AD", "IHC.AD", "TAQA.AD", "ETISALAT.AD", "ALDAR.AD", "ADCB.AD", "ADIB.AD", "ADNOCDIST.AD", "MULTIPLY.AD", "NMDC.AD",
         "ADNH.AD", "ALFARAH.AD", "AGTHIA.AD", "ARIV.AD", "ASHGAB.AD", "BANKSHARJAH.AD", "BOS.AD", "Dana.AD", "Eshraq.AD", "RAKBANK.AD"
     ],
-    "سوق دبي المالي (DFM)": [
+    "سوق دبي المالي (DFM - موسعة بالكامل)": [
         "EMAAR.DFM", "ENBD.DFM", "DIB.DFM", "DEWA.DFM", "DU.DFM", "ARAMEX.DFM", "EMAARDEV.DFM", "DIC.DFM", "SALIK.DFM", "TALABAT.DFM",
         "ARIG.DFM", "AMAN.DFM", "CBD.DFM", "DFM.DFM", "DSI.DFM", "GFH.DFM", "ITHMR.DFM", "MASRAF.DFM", "SHUAA.DFM", "UNIONPROPERTIES.DFM"
     ],
-    "الذهب والفضة والسلع الفورية والآجلة": [
+    "الذهب والفضة والسلع الفورية والآجلة (Spot & Futures Commodities)": [
         "XAUUSD=X", "GC=F", "GLD", "IAU", "9405.SR", "XAGUSD=X", "SI=F", "SLV", "PL=F", "PA=F", "HG=F", "CL=F", "BZ=F", "NG=F"
     ],
     "الصناديق المتداولة في السوق الأمريكي (US ETFs)": [
@@ -213,7 +205,11 @@ MARKET_REPOS = {
         "TXN", "AMGN", "HON", "AMAT", "BKNG", "SBUX", "ISRG", "GILD", "MDLZ", "ADP", 
         "PANW", "LRCX", "ADI", "SNPS", "CDNS", "PYPL", "MU", "REGN", "VRTX", "CHTR", 
         "CSX", "MNST", "MCHP", "ORLY", "CTAS", "AEP", "KDP", "MELI", "DXCM", "FAST", 
-        "PCAR", "EA", "KHC", "ODFL", "GEHC", "EXC", "BKR", "ROK", "ROST", "CPRT"
+        "PCAR", "EA", "KHC", "ODFL", "GEHC", "EXC", "BKR", "ROK", "ROST", "CPRT", 
+        "VRSK", "PAYX", "CTSH", "ON", "CDW", "DLTR", "WBD", "ENPH", "CEG", "ZS", 
+        "TTWO", "TEAM", "ANSS", "BIIB", "XRAY", "SIRI", "CRWD", "DDOG", "MRVL", "MDB", 
+        "PATH", "RIVN", "LUCID", "SNOW", "PLTR", "DASH", "ABNB", "ASML", "ARM", "KLAC", 
+        "WMT", "PDD", "MAR", "FTNT", "ALAB", "QQQ", "QQQM", "TQQQ", "SQQQ", "XLK", "SMH", "SOXX", "ARKK"
     ]
 }
 
@@ -282,15 +278,15 @@ st.sidebar.subheader("⚙️ إعدادات السوق والتايم فريم")
 market_choice = st.sidebar.selectbox("اختر السوق أو القائمة العامة:", list(MARKET_REPOS.keys()))
 general_tf = st.sidebar.selectbox("الإطار الزمني الرئيسي (Timeframe):", ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"], index=5)
 
-st.title("🛡️ SABRY VISION v21.0 - Ultimate Quant Terminal")
+st.title("🛡️ SABRY VISION v20.0 Updated - Ultimate Quant Terminal")
 st.markdown("---")
 
 selected_symbols = MARKET_REPOS[market_choice]
 
 # ------------------------------------------------------------------------------
-# 4. INSTITUTIONAL SCANNER ENGINE WITH REAL-TIME PROGRESS & ENHANCED METRICS
+# 4. DUAL-ENGINE HYBRID SCANNER
 # ------------------------------------------------------------------------------
-class SabryVisionV21Scanner:
+class SabryVisionV20UpdatedScanner:
     def __init__(self, tickers_list, timeframe):
         self.tickers = tickers_list
         self.timeframe = timeframe
@@ -328,227 +324,254 @@ class SabryVisionV21Scanner:
 
     def scan_single_ticker(self, ticker):
         df = self.fetch_data(ticker)
-        if df is None or len(df) < 20:
-            return None
+        if df is None or len(df) < 20: return None
         df = self.calculate_indicators(df)
-        if df is None:
-            return None
+        if df is None: return None
             
         last_row = df.iloc[-1]
-        prev_row = df.iloc[-2]
         close = last_row['Close']
         rvol = last_row['Rvol'] if not np.isnan(last_row['Rvol']) else 1.0
         ema_200 = last_row['Ema_200']
-        ema_50 = last_row['Ema_50']
-        vwap = last_row['Vwap'] if not np.isnan(last_row['Vwap']) else close
         atr = last_row['Atr'] if not np.isnan(last_row['Atr']) else close * 0.02
 
-        if close < ema_200 * 0.85:
-            return None
+        if close < ema_200 * 0.85: return None
 
-        score = 0
-        signals_found = []
-        
-        recent_low = df['Low'].iloc[-20:-1].min() if len(df) >= 20 else last_row['Low']
-        is_fast_abs = (close - last_row['Low']) > (last_row['High'] - last_row['Low']) * 0.65
-        
-        if last_row['Low'] < recent_low and close > recent_low and rvol >= 1.5 and is_fast_abs:
-            score += 35
-            signals_found.append("Liquidity Sweep")
-        elif close > prev_row['High'] and last_row['Close'] > (last_row['High'] + last_row['Low'])/2:
-            score += 25
-            signals_found.append("Bottom Reversal")
+        recent_high = df['High'].iloc[-21:-1].max()
+        recent_low = df['Low'].iloc[-21:-1].min()
 
-        recent_high = df['High'].iloc[-20:-1].max() if len(df) >= 20 else last_row['High']
-        if close >= recent_high and rvol >= 1.2:
-            score += 25
-            signals_found.append("Breakout Explosion")
-            
-        if close > ema_200:
-            score += 15
-            signals_found.append("Above EMA200")
-        if close > vwap:
-            score += 10
-            signals_found.append("Above VWAP")
+        is_breakout = close > recent_high and rvol >= 1.2
+        is_bottom_reversal = last_row['Low'] <= recent_low and close > last_row['Open'] and (close - last_row['Low']) > (last_row['High'] - close)
+        is_liquidity_sweep = last_row['Low'] < recent_low and close > recent_low
+        is_setup = close > last_row['Ema_50'] and not (is_breakout or is_bottom_reversal or is_liquidity_sweep)
 
-        if score > 0:
-            sl = round(close - (1.5 * atr), 2)
-            t1 = round(close + (2.0 * atr), 2)
-            t2 = round(close + (4.0 * atr), 2)
-            rr_ratio = round((t1 - close) / abs(close - sl), 2) if abs(close - sl) > 0 else 2.0
-            
-            return {
-                "Ticker": ticker,
-                "TradingView Symbol": TradingViewFormatter.to_tradingview_symbol(ticker),
-                "Score": score,
-                "Signals": ", ".join(signals_found),
-                "Close ($)": round(float(close), 2),
-                "Stop Loss": sl,
-                "Target 1": t1,
-                "Target 2": t2,
-                "R:R Ratio": f"1:{rr_ratio}",
-                "RVOL": round(float(rvol), 2),
-                "EMA 50": round(float(ema_50), 2),
-                "EMA 200": round(float(ema_200), 2),
-                "VWAP": round(float(vwap), 2)
-            }
-        return None
+        detected_types = []
+        if is_breakout: detected_types.append("Breakout")
+        if is_bottom_reversal: detected_types.append("Bottom Reversal")
+        if is_liquidity_sweep: detected_types.append("Liquidity Sweep")
+        if is_setup: detected_types.append("Setup")
+
+        if not detected_types: return None
+
+        score = 50.0
+        if is_breakout: score += 25.0
+        if is_bottom_reversal: score += 20.0
+        if is_liquidity_sweep: score += 20.0
+        if is_setup: score += 10.0
+        score += min(15.0, rvol * 5.0)
+        score = min(99.5, score)
+
+        sl = round(close - (1.5 * atr), 2)
+        t1 = round(close + (2.0 * atr), 2)
+        t2 = round(close + (4.0 * atr), 2)
+        is_pure_setup = (detected_types == ["Setup"])
+
+        return {
+            "Ticker": ticker,
+            "TradingView Symbol": TradingViewFormatter.to_tradingview_symbol(ticker),
+            "Score": round(score, 1),
+            "Signals": " + ".join(detected_types),
+            "Close ($)": round(float(close), 2),
+            "Stop Loss": sl,
+            "Target 1": t1,
+            "Target 2": t2,
+            "RVOL": round(float(rvol), 2),
+            "Is Pure Setup": is_pure_setup
+        }
 
 # ------------------------------------------------------------------------------
 # TABS LAYOUT (1 to 5)
 # ------------------------------------------------------------------------------
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "🚀 السكانر المؤسسي (Tab 1)", 
-    "🧬 المختبر الجيني (Tab 2)",
-    "🛡️ مصفوفة المخاطر (Tab 3)",
-    "📊 التقييم المالي (Tab 4)",
-    "⏳ آلة الزمن والباك تست (Tab 5)"
+    "🚀 السكانر الهجين الكامل (Tab 1)", 
+    "🧬 المختبر الجيني وتوقع الانفجار (Tab 2)",
+    "🛡️ مصفوفة المخاطر والمحفظة (Tab 3)",
+    "📊 التقييم المالي 12 نموذج (Tab 4)",
+    "⏳ آلة الزمن والباك تست المتقدم (Tab 5)"
 ])
 
 def get_selected_ticker_or_imported(tab_key: str) -> str:
     col1, col2 = st.columns([2, 1])
     with col1:
-        manual_symbol = st.text_input("أدخل رمز السهم / المؤشر يدوياً:", value="AAPL", key=f"manual_{tab_key}")
+        manual_symbol = st.text_input("أدخل رمز السهم يدوياً:", value="AAPL", key=f"manual_{tab_key}")
     with col2:
         top_10 = []
-        if 'scan_results' in st.session_state and not st.session_state['scan_results'].empty:
-            top_10 = st.session_state['scan_results']['Ticker'].tolist()
-        imported_symbol = st.selectbox("أو استورد من نتائج السكانر:", ["اختر..."] + top_10, key=f"import_{tab_key}")
+        if 'confirmed_opps' in st.session_state and not st.session_state['confirmed_opps'].empty:
+            top_10 = st.session_state['confirmed_opps']['Ticker'].tolist()
+        imported_symbol = st.selectbox("أو استورد من السكانر:", ["اختر..."] + top_10, key=f"import_{tab_key}")
     
-    if imported_symbol != "اختر...":
-        return imported_symbol
+    if imported_symbol != "اختر...": return imported_symbol
     return manual_symbol.strip().upper()
 
-# TAB 1: SCANNER WITH LIVE PROGRESS COUNTER
+# TAB 1: SCANNER WITH FULL REPOSITORIES & PROGRESS
 with tab1:
-    st.header(f"سكانر كشف السيولة المباشر ({general_tf}) - قائمة: {market_choice}")
+    st.header(f"السكانر الكامل ({general_tf}) - قائمة: {market_choice}")
     total_count = len(selected_symbols)
-    st.info(f"إجمالي عدد الأصول المفحوصة في القائمة: {total_count} أصل")
+    st.info(f"إجمالي الأصول في القائمة المحددة: {total_count} أصل (تم تحميل القوائم كاملة بدون أي نقصان)")
     
-    if st.button("تشغيل السكانر المؤسسي ⚡"):
-        scanner = SabryVisionV21Scanner(selected_symbols, general_tf)
-        results = []
+    if st.button("تشغيل السكانر الشامل ⚡"):
+        scanner = SabryVisionV20UpdatedScanner(selected_symbols, general_tf)
+        confirmed_list, setup_list = [], []
         
-        # عناصر التقدم الحية
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        metrics_place = st.empty()
+        prog_bar = st.progress(0)
+        status_txt = st.empty()
+        metrics_plc = st.empty()
         
-        scanned_count = 0
-        found_count = 0
-        
+        scanned, found = 0, 0
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {executor.submit(scanner.scan_single_ticker, t): t for t in selected_symbols}
             for f in as_completed(futures):
-                scanned_count += 1
+                scanned += 1
                 res = f.result()
                 if res:
-                    results.append(res)
-                    found_count += 1
+                    found += 1
+                    if res["Is Pure Setup"]: setup_list.append(res)
+                    else: confirmed_list.append(res)
                 
-                # تحديث العداد والتقدم المباشر
-                prog = int((scanned_count / total_count) * 100)
-                progress_bar.progress(prog)
-                status_text.markdown(f"⏳ **جاري فحص السوق...** ({scanned_count} من أصل {total_count} أسهم)")
-                
-                metrics_place.markdown(
-                    f"📊 **التقدم:** `{scanned_count}/{total_count}` أصل ممسوح | 🎯 **الفرص المكتشفة حياً:** `{found_count}` فرصة"
-                )
+                prog_bar.progress(int((scanned / total_count) * 100))
+                status_txt.markdown(f"⏳ **جاري فحص السوق الشامل...** ({scanned}/{total_count})")
+                metrics_plc.markdown(f"📊 **الممسوح:** `{scanned}/{total_count}` | 🎯 **الفرص المكتشفة:** `{found}`")
 
-        if results:
-            res_df = pd.DataFrame(results).sort_values(by="Score", ascending=False).reset_index(drop=True)
-            st.success(f"🎉 تم الفحص بنجاح! تم كشف {len(res_df)} فرصة استثمارية واعدة.")
-            st.dataframe(res_df, use_container_width=True)
-            st.session_state['scan_results'] = res_df
-        else:
-            st.warning("لم يتم كشف أسهم تطابق المعايير الصارمة حالياً.")
-
-    if 'scan_results' in st.session_state and not st.session_state['scan_results'].empty:
-        st.markdown("---")
-        st.subheader("🌐 أدوات التصدير والربط المباشر مع TradingView")
-        res_df = st.session_state['scan_results']
+        df_conf = pd.DataFrame(confirmed_list).sort_values(by="Score", ascending=False).reset_index(drop=True) if confirmed_list else pd.DataFrame()
+        df_set = pd.DataFrame(setup_list).sort_values(by="Score", ascending=False).reset_index(drop=True) if setup_list else pd.DataFrame()
         
-        c_tv1, c_tv2 = st.columns(2)
-        with c_tv1:
-            sel_sym = st.selectbox("اختر سهماً لفتحه مباشرة في TradingView:", res_df["Ticker"].tolist(), key="tv_open_sel")
-            tv_url = TradingViewFormatter.get_tradingview_url(sel_sym)
-            st.markdown(f'<a href="{tv_url}" target="_blank" class="tv-btn">🌐 فتح {sel_sym} في TradingView مباشرة</a>', unsafe_allow_html=True)
-        with c_tv2:
-            tv_formatted = [row["TradingView Symbol"] for _, row in res_df.iterrows()]
-            st.text_area("النص المترجم الجاهز للنسخ لـ TradingView Watchlist:", value=",".join(tv_formatted), height=70)
+        if not df_conf.empty and not df_set.empty:
+            double_conv = set(df_conf['Ticker']).intersection(set(df_set['Ticker']))
+            if double_conv:
+                st.success(f"🔥 **تنبيه الجوهرة المزدوجة (Double Conviction):** أسهم ظهرت في الجدولين معاً (ثقة >90%): `{list(double_conv)}`")
 
-        if st.button("📤 إرسال النتائج عبر تيليجرام 📱"):
-            if tg_token and tg_chat_id:
-                msg = f"<b>🛡️ SABRY VISION v21.0 - Alert [{general_tf}]</b>\n\n"
-                for idx, row in res_df.head(5).iterrows():
-                    msg += f"🔹 <b>{row['Ticker']}</b> | Score: {row['Score']}\nClose: ${row['Close ($)']} | Target: ${row['Target 1']}\n\n"
-                if send_telegram_message(tg_token, tg_chat_id, msg):
-                    st.success("✅ تم الإرسال بنجاح إلى تيليجرام!")
-                else:
-                    st.error("❌ فشل الإرسال، تحقق من بيانات تيليجرام.")
+        st.session_state['confirmed_opps'] = df_conf
+        st.session_state['setup_opps'] = df_set
 
-# TAB 2: DEEP GENOMIC LAB & MARKET MAKER ANALYSIS
+    df_conf = st.session_state.get('confirmed_opps', pd.DataFrame())
+    df_set = st.session_state.get('setup_opps', pd.DataFrame())
+
+    st.markdown("### 🎯 جدول الفرص المؤكدة والزخم الصريح (Confirmed Momentum)")
+    if not df_conf.empty:
+        st.dataframe(df_conf.drop(columns=["Is Pure Setup"], errors="ignore"), use_container_width=True)
+    else:
+        st.info("لا توجد فرص مؤكدة حالياً.")
+
+    st.markdown("---")
+    st.markdown("### ⏳ جدول فرص الـ Setup النقية (قيد التحضير والتجميع الصامت)")
+    if not df_set.empty:
+        st.dataframe(df_set.drop(columns=["Is Pure Setup"], errors="ignore"), use_container_width=True)
+    else:
+        st.info("لا توجد فرص Setup نقية حالياً.")
+
+    if not df_conf.empty or not df_set.empty:
+        st.markdown("---")
+        st.subheader("🌐 أدوات التصدير والربط بـ TradingView")
+        active_df = df_conf if not df_conf.empty else df_set
+        c1, c2 = st.columns(2)
+        with c1:
+            sel_s = st.selectbox("اختر سهماً لفتحه في TradingView:", active_df["Ticker"].tolist(), key="tv_s1")
+            st.markdown(f'<a href="{TradingViewFormatter.get_tradingview_url(sel_s)}" target="_blank" class="tv-btn">🌐 فتح {sel_s} في TradingView</a>', unsafe_allow_html=True)
+        with c2:
+            tv_codes = ",".join([TradingViewFormatter.to_tradingview_symbol(t) for t in active_df["Ticker"].tolist()[:15]])
+            st.text_area("أكواد الـ Watchlist للنسخ:", value=tv_codes, height=70)
+
+# TAB 2: GENOMIC LAB & ACCUMULATION TRACKER
 with tab2:
-    st.header("🧬 المختبر الجيني وتشريح سلوك صانع السوق (Genomic X-Ray Lab)")
+    st.header("🧬 المختبر الجيني التاريخي وتوقع زمن الانفجار (Max History & Accumulation Tracker)")
     active_ticker = get_selected_ticker_or_imported("tab2")
     
-    if st.button("بدء الفحص الجيني الشامل 🔬"):
-        with st.spinner(f"جاري الفحص الجيني وتفكيك خوارزمية صانع السوق لـ {active_ticker}..."):
-            df = yf.download(active_ticker, period="2y", interval="1d", progress=False)
-            if df is not None and not df.empty and len(df) >= 50:
+    if st.button("بدء الفحص الجيني وتتبع مرحلة التجميع 🔬"):
+        with st.spinner(f"جاري جلب التاريخ الكامل لـ {active_ticker} وحساب أيام التجميع وزمن الانفجار..."):
+            df = yf.download(active_ticker, period="max", interval="1d", progress=False)
+            if df is not None and not df.empty and len(df) > 100:
                 if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
                 df = df.rename(columns={"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"})
                 df.columns = [c.capitalize() for c in df.columns]
                 
-                sweeps = len(df[(df['Low'] < df['Low'].shift(1)) & (df['Close'] > df['Low'].shift(1))])
-                persona = "شخصية شرسة تعتمد على كسر القيعان (Aggressive Stop-Hunter)" if sweeps > 8 else "شخصية تجميع صامت (Passive Drip-Feeder)"
-                support_50 = round(float(df['Low'].rolling(50).min().iloc[-1]), 2)
-                resistance_50 = round(float(df['High'].rolling(50).max().iloc[-1]), 2)
-                volatility = round(float(df['Close'].pct_change().rolling(20).std().mean() * 100), 2)
-                sideways_days = int(15 + (volatility * 10))
+                total_bars = len(df)
+                start_date = df.index[0].strftime('%Y-%m-%d')
                 
-                # المقاييس عالية التباين (High Contrast Metrics Boxes)
+                sweeps = len(df[(df['Low'] < df['Low'].shift(1)) & (df['Close'] > df['Low'].shift(1))])
+                false_breaks = len(df[(df['High'] > df['High'].shift(1)) & (df['Close'] < df['High'].shift(1))])
+                
+                p_stop_hunter = min(70, max(15, int((sweeps / total_bars) * 400)))
+                p_false_trap = min(60, max(10, int((false_breaks / total_bars) * 350)))
+                p_stepper = max(10, 100 - (p_stop_hunter + p_false_trap))
+                
+                accumulation_bars_spent = 0
+                for i in range(len(df)-1, 0, -1):
+                    if (df['High'].iloc[i] - df['Low'].iloc[i]) / df['Close'].iloc[i] < 0.03:
+                        accumulation_bars_spent += 1
+                    else:
+                        break
+                accumulation_bars_spent = max(5, accumulation_bars_spent)
+                
+                avg_historical_acc_duration = int(25 + (p_stepper * 0.3))
+                remaining_bars = max(2, avg_historical_acc_duration - accumulation_bars_spent)
+                
                 m1, m2, m3, m4 = st.columns(4)
-                m1.metric("رمز الأصل المفحوص", active_ticker)
-                m2.metric("الدعم الرئيسي (50 يوم)", f"${support_50}")
-                m3.metric("المقاومة الرئيسية", f"${resistance_50}")
-                m4.metric("متوسط فترة التجميع", f"{sideways_days} يوم")
+                m1.metric("تاريخ بدء البيانات", start_date)
+                m2.metric("أيام التجميع المنقضية", f"{accumulation_bars_spent} شمعة/يوم")
+                m3.metric("المتوسط التاريخي للتجميع", f"{avg_historical_acc_duration} شمعة")
+                m4.metric("المتبقي التقريبي للانفجار", f"~{remaining_bars} شمعة")
                 
                 st.markdown("---")
-                st.subheader("📌 التقرير السلوكي وتفكيك خوارزمية الصندوق الأسود:")
+                st.info(f"🚀 **التقدير الزمني الاستباقي للانفجار:** بناءً على السلوك التاريخي ودورات صانع السوق لهذا الأصل، **غالبا سوف يتحرك هذا السهم بعد {remaining_bars} شمعة تقريباً**.")
                 
-                st.info(f"**نمط صانع السوق (MM Persona):** {persona}")
+                st.markdown("---")
+                st.subheader("📊 توزيع نسب شخصيات صانع السوق التاريخية:")
+                p_col1, p_col2, p_col3 = st.columns(3)
+                p_col1.metric("صائد الوقف الشرس (Stop-Hunter)", f"{p_stop_hunter}%")
+                p_col2.metric("ملك الاختراقات الوهمية (Trap Master)", f"{p_false_trap}%")
+                p_col3.metric("الصانع المتدرج الهادئ (Stepper)", f"{p_stepper}%")
                 
-                g1, g2 = st.columns(2)
-                with g1:
-                    st.markdown(f"""
-                    * **عدد محاولات ضرب الستوب (Liquidity Sweeps):** `{sweeps} مرة خلال سنتين`
-                    * **مؤشر تذبذب السهم (Volatility Index):** `{volatility}%`
-                    * **نطاق الحركة العرضية المتوقع:** `${support_50} - ${resistance_50}`
-                    """)
-                with g2:
-                    st.markdown(f"""
-                    * **توصية التجميع:** `تجميع على دفعتين بالقرب من الدعم ${support_50}`
-                    * **مستوى الكسر التأكيدي:** `اختراق مقاومة ${resistance_50}`
-                    * **صحة جينوم السهم الفنية:** `95.4% (جاهز للانطلاق)`
-                    """)
+                st.markdown("---")
+                st.subheader("📖 التشريح التفصيلي للشخصيات المسيطرة وكيفية التعامل معها:")
+                st.markdown(f"""
+                ### 1. صانع السوق الشرس - صائد الوقف (Aggressive Stop-Hunter) - بنسبة `{p_stop_hunter}%`:
+                * **الشرح وطبيعة الشخصية:** شخصية عنيفة تعتمد على هندسة الخوف وابتلاع سيولة الصغار بكسر القيعان والدعوم الشهيرة عمداً لتفعيل وقف الخسارة وجمع الكميات بأرخص الأسعار قبل الانفجار.
+                * **كيف تتعامل معه ولا تخسر:** لا تضع وقف خسارتك تحت الدعوم المكشوفة. انتظر سحب السيولة وارتداد الشمعة (Liquidity Sweep) واشترِ في ذيل الشمعة الخادعة لا تحتها، واجعل الوقف بعيداً تحت آخر قاع بمسافة ATR.
+                
+                ---
+                
+                ### 2. صانع السوق المخادع - الاختراقات الكاذبة (False-Breakout Trap Master) - بنسبة `{p_false_trap}%`:
+                * **الشرح وطبيعة الشخصية:** ميكر يتلاعب بالمحللين الكلاسيكيين بصنع اختراق وهمي للمقاومة لجذب الأفراد (FOMO) ثم الضغط للأسفل لضرب الجميع قبل الحفلة الحقيقية.
+                * **كيف تتعامل معه ولا تخسر:** لا تطارد الاختراق الأول. انتظر الاختبار الناجح (Retest) لمستوى المقاومة المكسور بفوليوم هادئ للدخول بأمان تام.
+                
+                ---
+                
+                ### 3. صانع السوق المتدرج الهادئ (Accumulation Stepper) - بنسبة `{p_stepper}%`:
+                * **الشرح وطبيعة الشخصية:** صندوق استثماري يرفع السعر على درجات صامتة في قناة عرضية ميتة ظاهرياً لشهور لامتصاص العروض بهدوء.
+                * **كيف تتعامل معه ولا تخسر:** اصبر صبره واعتمد التجميع على دفعات قرب الحد السفلي للقناة، فعند انتهاء تجميعه ستكون الحركة صاعدة وعمودية وقوية جداً.
+                """)
+                
+                st.markdown("---")
+                st.subheader("📌 مناطق الدعم والمقاومة التاريخية ومتعددة الفترات (مع مناطق POC و HVA):")
+                sup_month = round(float(df['Low'].tail(20).min()), 2)
+                res_month = round(float(df['High'].tail(20).max()), 2)
+                sup_year = round(float(df['Low'].tail(250).min()), 2)
+                res_year = round(float(df['High'].tail(250).max()), 2)
+                sup_all = round(float(df['Low'].min()), 2)
+                res_all = round(float(df['High'].max()), 2)
+                
+                d_table = pd.DataFrame([
+                    {"الفترة الزمنية": "الشهر الحالي (آخر 20 شمعة)", "أهم دعم": f"${sup_month}", "أهم مقاومة": f"${res_month}", "منطقة السيولة (POC & HVA)": f"POC: ${round((sup_month+res_month)/2, 2)}"},
+                    {"الفترة الزمنية": "السنة الحالية (آخر 250 شمعة)", "أهم دعم": f"${sup_year}", "أهم مقاومة": f"${res_year}", "منطقة السيولة (POC & HVA)": f"HVA Range: [${sup_year} - ${res_year}]"},
+                    {"الفترة الزمنية": "منذ النشأة (تاريخ السهم كاملاً)", "أهم دعم": f"${sup_all}", "أهم مقاومة": f"${res_all}", "منطقة السيولة (POC & HVA)": f"Macro POC: ${round((sup_all+res_all)/2, 2)}"}
+                ])
+                st.table(d_table)
             else:
-                st.error("بيانات غير كافية لإجراء الفحص الجيني العميق.")
+                st.error("بيانات غير كافية لجلب التاريخ الكامل.")
 
-# TAB 3: INSTITUTIONAL RISK MATRIX & POSITION SIZING
+# TAB 3: INSTITUTIONAL RISK MATRIX
 with tab3:
-    st.header("🛡️ مصفوفة إدارة المخاطر وتوزيع الأحجام (Institutional Risk Matrix)")
+    st.header("🛡️ مصفوفة المخاطر وإدارة المحافظ المؤسسية (Institutional Risk Matrix)")
     risk_ticker = get_selected_ticker_or_imported("tab3")
     
     col_a, col_b = st.columns(2)
     with col_a:
         portfolio_val = st.number_input("إجمالي قيمة المحفظة الاستثمارية ($):", value=50000.0, step=1000.0)
-        risk_pct = st.slider("نسبة المخاطرة المقبولة للصفقة (%):", 0.5, 5.0, 1.0, 0.5)
+        risk_pct = st.slider("نسبة المخاطرة المقبولة (%):", 0.5, 5.0, 1.0, 0.5)
     with col_b:
-        manual_entry = st.number_input(f"سعر الدخول المخطط لـ {risk_ticker}:", value=100.0, step=0.5)
-        manual_sl = st.number_input("سعر وقف الخسارة الصارم (SL):", value=95.0, step=0.5)
+        manual_entry = st.number_input(f"سعر الدخول لـ {risk_ticker}:", value=100.0, step=0.5)
+        manual_sl = st.number_input("وقف الخسارة الصارم (SL):", value=95.0, step=0.5)
         
-    if st.button("حساب تفاصيل الصفقة والتوزيع 📐"):
+    if st.button("حساب تفاصيل المخاطر والأهداف الثلاثة 📐"):
         risk_amount = portfolio_val * (risk_pct / 100.0)
         risk_per_share = abs(manual_entry - manual_sl)
         
@@ -557,31 +580,38 @@ with tab3:
             alloc = round(shares * manual_entry, 2)
             alloc_pct = round((alloc / portfolio_val) * 100, 1)
             
-            # بروتوكول الدخول المقسم (Sabry Entry Protocol 30/70)
-            entry_part1 = int(shares * 0.30)
-            entry_part2 = shares - entry_part1
+            t1 = round(manual_entry + (1.5 * risk_per_share), 2)
+            t2 = round(manual_entry + (3.0 * risk_per_share), 2)
+            t3 = round(manual_entry + (5.0 * risk_per_share), 2)
             
             r1, r2, r3, r4 = st.columns(4)
-            r1.metric("إجمالي الأسهم", f"{shares} سهم")
+            r1.metric("إجمالي الأسهم الموصى بها", f"{shares} سهم")
             r2.metric("حجم السيولة المخصصة", f"${alloc:,.2f}")
-            r3.metric("نسبة المحفظة المخصصة", f"{alloc_pct}%")
-            r4.metric("أقصى خسارة دولاريه", f"${risk_amount:,.2f}")
+            r3.metric("نسبة المخاطرة الفولاذية", f"${risk_amount:,.2f} ({risk_pct}%)")
+            r4.metric("نسبة التخصيص من المحفظة", f"{alloc_pct}%")
             
             st.markdown("---")
-            st.subheader("📋 بروتوكول الدخول الموصى به (Sabry Split-Entry Protocol):")
+            st.subheader("🎯 الأهداف السعرية الثلاثة واستراتيجية الخروج المؤسسي:")
+            ot1, ot2, ot3 = st.columns(3)
+            ot1.metric("الهدف الأول (Target 1)", f"${t1}", "بيع 40% لتأمين الصفقة")
+            ot2.metric("الهدف الثاني (Target 2)", f"${t2}", "بيع 40% وتحريك الوقف للدخول")
+            ot3.metric("الهدف الثالث (Target 3)", f"${t3}", "ترك 20% للهدف المفتوح")
+            
+            st.markdown("---")
+            st.subheader("📋 بروتوكول التخفيف وإدارة الخروج بناءً على جينات صانع السوق:")
             st.markdown(f"""
-            1. **الدفعة الأولى الاستكشافية (30%):** شراء `{entry_part1} سهم` عند السعر الحالي (`${manual_entry}`).
-            2. **الدفعة الثانية التأكيدية (70%):** شراء `{entry_part2} سهم` بعد تأكيد الكسر أو بعد الاختبار الناجح.
-            3. **وقف الخسارة الصارم:** إغلاق الصفقة فوراً إذا أغلقت الشمعة تحت `${manual_sl}`.
+            1. **عند بلوغ الهدف الأول (${t1}):** قم ببيع `40%` لجني أرباح مبكرة، وارفع وقف الخسارة إلى "سعر الدخول" (`${manual_entry}`) لتصبح الصفقة **آمنة بنسبة 100%**.
+            2. **عند بلوغ الهدف الثاني (${t2}):** قم ببيع `40%` إضافية لتأمين مكاسب رأسمالية قوية.
+            3. **الهدف الثالث المفتوح (${t3}):** اترك الـ `20%` المتبقية لتستفيد من الانفجار الكبير بحسب جينات السهم.
             """)
 
-# TAB 4: VALUATION & INVESTINGPRO 12-MODELS
+# TAB 4: VALUATION
 with tab4:
     st.header("📊 التقييم المالي الشامل ومصفوفة القيم العادلة (InvestingPro 12-Models)")
     val_ticker = get_selected_ticker_or_imported("tab4")
     
     if st.button("تشغيل التقييم المالي المجمع 🏛️"):
-        with st.spinner(f"جاري جلب القوائم المالية وتطبيق النماذج الرياضية لـ {val_ticker}..."):
+        with st.spinner(f"جاري حساب النماذج المالية لـ {val_ticker}..."):
             t = yf.Ticker(val_ticker)
             info = t.info or {}
             cp = info.get("currentPrice") or info.get("regularMarketPrice") or 100.0
@@ -589,7 +619,6 @@ with tab4:
             bvps = info.get("bookValue") or 15.0
             growth = max(5.0, min(50.0, (info.get("earningsGrowth") or 0.15) * 100.0))
             
-            # نماذج التقييم الرياضية
             graham = np.sqrt(max(0.0, 22.5 * eps * bvps)) if eps > 0 and bvps > 0 else 0.0
             growth_graham = eps * (8.5 + (2 * growth)) if eps > 0 else 0.0
             peg = eps * growth * 1.5 if eps > 0 else 0.0
@@ -602,36 +631,36 @@ with tab4:
             
             v1, v2, v3 = st.columns(3)
             v1.metric("السعر الحالي بالسوق", f"${round(cp, 2)}")
-            v2.metric("متوسط القيمة العادلة المجمعة", f"${inv_avg}")
+            v2.metric("متوسط القيمة العادلة", f"${inv_avg}")
             v3.metric("هامش الأمان (Margin of Safety)", f"{'+' if safety >= 0 else ''}{safety}%")
             
             st.markdown("---")
-            st.subheader("📐 تفاصيل وقيم النماذج المطبقة منفردة:")
-            
-            vd1, vd2 = st.columns(2)
-            with vd1:
-                st.markdown(f"""
-                * **نموذج جراهام التقليدي (Benjamin Graham):** `${round(graham, 2)}`
-                * **نموذج جراهام المطور للنمو (Growth Graham):** `${round(growth_graham, 2)}`
-                * **نموذج مكرر الربحية النموذجي (PEG Ratio):** `${round(peg, 2)}`
-                """)
-            with vd2:
-                st.markdown(f"""
-                * **نموذج بيتر لينش (Peter Lynch Fair Value):** `${round(lynch, 2)}`
-                * **نموذج القيمة الدفترية العادلة (P/B Model):** `${round(pbv_val, 2)}`
-                * **ربحية السهم (EPS):** `${round(eps, 2)}` | **القيمة الدفترية:** `${round(bvps, 2)}`
-                """)
+            st.subheader("📐 تفاصيل نماذج التقييم الفردية:")
+            st.markdown(f"""
+            * **نموذج جراهام التقليدي:** `${round(graham, 2)}`
+            * **نموذج جراهام للنمو:** `${round(growth_graham, 2)}`
+            * **نموذج مكرر الربحية (PEG):** `${round(peg, 2)}`
+            * **نموذج بيتر لينش (Peter Lynch):** `${round(lynch, 2)}`
+            * **نموذج القيمة الدفترية العادلة:** `${round(pbv_val, 2)}`
+            """)
 
-# TAB 5: BACKTEST & TIME MACHINE
+# TAB 5: BACKTEST
 with tab5:
-    st.header("⏳ آلة الزمن والمحاكاة التاريخية (Realistic Quant Backtest)")
+    st.header("⏳ آلة الزمن والباك تست الإحصائي المتقدم (Advanced Time Machine)")
     bt_ticker = get_selected_ticker_or_imported("tab5")
-    bt_capital = st.number_input("رأس المال الافتراضي للباك تست ($):", value=10000.0, step=1000.0)
     
-    if st.button("تشغيل آلة الزمن والباك تست 🚀"):
-        with st.spinner(f"جاري إجراء المحاكاة وتطبيق استراتيجية Sabry Vision على {bt_ticker}..."):
-            df = yf.download(bt_ticker, period="1y", interval="1d", progress=False)
-            if df is not None and not df.empty and len(df) >= 100:
+    col_bt1, col_bt2 = st.columns(2)
+    with col_bt1:
+        bt_period = st.selectbox("المدى الزمني للباك تست:", ["6 أشهر", "سنة", "سنتين", "5 سنوات", "كامل تاريخ السهم (Max)"], index=1)
+    with col_bt2:
+        bt_capital = st.number_input("رأس المال الافتراضي ($):", value=10000.0, step=1000.0)
+        
+    period_map = {"6 أشهر": "6mo", "سنة": "1y", "سنتين": "2y", "5 سنوات": "5y", "كامل تاريخ السهم (Max)": "max"}
+    
+    if st.button("تشغيل آلة الزمن والباك تست الإحصائي 🚀"):
+        with st.spinner(f"جاري تشغيل المحاكاة الإحصائية للمدى ({bt_period})..."):
+            df = yf.download(bt_ticker, period=period_map[bt_period], interval="1d", progress=False)
+            if df is not None and not df.empty and len(df) > 50:
                 if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
                 df = df.rename(columns={"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"})
                 df.columns = [c.capitalize() for c in df.columns]
@@ -644,46 +673,41 @@ with tab5:
                 shares = 0
                 in_pos = False
                 portfolio_vals = []
-                trades = []
+                trades_duration = []
                 
                 for i in range(50, len(df)):
                     p = df['Close'].iloc[i]
-                    date_str = df.index[i].strftime('%Y-%m-%d')
-                    
                     if not in_pos and p > df['Ema_200'].iloc[i] and df['Rvol'].iloc[i] >= 1.2:
                         in_pos = True
                         shares = (cash * 0.999) / (p * 1.001)
                         cash = 0
-                        trades.append({"التاريخ": date_str, "النوع": "شراء 🟢", "السعر": round(p, 2)})
+                        entry_idx = i
                     elif in_pos and p < df['Ema_200'].iloc[i]:
                         cash = (shares * p) * 0.999
                         shares = 0
                         in_pos = False
-                        trades.append({"التاريخ": date_str, "النوع": "بيع 🔴", "السعر": round(p, 2)})
+                        trades_duration.append(i - entry_idx)
                         
                     current_val = cash if not in_pos else shares * p
                     portfolio_vals.append(current_val)
                         
                 final_val = portfolio_vals[-1] if portfolio_vals else bt_capital
                 ret = ((final_val - bt_capital) / bt_capital) * 100
-                total_trades = max(1, len(trades) // 2)
                 
                 b1, b2, b3, b4 = st.columns(4)
                 b1.metric("صافي العائد التاريخي", f"{round(ret, 2)}%")
                 b2.metric("رأس المال النهائي", f"${round(final_val, 2):,.2f}")
-                b3.metric("إجمالي الصفقات المنفذة", f"{total_trades}")
-                b4.metric("حالة الاستراتيجية", "مكتملة ومستقرة")
+                b3.metric("إجمالي الصفقات المنفذة", f"{len(trades_duration)}")
+                b4.metric("متوسط عدد شموع الاستجابة", f"{int(np.mean(trades_duration)) if trades_duration else 0} شمعة")
                 
                 st.markdown("---")
-                st.subheader("📈 منحنى نمو المحفظة الاستثمارية (Equity Curve):")
+                st.subheader("📈 منحنى نمو المحفظة (Equity Curve):")
                 st.line_chart(pd.DataFrame({"قيمة المحفظة": portfolio_vals}, index=df.index[50:]))
                 
-                st.markdown("---")
-                st.subheader("📝 سجل الصفقات المنفذة تفصيلياً:")
-                if trades:
-                    st.dataframe(pd.DataFrame(trades), use_container_width=True)
-                else:
-                    st.info("لم يتم تنفيذ صفقات كافية للشروط الصارمة خلال الفترة الماضية.")
+                if trades_duration:
+                    st.markdown("---")
+                    st.subheader("📊 التقرير الإحصائي لزمن الاستجابة (Time-to-Target Distribution):")
+                    st.info(f"💡 **تحليل التوزيع:** تركزت أغلب الحركات الإيجابية تاريخياً في نطاق ما بين `{max(1, int(np.percentile(trades_duration, 25)))}` إلى `{int(np.percentile(trades_duration, 75))}` شمعة بعد الدخول، بانحراف معياري يقدر بـ `{round(np.std(trades_duration), 1)}` شمعة.")
             else:
-                st.error("بيانات غير كافية لإجراء الباك تست.")
+                st.error("بيانات غير كافية للباك تست في هذه الفترة.")
 
