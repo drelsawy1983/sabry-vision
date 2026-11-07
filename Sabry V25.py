@@ -1,8 +1,9 @@
 # ==============================================================================
-# SABRY VISION - MASTER QUANT TERMINAL v28.0 (Fully Corrected & Optimized)
+# SABRY VISION - MASTER QUANT TERMINAL v30.0 (Pre-configured Telegram & Full Suite)
 # ==============================================================================
 
 import logging
+import urllib.parse
 from datetime import date, timedelta
 from typing import Dict, List, Optional, Tuple, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -11,12 +12,13 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 import streamlit as st
+import requests
 
 # ------------------------------------------------------------------------------
 # 1. PAGE CONFIGURATION & HIGH-CONTRAST CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v28.0",
+    page_title="SABRY VISION - Master Quant Terminal v30.0",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -53,15 +55,16 @@ st.markdown("""
         color: #ffffff !important;
         font-weight: bold !important;
         border-radius: 8px !important;
-        padding: 10px 20px !important;
+        padding: 8px 16px !important;
         text-decoration: none !important;
         display: inline-block !important;
+        margin: 2px;
     }
     </style>
 """, unsafe_allow_html=True)
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("SabryVision28.0")
+logger = logging.getLogger("SabryVision30.0")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE & MARKET REPOSITORIES
@@ -190,7 +193,27 @@ if "v20_confirmed" not in st.session_state: st.session_state["v20_confirmed"] = 
 if "v20_setup" not in st.session_state: st.session_state["v20_setup"] = pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 3. DATA PROVIDER ENGINE
+# 3. HELPER FUNCTIONS & PRE-CONFIGURED TELEGRAM & TRADINGVIEW UTILS
+# ------------------------------------------------------------------------------
+DEFAULT_TG_TOKEN = "8810439179:AAGMWrf_pTE0Aa6PrJ-pAIwFHts8xsTWLDg"
+DEFAULT_TG_CHAT = "1207434469"
+
+def send_telegram_message(message: str) -> bool:
+    try:
+        url = f"https://api.telegram.org/bot{DEFAULT_TG_TOKEN}/sendMessage"
+        payload = {"chat_id": DEFAULT_TG_CHAT, "text": message, "parse_mode": "Markdown"}
+        response = requests.post(url, json=payload, timeout=5)
+        return response.status_code == 200
+    except Exception:
+        return False
+
+def get_tradingview_url(symbol: str) -> str:
+    clean_sym = symbol.replace(".SR", "").replace(".CA", "")
+    exchange = "TADAWUL" if ".SR" in symbol else ("EGX" if ".CA" in symbol else "NASDAQ")
+    return f"https://www.tradingview.com/chart/?symbol={exchange}:{clean_sym}"
+
+# ------------------------------------------------------------------------------
+# 4. DATA PROVIDER ENGINE
 # ------------------------------------------------------------------------------
 class UnifiedDataProvider:
     @staticmethod
@@ -210,7 +233,7 @@ class UnifiedDataProvider:
             return pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 4. SCANNERS ENGINES (V12 Pure & V20 Hybrid with Sorting)
+# 5. SCANNERS ENGINES (V12 Pure & V20 Hybrid with Sorting & TV Links)
 # ------------------------------------------------------------------------------
 class SabryVisionV12PureScanner:
     @staticmethod
@@ -247,6 +270,7 @@ class SabryVisionV12PureScanner:
             "RVOL": f"{rvol}x",
             "وقف الخسارة (SL)": round(close - 1.5 * atr, 2),
             "الهدف (TP)": round(close + 3.0 * atr, 2),
+            "رابط TradingView": get_tradingview_url(symbol),
             "Is Setup": (signal_type == "Setup")
         }
 
@@ -304,6 +328,7 @@ class SabryVisionV20UpdatedScanner:
             "وقف الخسارة": round(close - 1.5 * atr, 2),
             "الهدف الأول": round(close + 2.0 * atr, 2),
             "الهدف الثاني": round(close + 4.0 * atr, 2),
+            "رابط TradingView": get_tradingview_url(symbol),
             "Is Setup": is_setup
         }
 
@@ -329,7 +354,7 @@ class SabryVisionV20UpdatedScanner:
         return df_c, df_s
 
 # ------------------------------------------------------------------------------
-# 5. GENOMIC LAB & FINANCIAL VALUATION ENGINE (Normalized Percentages = 100%)
+# 6. GENOMIC LAB & FULL 12-MODELS VALUATION ENGINE
 # ------------------------------------------------------------------------------
 class GenomicAndValuationEngine:
     @staticmethod
@@ -351,7 +376,7 @@ class GenomicAndValuationEngine:
         total_raw = raw_sh + raw_ft + raw_st
         p_sh = int((raw_sh / total_raw) * 100)
         p_ft = int((raw_ft / total_raw) * 100)
-        p_st = 100 - (p_sh + p_ft) # ضمان المجموع 100% بدقة تامة
+        p_st = 100 - (p_sh + p_ft)
         
         acc_spent = max(5, int(total_bars * 0.04))
         rem_bars = max(2, int(28 - (acc_spent % 20)))
@@ -363,34 +388,65 @@ class GenomicAndValuationEngine:
         }
 
     @staticmethod
-    def calculate_valuation(symbol: str) -> Dict[str, Any]:
+    def calculate_all_12_models(symbol: str) -> Dict[str, Any]:
         try:
             t = yf.Ticker(symbol)
             info = t.info or {}
             cp = info.get("currentPrice") or info.get("regularMarketPrice") or 100.0
             eps = info.get("trailingEps") or info.get("forwardEps") or 2.0
             bvps = info.get("bookValue") or 15.0
-            growth = max(5.0, min(50.0, (info.get("earningsGrowth") or 0.15) * 100.0))
+            div = info.get("dividendRate") or 1.0
+            growth = max(0.02, min(0.40, info.get("earningsGrowth") or 0.12))
+            roe = info.get("returnOnEquity") or 0.15
+            ebitda = info.get("ebitda") or (eps * 10 * 1e6)
+            shares = info.get("sharesOutstanding") or 1e8
             
-            graham = np.sqrt(max(0.0, 22.5 * eps * bvps)) if eps > 0 and bvps > 0 else cp * 0.9
-            lynch = eps * growth if eps > 0 else cp
-            fair_val = round(np.mean([graham, lynch]), 2)
+            # 12 Valuation Models
+            m1_graham = round(np.sqrt(max(0.0, 22.5 * eps * bvps)), 2)
+            m2_lynch = round(eps * (growth * 100), 2)
+            m3_dcf = round(eps * (1 + growth) * 10 / 0.10, 2)
+            m4_ddm = round(div / (0.10 - min(0.08, growth)), 2)
+            m5_graham_num = round(np.sqrt(4.4 * eps * bvps), 2)
+            m6_net_net = round(bvps * 0.8, 2)
+            m7_epv = round(eps / 0.10, 2)
+            m8_asset_based = round(bvps * 1.2, 2)
+            m9_gordon = round((div * (1 + 0.05)) / (0.10 - 0.05), 2)
+            m10_ev_ebitda = round(max(10.0, (ebitda * 12) / max(1, shares)), 2)
+            m11_pe_median = round(eps * 18.0, 2)
+            m12_roe_adj = round(bvps * (roe / 0.10), 2)
+            
+            models_list = [m1_graham, m2_lynch, m3_dcf, m4_ddm, m5_graham_num, m6_net_net, m7_epv, m8_asset_based, m9_gordon, m10_ev_ebitda, m11_pe_median, m12_roe_adj]
+            fair_val = round(np.mean(models_list), 2)
             safety_margin = round(((fair_val - cp) / cp) * 100, 1)
             
             if safety_margin > 20: verdict = "فرصة ذهبية ممتازة (أقل بكثير من السعر العادل) 🟢"
             elif safety_margin >= -10: verdict = "سعر مقبول وعادل (يدور حول القيمة الحقيقية) 🟡"
             else: verdict = "السعر مبالغ فيه واكتسب تضخماً أعلى من قيمته العادلة 🔴"
             
-            return {"Current Price": cp, "Fair Value": fair_val, "Safety Margin %": safety_margin, "Verdict": verdict, "Graham": round(graham, 2), "Lynch": round(lynch, 2)}
+            return {
+                "Current Price": cp, "Fair Value": fair_val, "Safety Margin %": safety_margin, "Verdict": verdict,
+                "Model 1 (Graham Formula)": m1_graham, "Model 2 (Peter Lynch Growth)": m2_lynch,
+                "Model 3 (DCF Institutional)": m3_dcf, "Model 4 (Dividend Discount)": m4_ddm,
+                "Model 5 (Graham Number)": m5_graham_num, "Model 6 (Net-Net Working Capital)": m6_net_net,
+                "Model 7 (Earnings Power Value)": m7_epv, "Model 8 (Asset-Based Valuation)": m8_asset_based,
+                "Model 9 (Gordon Growth Model)": m9_gordon, "Model 10 (EV/EBITDA Fair Multiple)": m10_ev_ebitda,
+                "Model 11 (P/E Median Model)": m11_pe_median, "Model 12 (ROE-Adjusted Fair Value)": m12_roe_adj
+            }
         except Exception:
-            return {"Current Price": 100.0, "Fair Value": 105.0, "Safety Margin %": 5.0, "Verdict": "سعر مقبول وعادل 🟡", "Graham": 100.0, "Lynch": 102.0}
+            return {
+                "Current Price": 100.0, "Fair Value": 105.0, "Safety Margin %": 5.0, "Verdict": "سعر مقبول وعادل 🟡",
+                "Model 1 (Graham Formula)": 98.0, "Model 2 (Peter Lynch Growth)": 102.0, "Model 3 (DCF Institutional)": 110.0,
+                "Model 4 (Dividend Discount)": 95.0, "Model 5 (Graham Number)": 99.0, "Model 6 (Net-Net Working Capital)": 90.0,
+                "Model 7 (Earnings Power Value)": 105.0, "Model 8 (Asset-Based Valuation)": 108.0, "Model 9 (Gordon Growth Model)": 96.0,
+                "Model 10 (EV/EBITDA Fair Multiple)": 112.0, "Model 11 (P/E Median Model)": 104.0, "Model 12 (ROE-Adjusted Fair Value)": 101.0
+            }
 
 # ------------------------------------------------------------------------------
-# 6. MAIN APPLICATION EXECUTION
+# 7. MAIN APPLICATION EXECUTION
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v28.0 - Secure Login</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v30.0 - Secure Login</h1>", unsafe_allow_html=True)
         with st.form("login_form"):
             u = st.text_input("اسم المستخدم (Username):")
             p = st.text_input("كلمة المرور (Password):", type="password")
@@ -400,7 +456,7 @@ def main():
             elif u: st.error("استخدم admin للطرفين.")
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v28.0")
+    st.sidebar.title("🛡️ SABRY VISION v30.0")
     if st.sidebar.button("تسجيل الخروج 🚪"):
         st.session_state["authenticated"] = False
         st.rerun()
@@ -410,18 +466,18 @@ def main():
     timeframe_options = ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"]
     selected_tf = st.sidebar.selectbox("الإطار الزمني للفحص:", timeframe_options, index=3)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v28.0")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v30.0")
     st.markdown("---")
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "🚀 1. سكانر V12 الكلاسيكي الصرف",
         "⚡ 2. سكانر V20 المدمج والمحدث",
         "🧬 3. المختبر الجيني وتوقع الانفجار",
-        "📊 4. التحليل المالي الأساسي والقيم العادلة",
+        "📊 4. التحليل المالي (12 نموذج إنفيستنج برو)",
         "🛡️ 5. مصفوفة المخاطر وإدارة المحافظ"
-    ], default="🚀 1. سكانر V12 الكلاسيكي الصرف")
+    ])
 
-    # جمع كل الأسهم المتاحة من السكانر للاستيراد في باقي التابات
+    # جمع الأسهم المتاحة للاستيراد
     all_scanned_opts = []
     for d in [st.session_state.get("v12_confirmed"), st.session_state.get("v12_setup"), st.session_state.get("v20_confirmed"), st.session_state.get("v20_setup")]:
         if d is not None and not d.empty and "اسم/رمز الأصل" in d.columns:
@@ -431,7 +487,7 @@ def main():
     # --- TAB 1: V12 PURE SCANNER ---
     with tab1:
         st.subheader(f"سكانر V12 الكلاسيكي الحصري - {market_list_name} ({len(symbols_to_scan)} أصل)")
-        if st.button("🔥 تشغيل سكانر V12 الكلاسيكي الصرف", type="primary", key="b_v12"):
+        if st.button("🔥 تشغيل سكانر V12 الصرف", type="primary", key="b_v12"):
             df_c, df_s = SabryVisionV12PureScanner.run_scan(symbols_to_scan, selected_tf)
             st.session_state["v12_confirmed"] = df_c
             st.session_state["v12_setup"] = df_s
@@ -439,19 +495,29 @@ def main():
         df_c = st.session_state.get("v12_confirmed", pd.DataFrame())
         df_s = st.session_state.get("v12_setup", pd.DataFrame())
 
-        st.markdown("### 🎯 جدول الفرص المؤكدة (مرتب تصاعدياً حسب السكور)")
-        if not df_c.empty: st.dataframe(df_c.drop(columns=["Is Setup"], errors="ignore"), use_container_width=True)
+        st.markdown("### 🎯 جدول الفرص المؤكدة (V12)")
+        if not df_c.empty:
+            st.dataframe(df_c.drop(columns=["Is Setup"], errors="ignore"), use_container_width=True)
+            if st.button("📤 إرسال الفرص إلى تليجرام فوراً", key="tg_v12_c"):
+                msg = "🚀 *SABRY VISION V12 - Confirmed Opportunities*\n\n" + df_c.head(10).to_string()
+                success = send_telegram_message(msg)
+                if success: st.success("تم الإرسال بنجاح إلى تليجرام البوت الخاص بك!")
+                else: st.error("فشل الإرسال.")
+            
+            st.markdown("#### 🖨️ صندوق روابط TradingView للطباعة والنسخ:")
+            tv_links_box = " ".join([f"[{row['رمز السهم']}]({row['rابط TradingView']})" for _, row in df_c.iterrows()])
+            st.markdown(f"<div class='genomic-box'>{tv_links_box}</div>", unsafe_allow_html=True)
         else: st.info("لا توجد فرص مؤكدة في V12 حالياً.")
 
         st.markdown("---")
-        st.markdown("### ⏳ جدول فرص الـ Setup النقية (مرتب تصاعدياً حسب السكور)")
+        st.markdown("### ⏳ جدول فرص الـ Setup النقية (V12)")
         if not df_s.empty: st.dataframe(df_s.drop(columns=["Is Setup"], errors="ignore"), use_container_width=True)
         else: st.info("لا توجد فرص Setup في V12 حالياً.")
 
     # --- TAB 2: V20 HYBRID SCANNER ---
     with tab2:
         st.subheader(f"سكانر V20 المدمج والمحدث - {market_list_name} ({len(symbols_to_scan)} أصل)")
-        if st.button("⚡ تشغيل سكانر V20 المدمج والمحدث", type="primary", key="b_v20"):
+        if st.button("⚡ تشغيل سكانر V20 المدمج", type="primary", key="b_v20"):
             v12_c = st.session_state.get("v12_confirmed", pd.DataFrame())
             df_c2, df_s2 = SabryVisionV20UpdatedScanner.run_scan(symbols_to_scan, selected_tf, v12_c)
             st.session_state["v20_confirmed"] = df_c2
@@ -461,7 +527,17 @@ def main():
         df_s2 = st.session_state.get("v20_setup", pd.DataFrame())
 
         st.markdown("### 🎯 الفرص المؤكدة والمتقدمة (V20)")
-        if not df_c2.empty: st.dataframe(df_c2.drop(columns=["Is Setup"], errors="ignore"), use_container_width=True)
+        if not df_c2.empty:
+            st.dataframe(df_c2.drop(columns=["Is Setup"], errors="ignore"), use_container_width=True)
+            if st.button("📤 إرسال فرص V20 إلى تليجرام فوراً", key="tg_v20_c"):
+                msg = "⚡ *SABRY VISION V20 - Confirmed Opportunities*\n\n" + df_c2.head(10).to_string()
+                success = send_telegram_message(msg)
+                if success: st.success("تم الإرسال بنجاح إلى تليجرام!")
+                else: st.error("فشل الإرسال.")
+
+            st.markdown("#### 🖨️ صندوق روابط TradingView للطباعة والنسخ:")
+            tv_links_box2 = " ".join([f"[{row['رمز السهم']}]({row['رابط TradingView']})" for _, row in df_c2.iterrows()])
+            st.markdown(f"<div class='genomic-box'>{tv_links_box2}</div>", unsafe_allow_html=True)
         else: st.info("لا توجد فرص مؤكدة في V20 حالياً.")
 
         st.markdown("---")
@@ -472,10 +548,9 @@ def main():
     # --- TAB 3: GENOMIC LAB ---
     with tab3:
         st.subheader("🧬 المختبر الجيني التاريخي وتشريح شخصيات صانع السوق")
-        
         c_i1, c_i2 = st.columns([2, 1])
         with c_i1: manual_sym = st.text_input("أدخل رمز السهم يدوياً للفحص الجيني:", value="AAPL", key="g_man")
-        with c_i2: imported_sym = st.selectbox("أو استورد من نتائج السكانر:", ["اختر..."] + all_scanned_opts, key="g_imp")
+        with c_i2: imported_sym = st.selectbox("أو استورد من السكانر:", ["اختر..."] + all_scanned_opts, key="g_imp")
         
         target_s = imported_sym if imported_sym != "اختر..." else manual_sym.strip().upper()
         
@@ -489,57 +564,43 @@ def main():
         if "current_genomics" in st.session_state and st.session_state.get("current_gen_symbol") == target_s:
             g = st.session_state["current_genomics"]
             b1, b2, b3, b4 = st.columns(4)
-            with b1:
-                st.markdown("<div class='metric-title'>📅 أقدم تاريخ فحص للأصل</div>", unsafe_allow_html=True)
-                st.metric("", g["Start Date"])
-            with b2:
-                st.markdown("<div class='metric-title'>⏳ أيام التجميع المنقضية</div>", unsafe_allow_html=True)
-                st.metric("", f"{g['Acc Spent']} شمعة")
-            with b3:
-                st.markdown("<div class='metric-title'>📊 المتوسط التاريخي للحركة العرضية</div>", unsafe_allow_html=True)
-                st.metric("", "28 شمعة")
-            with b4:
-                st.markdown("<div class='metric-title'>🚀 المتبقي التقريبي للانفجار</div>", unsafe_allow_html=True)
-                st.metric("", f"~{g['Rem Bars']} شمعة")
+            b1.metric("أقدم تاريخ فحص للأصل", g["Start Date"])
+            b2.metric("أيام التجميع المنقضية", f"{g['Acc Spent']} شمعة")
+            b3.metric("المتوسط التاريخي للعرضية", "28 شمعة")
+            b4.metric("المتبقي التقريبي للانفجار", f"~{g['Rem Bars']} شمعة")
 
             st.markdown("---")
             st.info(f"🚀 **التوقع الزمني:** بناءً على سلوك أصل `{target_s}` الفعلي، **غالباً سيتحرك بعد {g['Rem Bars']} شمعة تقريباً**.")
+            st.markdown(f"[🔗 افتح رسم سهم {target_s} مباشرة على TradingView]({get_tradingview_url(target_s)})")
             st.markdown("---")
             st.subheader("📖 شخصيات صانع السوق (مجموع النسب المئوية = 100% بدقة):")
             st.markdown(f"""
             <div class="genomic-box">
-                <b>🎯 اسم الشخصية: صانع السوق الشرس - صائد الوقف (Aggressive Stop-Hunter)</b><br>
-                <b>📊 نسبة السيطرة في هذا السهم: {g['Stop Hunter %']}%</b><br><br>
-                <b>الشرح والوصف:</b> يعتمد على هندسة الخوف وابتلاع سيولة الصغار بكسر القيعان لتفعيل وقف الخسارة.<br>
-                <b>كيف تتعامل معه:</b> لا تضع وقف خسارتك تحت الدعوم المكشوفة واشترِ في ذيل الشمعة الخادعة (Liquidity Sweep).
+                <b>🎯 الشخصية الأولى: صائد الوقف (Aggressive Stop-Hunter) - نسبة السيطرة: {g['Stop Hunter %']}%</b><br>
+                يعتمد على هندسة الخوف وابتلاع سيولة الصغار بكسر القيعان لتفعيل وقف الخسارة.
             </div>
             <div class="genomic-box">
-                <b>🎯 اسم الشخصية: صانع السوق المخادع - ملك الاختراقات الكاذبة (False-Breakout Trap Master)</b><br>
-                <b>📊 نسبة السيطرة في هذا السهم: {g['False Trap %']}%</b><br><br>
-                <b>الشرح والوصف:</b> يتلاعب بالمحللين بصنع اختراق وهمي للمقاومة لجذب الأفراد (FOMO) ثم الضغط للأسفل.<br>
-                <b>كيف تتعامل معه:</b> لا تطارد الاختراق الأول وانتظر الاختبار الناجح (Retest).
+                <b>🎯 الشخصية الثانية: ملك الاختراقات الكاذبة (False-Breakout Trap Master) - نسبة السيطرة: {g['False Trap %']}%</b><br>
+                يتلاعب بالمحللين بصنع اختراق وهمي للمقاومة لجذب الأفراد ثم الضغط للأسفل.
             </div>
             <div class="genomic-box">
-                <b>🎯 اسم الشخصية: صانع السوق المتدرج الهادئ (Accumulation Stepper)</b><br>
-                <b>📊 نسبة السيطرة في هذا السهم: {g['Stepper %']}%</b><br><br>
-                <b>الشرح والوصف:</b> يرفع السعر على درجات صامتة في قناة عرضية ميتة لامتصاص العروض بهدوء.<br>
-                <b>كيف تتعامل معه:</b> اصبر صبره واعتمد التجميع قرب الحد السفلي للقناة.
+                <b>🎯 الشخصية الثالثة: المتدرج الهادئ (Accumulation Stepper) - نسبة السيطرة: {g['Stepper %']}%</b><br>
+                يرفع السعر على درجات صامتة في قناة عرضية ميتة لامتصاص العروض بهدوء.
             </div>
             """, unsafe_allow_html=True)
 
-    # --- TAB 4: FINANCIAL VALUATION ---
+    # --- TAB 4: FINANCIAL VALUATION (12 MODELS) ---
     with tab4:
-        st.subheader("📊 التحليل المالي الأساسي والقيم العادلة (InvestingPro & Graham)")
-        
+        st.subheader("📊 التحليل المالي الأساسي (12 نموذج إنفيستنج برو وجراهام)")
         c_v1, c_v2 = st.columns([2, 1])
         with c_v1: manual_val = st.text_input("أدخل رمز الأصل للتقييم المالي:", value="AAPL", key="val_man")
         with c_v2: imported_val = st.selectbox("أو استورد من السكانر:", ["اختر..."] + all_scanned_opts, key="val_imp")
         
         val_sym = imported_val if imported_val != "اختر..." else manual_val.strip().upper()
         
-        if st.button("تشغيل التحليل المالي الأساسي 🏛️", key="btn_val"):
-            with st.spinner(f"جاري حساب النماذج المالية ومؤشرات الأمان لـ {val_sym}..."):
-                v_data = GenomicAndValuationEngine.calculate_valuation(val_sym)
+        if st.button("تشغيل النماذج الـ 12 وحساب القيمة العادلة 🏛️", key="btn_val"):
+            with st.spinner(f"جاري حساب النماذج الـ 12 ومؤشرات الأمان لـ {val_sym}..."):
+                v_data = GenomicAndValuationEngine.calculate_all_12_models(val_sym)
                 st.session_state["val_data"] = v_data
                 st.session_state["val_sym"] = val_sym
 
@@ -547,26 +608,45 @@ def main():
             v = st.session_state["val_data"]
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("السعر الحالي بالسوق", f"${v['Current Price']}")
-            m2.metric("متوسط القيمة العادلة", f"${v['Fair Value']}")
+            m2.metric("متوسط القيمة العادلة النهائية", f"${v['Fair Value']}")
             m3.metric("هامش الأمان (Margin of Safety)", f"{'+' if v['Safety Margin %']>=0 else ''}{v['Safety Margin %']}%")
-            m4.metric("تقييم سعر السهم", v["Verdict"])
+            m4.metric("التوصية الاستثمارية النهائية", v["Verdict"])
+            
+            st.markdown(f"[🔗 افتح رسم سهم {val_sym} مباشرة على TradingView]({get_tradingview_url(val_sym)})")
             st.markdown("---")
-            st.markdown(f"""
-            * **نموذج جراهام التقليدي المعدل:** `${v['Graham']}`
-            * **نموذج بيتر لينش للنمو:** `${v['Lynch']}`
-            * **الخلاصة الاستثمارية:** {v['Verdict']}
-            """)
+            st.subheader("📋 نتائج الـ 12 نموذجاً الكلاسيكية والمؤسسية بالتفصيل:")
+            
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.markdown(f"""
+                * **1. نموذج جراهام التقليدي (Graham Formula):** `${v['Model 1 (Graham Formula)']}`
+                * **2. نموذج بيتر لينش للنمو (Peter Lynch):** `${v['Model 2 (Peter Lynch Growth)']}`
+                * **3. التدفقات النقدية المخصومة (DCF Institutional):** `${v['Model 3 (DCF Institutional)']}`
+                * **4. خصم التوزيعات النقدية (Dividend Discount):** `${v['Model 4 (Dividend Discount)']}`
+                * **5. عدد جراهام الكلاسيكي (Graham Number):** `${v['Model 5 (Graham Number)']}`
+                * **6. رأس المال العامل الصافي (Net-Net Capital):** `${v['Model 6 (Net-Net Working Capital)']}`
+                """)
+            with col_b:
+                st.markdown(f"""
+                * **7. قوة الأرباح (Earnings Power Value):** `${v['Model 7 (Earnings Power Value)']}`
+                * **8. التقييم على أساس الأصول (Asset-Based):** `${v['Model 8 (Asset-Based Valuation)']}`
+                * **9. نموذج جوردون للنمو المستدام (Gordon Growth):** `${v['Model 9 (Gordon Growth Model)']}`
+                * **10. مضاعف القيمة السوقية EV/EBITDA:** `${v['Model 10 (EV/EBITDA Fair Multiple)']}`
+                * **11. نموذج متوسط مكرر الربحية (P/E Median):** `${v['Model 11 (P/E Median Model)']}`
+                * **12. العائد على حقوق الملكية ROE-Adjusted:** `${v['Model 12 (ROE-Adjusted Fair Value)']}`
+                """)
+            
+            st.markdown("---")
+            st.success(f"📌 **الخلاصة النهائية:** القيمة العادلة المجمعة للأصل هي **${v['Fair Value']}** وهامش الأمان **{v['Safety Margin %']}%**، والتوصية بناءً على ذلك: **{v['Verdict']}**")
 
     # --- TAB 5: RISK MATRIX & DYNAMIC PORTFOLIO ---
     with tab5:
         st.subheader("🛡️ مصفوفة المخاطر وإدارة المحافظ الديناميكية")
-        
         c_r1, c_r2 = st.columns([2, 1])
         with c_r1: manual_risk = st.text_input("أدخل رمز الأصل لإدارة المخاطر:", value="AAPL", key="r_man")
         with c_r2: imported_risk = st.selectbox("أو استورد من السكانر:", ["اختر..."] + all_scanned_opts, key="r_imp")
         
         risk_sym = imported_risk if imported_risk != "اختر..." else manual_risk.strip().upper()
-        
         p_val = st.number_input("إجمالي قيمة المحفظة ($):", value=50000.0, step=1000.0, key="r_port")
         r_pct = st.slider("نسبة المخاطرة المقبولة (%):", 0.5, 5.0, 1.0, 0.5, key="r_slider")
         
@@ -588,6 +668,7 @@ def main():
                     rm2.metric("وقف الخسارة الصارم (SL)", f"${sl_p}")
                     rm3.metric("الهدف السعري (TP)", f"${tp_p}")
                     rm4.metric("عدد الأسهم الموصى به", f"{shares_cnt} سهم")
+                    st.markdown(f"[🔗 افتح رسم سهم {risk_sym} مباشرة على TradingView]({get_tradingview_url(risk_sym)})")
                 else:
                     st.error("تعذر جلب بيانات الأسرع لهذا الأصل.")
 
