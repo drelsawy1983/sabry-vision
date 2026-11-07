@@ -1,5 +1,5 @@
 # ==============================================================================
-# SABRY VISION - MASTER QUANT TERMINAL v30.0 (Pre-configured Telegram & Full Suite)
+# SABRY VISION - MASTER QUANT TERMINAL v31.0 (KeyError Bugfixed & Fully Robust)
 # ==============================================================================
 
 import logging
@@ -18,7 +18,7 @@ import requests
 # 1. PAGE CONFIGURATION & HIGH-CONTRAST CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v30.0",
+    page_title="SABRY VISION - Master Quant Terminal v31.0",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -64,7 +64,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("SabryVision30.0")
+logger = logging.getLogger("SabryVision31.0")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE & MARKET REPOSITORIES
@@ -446,7 +446,7 @@ class GenomicAndValuationEngine:
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v30.0 - Secure Login</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v31.0 - Secure Login</h1>", unsafe_allow_html=True)
         with st.form("login_form"):
             u = st.text_input("اسم المستخدم (Username):")
             p = st.text_input("كلمة المرور (Password):", type="password")
@@ -456,7 +456,7 @@ def main():
             elif u: st.error("استخدم admin للطرفين.")
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v30.0")
+    st.sidebar.title("🛡️ SABRY VISION v31.0")
     if st.sidebar.button("تسجيل الخروج 🚪"):
         st.session_state["authenticated"] = False
         st.rerun()
@@ -466,7 +466,7 @@ def main():
     timeframe_options = ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"]
     selected_tf = st.sidebar.selectbox("الإطار الزمني للفحص:", timeframe_options, index=3)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v30.0")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v31.0")
     st.markdown("---")
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -505,7 +505,7 @@ def main():
                 else: st.error("فشل الإرسال.")
             
             st.markdown("#### 🖨️ صندوق روابط TradingView للطباعة والنسخ:")
-            tv_links_box = " ".join([f"[{row['رمز السهم']}]({row['rابط TradingView']})" for _, row in df_c.iterrows()])
+            tv_links_box = " ".join([f"[{row.get('رمز السهم', 'N/A')}]({row.get('رابط TradingView', '#')})" for _, row in df_c.iterrows()])
             st.markdown(f"<div class='genomic-box'>{tv_links_box}</div>", unsafe_allow_html=True)
         else: st.info("لا توجد فرص مؤكدة في V12 حالياً.")
 
@@ -536,7 +536,7 @@ def main():
                 else: st.error("فشل الإرسال.")
 
             st.markdown("#### 🖨️ صندوق روابط TradingView للطباعة والنسخ:")
-            tv_links_box2 = " ".join([f"[{row['رمز السهم']}]({row['رابط TradingView']})" for _, row in df_c2.iterrows()])
+            tv_links_box2 = " ".join([f"[{row.get('رمز السهم', 'N/A')}]({row.get('رابط TradingView', '#')})" for _, row in df_c2.iterrows()])
             st.markdown(f"<div class='genomic-box'>{tv_links_box2}</div>", unsafe_allow_html=True)
         else: st.info("لا توجد فرص مؤكدة في V20 حالياً.")
 
