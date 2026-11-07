@@ -1,5 +1,5 @@
 # ==============================================================================
-# SABRY VISION - MASTER QUANT TERMINAL v33.0 (Fixed Syntax & Beautiful Telegram Cards)
+# SABRY VISION - MASTER QUANT TERMINAL v34.0 (Fixed Metric Labels & Interactive TV Buttons)
 # ==============================================================================
 
 import logging
@@ -18,7 +18,7 @@ import requests
 # 1. PAGE CONFIGURATION & HIGH-CONTRAST CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v33.0",
+    page_title="SABRY VISION - Master Quant Terminal v34.0",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -28,41 +28,46 @@ st.markdown("""
     <style>
     .main { background-color: #0d1117; color: #f0f6fc; }
     div[data-testid="stMetric"] {
-        background: rgba(22, 27, 34, 0.95) !important;
-        border: 1px solid rgba(0, 255, 102, 0.3) !important;
-        padding: 12px 15px !important;
+        background: rgba(22, 27, 34, 0.98) !important;
+        border: 1px solid rgba(0, 255, 102, 0.4) !important;
+        padding: 14px 18px !important;
         border-radius: 12px !important;
         box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.6) !important;
     }
+    div[data-testid="stMetricLabel"] > div {
+        color: #00E5FF !important;
+        font-size: 0.9rem !important;
+        font-weight: 800 !important;
+        margin-bottom: 6px !important;
+    }
     div[data-testid="stMetricValue"] > div {
         color: #00FF66 !important;
-        font-size: 1.25rem !important;
+        font-size: 1.35rem !important;
         font-weight: 900 !important;
     }
-    .metric-title { font-size: 0.8rem; color: #00E5FF; font-weight: 700; margin-bottom: 4px; }
     .genomic-box {
         background: rgba(13, 17, 23, 0.98);
         border: 1px solid #00FF66;
         padding: 14px;
         border-radius: 10px;
         margin-bottom: 12px;
-        font-size: 0.82rem;
-        line-height: 1.5;
+        font-size: 0.85rem;
+        line-height: 1.6;
         color: #ffffff;
     }
     .box-title {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         color: #00FF66;
         font-weight: bold;
         margin-bottom: 6px;
         border-bottom: 1px solid rgba(0,255,102,0.3);
-        padding-bottom: 3px;
+        padding-bottom: 4px;
     }
     </style>
 """, unsafe_allow_html=True)
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("SabryVision33.0")
+logger = logging.getLogger("SabryVision34.0")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE & MARKET REPOSITORIES
@@ -536,7 +541,7 @@ class GenomicAndValuationEngine:
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v33.0 - Secure Login</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v34.0 - Secure Login</h1>", unsafe_allow_html=True)
         with st.form("login_form"):
             u = st.text_input("اسم المستخدم (Username):")
             p = st.text_input("كلمة المرور (Password):", type="password")
@@ -546,7 +551,7 @@ def main():
                 st.rerun()
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v33.0")
+    st.sidebar.title("🛡️ SABRY VISION v34.0")
     if st.sidebar.button("تسجيل الخروج 🚪"):
         st.session_state["authenticated"] = False
         st.session_state["username"] = ""
@@ -569,7 +574,7 @@ def main():
     timeframe_options = ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"]
     selected_tf = st.sidebar.selectbox("الإطار الزمني للفحص:", timeframe_options, index=5)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v33.0")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v34.0")
     st.markdown("---")
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -662,14 +667,14 @@ def main():
         sr_data = MultiTimeframeAnalyzer.analyze_supports_resistances(target_s)
 
         b1, b2, b3, b4 = st.columns(4)
-        b1.metric("أقدم تاريخ فحص للأصل", gen_data["Start Date"])
-        b2.metric("أيام التجميع المنقضية", f"{gen_data['Acc Spent']} شمعة")
-        b3.metric("المتوسط التاريخي للعرضية", "28 شمعة")
-        b4.metric("المتبقي التقريبي للانفجار", f"~{gen_data['Rem Bars']} شمعة")
+        b1.metric(label="📅 أقدم تاريخ فحص للأصل", value=gen_data["Start Date"])
+        b2.metric(label="📊 أيام التجميع المنقضية", value=f"{gen_data['Acc Spent']} شمعة")
+        b3.metric(label="📐 المتوسط التاريخي للعرضية", value="28 شمعة")
+        b4.metric(label="🚀 المتبقي التقريبي للانفجار", value=f"~{gen_data['Rem Bars']} شمعة")
 
         st.markdown("---")
         st.info(f"🚀 **التوقع الزمني:** بناءً على سلوك أصل `{target_s}` الفعلي، **غالباً سيتحرك بعد {gen_data['Rem Bars']} شمعة تقريباً**.")
-        st.markdown(f"[🔗 افتح رسم سهم {target_s} مباشرة على TradingView (فريم {selected_tf})]({get_tradingview_url(target_s, selected_tf)})")
+        st.link_button(f"🔗 افتح رسم سهم {target_s} مباشرة على TradingView (فريم {selected_tf})", get_tradingview_url(target_s, selected_tf))
         
         st.markdown("---")
         st.subheader("🏛️ جدول الدعوم والمقومات حسب الفترات الزمنية ومناطق POC:")
@@ -715,12 +720,13 @@ def main():
         v_data = GenomicAndValuationEngine.calculate_all_12_models(val_sym)
 
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("السعر الحالي بالسوق", f"${v_data['Current Price']}")
-        m2.metric("متوسط القيمة العادلة النهائية", f"${v_data['Fair Value']}")
-        m3.metric("هامش الأمان (Margin of Safety)", f"{'+' if v_data['Safety Margin %']>=0 else ''}{v_data['Safety Margin %']}%")
-        m4.metric("التوصية الاستثمارية النهائية", v_data["Verdict"])
+        m1.metric(label="💰 السعر الحالي بالسوق", value=f"${v_data['Current Price']}")
+        m2.metric(label="🏛️ متوسط القيمة العادلة", value=f"${v_data['Fair Value']}")
+        m3.metric(label="📊 هامش الأمان (Margin)", value=f"{'+' if v_data['Safety Margin %']>=0 else ''}{v_data['Safety Margin %']}%")
+        m4.metric(label="🎯 التوصية الاستثمارية", value=v_data["Verdict"])
         
-        st.markdown(f"[🔗 افتح رسم سهم {val_sym} مباشرة على TradingView (فريم {selected_tf})]({get_tradingview_url(val_sym, selected_tf)})")
+        st.markdown("---")
+        st.link_button(f"🔗 افتح رسم سهم {val_sym} مباشرة على TradingView (فريم {selected_tf})", get_tradingview_url(val_sym, selected_tf))
         st.markdown("---")
         st.subheader("📋 نتائج الـ 12 نموذجاً الكلاسيكية والمؤسسية بالتفصيل:")
         
@@ -778,13 +784,15 @@ def main():
                     
                     st.success(f"✅ تم حساب المستويات الديناميكية للأصل `{risk_sym}` بنجاح على الفريم `{selected_tf}`:")
                     rm1, rm2, rm3, rm4 = st.columns(4)
-                    rm1.metric("سعر الدخول المقترح", f"${round(cur_p, 2)}")
-                    rm2.metric("وقف الخسارة الصارم (SL)", f"${sl_p}")
-                    rm3.metric("الهدف السعري (TP)", f"${tp_p}")
-                    rm4.metric("عدد الأسهم الموصى به", f"{shares_cnt} سهم")
-                    st.markdown(f"[🔗 افتح رسم سهم {risk_sym} مباشرة على TradingView (فريم {selected_tf})]({get_tradingview_url(risk_sym, selected_tf)})")
+                    rm1.metric(label="🎯 سعر الدخول المقترح", value=f"${round(cur_p, 2)}")
+                    rm2.metric(label="🛑 وقف الخسارة الصارم (SL)", value=f"${sl_p}")
+                    rm3.metric(label="🎯 الهدف السعري (TP)", value=f"${tp_p}")
+                    rm4.metric(label="📦 عدد الأسهم الموصى به", value=f"{shares_cnt} سهم")
+                    st.markdown("---")
+                    st.link_button(f"🔗 افتح رسم سهم {risk_sym} مباشرة على TradingView (فريم {selected_tf})", get_tradingview_url(risk_sym, selected_tf))
                 else:
                     st.error("تعذر جلب بيانات الأسرع لهذا الأصل.")
 
 if __name__ == "__main__":
     main()
+
