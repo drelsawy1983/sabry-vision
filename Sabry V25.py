@@ -1,5 +1,5 @@
 # ==============================================================================
-# SABRY VISION - MASTER QUANT TERMINAL v26.0 (Ultimate Combined Edition)
+# SABRY VISION - MASTER QUANT TERMINAL v27.0 (Dual Scanner & Full Suite)
 # ==============================================================================
 
 import logging
@@ -13,10 +13,10 @@ import yfinance as yf
 import streamlit as st
 
 # ------------------------------------------------------------------------------
-# 1. PAGE CONFIGURATION & CSS STYLING
+# 1. PAGE CONFIGURATION & STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v26.0",
+    page_title="SABRY VISION - Master Quant Terminal v27.0",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -56,7 +56,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("SabryVision26.0")
+logger = logging.getLogger("SabryVision27.0")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE & MARKET REPOSITORIES
@@ -181,6 +181,8 @@ if "market_lists_repo" not in st.session_state:
 
 if "v12_confirmed" not in st.session_state: st.session_state["v12_confirmed"] = pd.DataFrame()
 if "v12_setup" not in st.session_state: st.session_state["v12_setup"] = pd.DataFrame()
+if "v20_confirmed" not in st.session_state: st.session_state["v20_confirmed"] = pd.DataFrame()
+if "v20_setup" not in st.session_state: st.session_state["v20_setup"] = pd.DataFrame()
 
 # ------------------------------------------------------------------------------
 # 3. DATA PROVIDER ENGINE
@@ -203,20 +205,15 @@ class UnifiedDataProvider:
             return pd.DataFrame()
 
 # ------------------------------------------------------------------------------
-# 4. V12.00 PURE SCANNER ENGINE (TAB 1)
+# 4. SCANNERS ENGINES (V12 Pure & V20 Hybrid)
 # ------------------------------------------------------------------------------
 class SabryVisionV12PureScanner:
     @staticmethod
     def scan_single(symbol: str, timeframe: str) -> Optional[Dict[str, Any]]:
         df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, interval=timeframe)
         if df.empty or len(df) < 30: return None
-        
         last = df.iloc[-1]
-        close = float(last['close'])
-        open_p = float(last['open'])
-        high_p = float(last['high'])
-        low_p = float(last['low'])
-        volume = float(last['volume'])
+        close, open_p, high_p, low_p, volume = float(last['close']), float(last['open']), float(last['high']), float(last['low']), float(last['volume'])
         
         recent_high = df['high'].iloc[-21:-1].max()
         recent_low = df['low'].iloc[-21:-1].min()
@@ -264,22 +261,73 @@ class SabryVisionV12PureScanner:
         bar.empty(); status.empty()
         return pd.DataFrame(conf), pd.DataFrame(setp)
 
+
+class SabryVisionV20UpdatedScanner:
+    @staticmethod
+    def scan_single(symbol: str, timeframe: str) -> Optional[Dict[str, Any]]:
+        df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, interval=timeframe)
+        if df.empty or len(df) < 30: return None
+        close = float(df['close'].iloc[-1])
+        ema_200 = float(df['close'].ewm(span=200).mean().iloc[-1])
+        if close < ema_200 * 0.85: return None
+        
+        vol_sma = float(df['volume'].rolling(20).mean().iloc[-1])
+        rvol = round(float(df['volume'].iloc[-1]) / max(1.0, vol_sma), 1)
+        recent_high = df['high'].iloc[-21:-1].max()
+        recent_low = df['low'].iloc[-21:-1].min()
+        
+        is_break = close > recent_high and rvol >= 1.2
+        is_sweep = float(df['low'].iloc[-1]) < recent_low and close > recent_low
+        is_setup = not (is_break or is_sweep)
+        
+        score = round(65.0 + min(30.0, rvol * 10), 1)
+        atr = float((df['high'] - df['low']).rolling(14).mean().iloc[-1])
+        
+        return {
+            "رمز السهم": symbol.split('.')[0],
+            "اسم/رمز الأصل": symbol,
+            "السكور": score,
+            "الحالة": "Breakout + Setup" if is_break else ("Liquidity Sweep" if is_sweep else "Pure Setup"),
+            "الإغلاق": round(close, 2),
+            "RVOL": f"{rvol}x",
+            "وقف الخسارة": round(close - 1.5 * atr, 2),
+            "الهدف الأول": round(close + 2.0 * atr, 2),
+            "الهدف الثاني": round(close + 4.0 * atr, 2),
+            "Is Setup": is_setup
+        }
+
+    @staticmethod
+    def run_scan(symbols: List[str], timeframe: str, v12_conf: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        conf, setp = [], []
+        bar = st.progress(0)
+        status = st.empty()
+        total = len(symbols)
+        for idx, s in enumerate(symbols):
+            bar.progress(int(((idx + 1) / total) * 100))
+            status.markdown(f"⏳ **جاري فحص V20 المدمج والمحدث... ({idx+1}/{total})**")
+            res = SabryVisionV20UpdatedScanner.scan_single(s, timeframe)
+            if res:
+                is_double = not v12_conf.empty and s in v12_conf["اسم/رمز الأصل"].values
+                res["العلامة المشتركة"] = "🔥 فرصة مزدوجة (V12 + V20)" if is_double else "عادي"
+                if res["Is Setup"]: setp.append(res)
+                else: conf.append(res)
+        bar.empty(); status.empty()
+        return pd.DataFrame(conf), pd.DataFrame(setp)
+
 # ------------------------------------------------------------------------------
-# 5. GENOMIC LAB & FINANCIAL VALUATION ENGINE (TABS 2, 3, 4, 5)
+# 5. GENOMIC LAB & FINANCIAL VALUATION ENGINE (TABS 3, 4, 5)
 # ------------------------------------------------------------------------------
 class GenomicAndValuationEngine:
     @staticmethod
     def audit_genomics(symbol: str) -> Dict[str, Any]:
         df = UnifiedDataProvider.fetch_raw_ohlcv(symbol, interval="1d")
         if df.empty or len(df) < 50: return {}
-        
         total_bars = len(df)
         start_date = df.index[0].strftime('%Y-%m-%d')
         
         sweeps = len(df[(df['low'] < df['low'].shift(1)) & (df['close'] > df['low'].shift(1))])
         false_breaks = len(df[(df['high'] > df['high'].shift(1)) & (df['close'] < df['high'].shift(1))])
         
-        # ربط ديناميكي للشخصيات بنوع وتحليل السهم
         p_stop_hunter = min(75, max(15, int((sweeps / total_bars) * 450)))
         p_false_trap = min(65, max(10, int((false_breaks / total_bars) * 380)))
         p_stepper = max(10, 100 - (p_stop_hunter + p_false_trap))
@@ -288,13 +336,9 @@ class GenomicAndValuationEngine:
         rem_bars = max(2, int(28 - (acc_spent % 20)))
         
         return {
-            "Start Date": start_date,
-            "Total Bars": total_bars,
-            "Acc Spent": acc_spent,
-            "Rem Bars": rem_bars,
-            "Stop Hunter %": p_stop_hunter,
-            "False Trap %": p_false_trap,
-            "Stepper %": p_stepper
+            "Start Date": start_date, "Total Bars": total_bars,
+            "Acc Spent": acc_spent, "Rem Bars": rem_bars,
+            "Stop Hunter %": p_stop_hunter, "False Trap %": p_false_trap, "Stepper %": p_stepper
         }
 
     @staticmethod
@@ -308,27 +352,15 @@ class GenomicAndValuationEngine:
             growth = max(5.0, min(50.0, (info.get("earningsGrowth") or 0.15) * 100.0))
             
             graham = np.sqrt(max(0.0, 22.5 * eps * bvps)) if eps > 0 and bvps > 0 else cp * 0.9
-            growth_graham = eps * (8.5 + (2 * growth)) if eps > 0 else cp * 0.95
-            peg = eps * growth * 1.5 if eps > 0 else cp
             lynch = eps * growth if eps > 0 else cp
-            pbv_val = bvps * 2.2 if bvps > 0 else cp
-            
-            fair_val = round(np.mean([graham, growth_graham, peg, lynch, pbv_val]), 2)
+            fair_val = round(np.mean([graham, lynch]), 2)
             safety_margin = round(((fair_val - cp) / cp) * 100, 1)
             
-            verdict = ""
             if safety_margin > 20: verdict = "فرصة ذهبية ممتازة (أقل بكثير من السعر العادل) 🟢"
             elif safety_margin >= -10: verdict = "سعر مقبول وعادل (يدور حول القيمة الحقيقية) 🟡"
             else: verdict = "السعر مبالغ فيه واكتسب تضخماً أعلى من قيمته العادلة 🔴"
             
-            return {
-                "Current Price": cp,
-                "Fair Value": fair_val,
-                "Safety Margin %": safety_margin,
-                "Verdict": verdict,
-                "Graham": round(graham, 2),
-                "Lynch": round(lynch, 2)
-            }
+            return {"Current Price": cp, "Fair Value": fair_val, "Safety Margin %": safety_margin, "Verdict": verdict, "Graham": round(graham, 2), "Lynch": round(lynch, 2)}
         except Exception:
             return {"Current Price": 100.0, "Fair Value": 105.0, "Safety Margin %": 5.0, "Verdict": "سعر مقبول وعادل 🟡", "Graham": 100.0, "Lynch": 102.0}
 
@@ -337,7 +369,7 @@ class GenomicAndValuationEngine:
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v26.0 - Secure Login</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v27.0 - Secure Login</h1>", unsafe_allow_html=True)
         with st.form("login_form"):
             u = st.text_input("اسم المستخدم (Username):")
             p = st.text_input("كلمة المرور (Password):", type="password")
@@ -347,7 +379,7 @@ def main():
             elif u: st.error("استخدم admin للطرفين.")
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v26.0")
+    st.sidebar.title("🛡️ SABRY VISION v27.0")
     if st.sidebar.button("تسجيل الخروج 🚪"):
         st.session_state["authenticated"] = False
         st.rerun()
@@ -357,21 +389,21 @@ def main():
     timeframe_options = ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"]
     selected_tf = st.sidebar.selectbox("الإطار الزمني للفحص:", timeframe_options, index=3)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v26.0")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v27.0")
     st.markdown("---")
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "🚀 1. سكانر V12 الكلاسيكي الصرف",
-        "🧬 2. المختبر الجيني وتوقع زمن الانفجار",
-        "📊 3. التحليل المالي الأساسي والأسعار العادلة",
-        "🛡️ 4. مصفوفة المخاطر وإدارة المحافظ",
-        "⏳ 5. آلة الزمن والباك تيست الإحصائي"
+        "⚡ 2. سكانر V20 المدمج والمحدث",
+        "🧬 3. المختبر الجيني وتوقع الانفجار",
+        "📊 4. التحليل المالي الأساسي والقيم العادلة",
+        "🛡️ 5. مصفوفة المخاطر وإدارة المحافظ"
     ])
 
     # --- TAB 1: V12 PURE SCANNER ---
     with tab1:
         st.subheader(f"سكانر V12 الكلاسيكي الحصري - {market_list_name} ({len(symbols_to_scan)} أصل)")
-        if st.button("🔥 تشغيل سكانر V12 الكلاسيكي", type="primary"):
+        if st.button("🔥 تشغيل سكانر V12 الكلاسيكي", type="primary", key="b_v12"):
             df_c, df_s = SabryVisionV12PureScanner.run_scan(symbols_to_scan, selected_tf)
             st.session_state["v12_confirmed"] = df_c
             st.session_state["v12_setup"] = df_s
@@ -379,32 +411,54 @@ def main():
         df_c = st.session_state.get("v12_confirmed", pd.DataFrame())
         df_s = st.session_state.get("v12_setup", pd.DataFrame())
 
-        st.markdown("### 🎯 جدول الفرص المؤكدة (Breakout & Reversal)")
+        st.markdown("### 🎯 جدول الفرص المؤكدة (V12)")
         if not df_c.empty: st.dataframe(df_c.drop(columns=["Is Setup"], errors="ignore"), use_container_width=True)
-        else: st.info("لا توجد فرص مؤكدة حالياً.")
+        else: st.info("لا توجد فرص مؤكدة في V12 حالياً.")
 
         st.markdown("---")
-        st.markdown("### ⏳ جدول فرص الـ Setup النقية")
+        st.markdown("### ⏳ جدول فرص الـ Setup النقية (V12)")
         if not df_s.empty: st.dataframe(df_s.drop(columns=["Is Setup"], errors="ignore"), use_container_width=True)
-        else: st.info("لا توجد فرص Setup حالياً.")
+        else: st.info("لا توجد فرص Setup في V12 حالياً.")
 
-    # --- TAB 2: GENOMIC LAB ---
+    # --- TAB 2: V20 HYBRID SCANNER ---
     with tab2:
+        st.subheader(f"سكانر V20 المدمج والمحدث - {market_list_name} ({len(symbols_to_scan)} أصل)")
+        if st.button("⚡ تشغيل سكانر V20 المدمج", type="primary", key="b_v20"):
+            v12_c = st.session_state.get("v12_confirmed", pd.DataFrame())
+            df_c2, df_s2 = SabryVisionV20UpdatedScanner.run_scan(symbols_to_scan, selected_tf, v12_c)
+            st.session_state["v20_confirmed"] = df_c2
+            st.session_state["v20_setup"] = df_s2
+
+        df_c2 = st.session_state.get("v20_confirmed", pd.DataFrame())
+        df_s2 = st.session_state.get("v20_setup", pd.DataFrame())
+
+        st.markdown("### 🎯 الفرص المؤكدة والمتقدمة (V20)")
+        if not df_c2.empty: st.dataframe(df_c2.drop(columns=["Is Setup"], errors="ignore"), use_container_width=True)
+        else: st.info("لا توجد فرص مؤكدة في V20 حالياً.")
+
+        I = "---"
+        st.markdown(I)
+        st.markdown("### ⏳ فرص الـ Setup والتجميع (V20)")
+        if not df_s2.empty: st.dataframe(df_s2.drop(columns=["Is Setup"], errors="ignore"), use_container_width=True)
+        else: st.info("لا توجد فرص Setup في V20 حالياً.")
+
+    # --- TAB 3: GENOMIC LAB ---
+    with tab3:
         st.subheader("🧬 المختبر الجيني التاريخي وتشريح شخصيات صانع السوق")
-        
-        all_symbols_opt = []
-        if not df_c.empty: all_symbols_opt += df_c["اسم/رمز الأصل"].tolist()
-        if not df_s.empty: all_symbols_opt += df_s["اسم/رمز الأصل"].tolist()
-        all_symbols_opt = list(set(all_symbols_opt))
+        all_opts = []
+        for d in [st.session_state.get("v12_confirmed"), st.session_state.get("v20_confirmed")]:
+            if d is not None and not d.empty and "اسم/رمز الأصل" in d.columns:
+                all_opts += d["اسم/رمز الأصل"].tolist()
+        all_opts = list(set(all_opts))
         
         c_i1, c_i2 = st.columns([2, 1])
-        with c_i1: manual_sym = st.text_input("أدخل رمز السهم يدوياً:", value="AAPL")
-        with c_i2: imported_sym = st.selectbox("أو استورد من جدول السكانر:", ["اختر..."] + all_symbols_opt)
+        with c_i1: manual_sym = st.text_input("أدخل رمز السهم يدوياً:", value="AAPL", key="g_man")
+        with c_i2: imported_sym = st.selectbox("أو استورد من السكانر:", ["اختر..."] + all_opts, key="g_imp")
         
         target_s = imported_sym if imported_sym != "اختر..." else manual_sym.strip().upper()
         
-        if st.button("بدء الفحص الجيني الديناميكي 🔬"):
-            with st.spinner(f"جاري جلب التاريخ وتحليل جينات صانع السوق لـ {target_s}..."):
+        if st.button("بدء الفحص الجيني الديناميكي 🔬", key="btn_g"):
+            with st.spinner(f"جاري جلب التحليل الجيني لـ {target_s}..."):
                 gen_data = GenomicAndValuationEngine.audit_genomics(target_s)
                 if gen_data:
                     st.session_state["current_genomics"] = gen_data
@@ -412,7 +466,6 @@ def main():
 
         if "current_genomics" in st.session_state and st.session_state.get("current_gen_symbol") == target_s:
             g = st.session_state["current_genomics"]
-            
             b1, b2, b3, b4 = st.columns(4)
             with b1:
                 st.markdown("<div class='metric-title'>أقدم تاريخ فحص للأصل</div>", unsafe_allow_html=True)
@@ -428,75 +481,60 @@ def main():
                 st.metric("", f"~{g['Rem Bars']} شمعة")
 
             st.markdown("---")
-            st.info(f"🚀 **التوقع الزمني للاستباق:** بناءً على التحليل الديناميكي لأصل `{target_s}`، **غالباً سوف يتحرك السهم بعد {g['Rem Bars']} شمعة تقريباً**.")
-            
+            st.info(f"🚀 **التوقع الزمني:** بناءً على سلوك أصل `{target_s}`، **غالباً سيتحرك بعد {g['Rem Bars']} شمعة تقريباً**.")
             st.markdown("---")
             st.subheader("📖 شخصيات صانع السوق المرتبطة جينياً بالسهم:")
             st.markdown(f"""
             <div class="genomic-box">
                 <b>🎯 اسم الشخصية: صانع السوق الشرس - صائد الوقف (Aggressive Stop-Hunter)</b><br>
-                <b>📊 نسبة السيطرة الديناميكية في هذا السهم: {g['Stop Hunter %']}%</b><br><br>
-                <b>الشرح والوصف:</b> شخصية عنيفة تعتمد على هندسة الخوف وابتلاع سيولة الصغار بكسر القيعان والدعوم الشهيرة عمداً لتفعيل وقف الخسارة.<br>
-                <b>كيف تتعامل معه ولا تخسر:</b> لا تضع وقف خسارتك تحت الدعوم المكشوفة. انتظر سحب السيولة وارتداد الشمعة (Liquidity Sweep) واشترِ في ذيل الشمعة الخادعة.
+                <b>📊 نسبة السيطرة في هذا السهم: {g['Stop Hunter %']}%</b><br><br>
+                <b>الشرح والوصف:</b> يعتمد على هندسة الخوف وابتلاع سيولة الصغار بكسر القيعان لتفعيل وقف الخسارة.<br>
+                <b>كيف تتعامل معه:</b> لا تضع وقف خسارتك تحت الدعوم المكشوفة واشترِ في ذيل الشمعة الخادعة (Liquidity Sweep).
             </div>
-            
             <div class="genomic-box">
                 <b>🎯 اسم الشخصية: صانع السوق المخادع - ملك الاختراقات الكاذبة (False-Breakout Trap Master)</b><br>
-                <b>📊 نسبة السيطرة الديناميكية في هذا السهم: {g['False Trap %']}%</b><br><br>
-                <b>الشرح والوصف:</b> ميكر يتلاعب بالمحللين الكلاسيكيين بصنع اختراق وهمي للمقاومة لجذب الأفراد (FOMO) ثم الضغط للأسفل.<br>
-                <b>كيف تتعامل معه ولا تخسر:</b> لا تطارد الاختراق الأول. انتظر الاختبار الناجح (Retest) لمستوى المقاومة المكسور بفوليوم هادئ.
+                <b>📊 نسبة السيطرة في هذا السهم: {g['False Trap %']}%</b><br><br>
+                <b>الشرح والوصف:</b> يتلاعب بالمحللين بصنع اختراق وهمي للمقاومة لجذب الأفراد (FOMO) ثم الضغط للأسفل.<br>
+                <b>كيف تتعامل معه:</b> لا تطارد الاختراق الأول وانتظر الاختبار الناجح (Retest).
             </div>
-            
             <div class="genomic-box">
                 <b>🎯 اسم الشخصية: صانع السوق المتدرج الهادئ (Accumulation Stepper)</b><br>
-                <b>📊 نسبة السيطرة الديناميكية في هذا السهم: {g['Stepper %']}%</b><br><br>
-                <b>الشرح والوصف:</b> صندوق استثماري يرفع السعر على درجات صامتة في قناة عرضية ميتة ظاهرياً لشهور لامتصاص العروض بهدوء.<br>
-                <b>كيف تتعامل معه ولا تخسر:</b> اصبر صبره واعتمد التجميع على دفعات قرب الحد السفلي للقناة.
+                <b>📊 نسبة السيطرة في هذا السهم: {g['Stepper %']}%</b><br><br>
+                <b>الشرح والوصف:</b> يرفع السعر على درجات صامتة في قناة عرضية ميتة لامتصاص العروض بهدوء.<br>
+                <b>كيف تتعامل معه:</b> اصبر صبره واعتمد التجميع قرب الحد السفلي للقناة.
             </div>
             """, unsafe_allow_html=True)
 
-    # --- TAB 3: FINANCIAL VALUATION (12-Models & Graham) ---
-    with tab3:
-        st.subheader("📊 التحليل المالي الأساسي ونماذج القيم العادلة (InvestingPro & Graham)")
-        val_sym = st.text_input("أرمز الأصل للتقييم المالي:", value=target_s, key="val_input")
-        
-        if st.button("تشغيل التحليل المالي الأساسي 🏛️"):
-            with st.spinner("جاري حساب النماذج المؤسسية وقيم جراهام وهامش الأمان..."):
+    # --- TAB 4: FINANCIAL VALUATION ---
+    with tab4:
+        st.subheader("📊 التحليل المالي الأساسي والقيم العادلة (InvestingPro & Graham)")
+        val_sym = st.text_input("أدخل رمز الأصل للتقييم المالي:", value=target_s, key="val_input")
+        if st.button("تشغيل التحليل المالي الأساسي 🏛️", key="btn_val"):
+            with st.spinner("جاري حساب النماذج المالية ومؤشرات الأمان..."):
                 v_data = GenomicAndValuationEngine.calculate_valuation(val_sym)
                 st.session_state["val_data"] = v_data
                 st.session_state["val_sym"] = val_sym
 
         if "val_data" in st.session_state and st.session_state.get("val_sym") == val_sym:
             v = st.session_state["val_data"]
-            
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("السعر الحالي بالسوق", f"${v['Current Price']}")
             m2.metric("متوسط القيمة العادلة", f"${v['Fair Value']}")
             m3.metric("هامش الأمان (Margin of Safety)", f"{'+' if v['Safety Margin %']>=0 else ''}{v['Safety Margin %']}%")
             m4.metric("تقييم سعر السهم", v["Verdict"])
-            
             st.markdown("---")
-            st.markdown("### 📐 تفاصيل نماذج التقييم المؤسسي:")
             st.markdown(f"""
-            * **نموذج جراهام التقليدي المعدل:** `${v['Graham']}`[span_6](start_span)[span_6](end_span)
-            * **نموذج بيتر لينش للنمو:** `${v['Lynch']}`[span_7](start_span)[span_7](end_span)
-            * **الحالة الاستثمارية العامة:** {v['Verdict']}[span_8](start_span)[span_8](end_span)
+            * **نموذج جراهام التقليدي المعدل:** `${v['Graham']}`
+            * **نموذج بيتر لينش للنمو:** `${v['Lynch']}`
+            * **الخلاصة الاستثمارية:** {v['Verdict']}
             """)
 
-    # --- TAB 4: RISK MATRIX ---
-    with tab4:
-        st.subheader("🛡️ مصفوفة المخاطر وإدارة المحافظ الديناميكية")
-        st.info("يتيح هذا التاب إدارة الصفقات بناءً على أسعار الدخول المستوردة وتخصيص نسبة المحفظة بدقة.")
-        p_val = st.number_input("إجمالي قيمة المحفظة ($):", value=50000.0, step=1000.0)
-        r_pct = st.slider("نسبة المخاطرة المقبولة (%):", 0.5, 5.0, 1.0, 0.5)
-        st.success(f"مبلغ المخاطرة المسموح به لهذه الصفقة: ${p_val * (r_pct / 100.0)}")
-
-    # --- TAB 5: TIME MACHINE ---
+    # --- TAB 5: RISK MATRIX ---
     with tab5:
-        st.subheader("⏳ آلة الزمن والباك تيست الإحصائي التاريخي")
-        st.info("محاكاة أداء الصفقات التاريخية على الأصول المحددة للفترات السابقة.")
-        if st.button("تشغيل آلة الزمن الإحصائية 🚀"):
-            st.success("✅ أثبت الباك تيست الإحصائي أن التوافق بين سكانر V12 والمختبر الجيني يحقق معدل نجاح يتجاوز 74% في الفريمات المحددة.")
+        st.subheader("🛡️ مصفوفة المخاطر وإدارة المحافظ الديناميكية")
+        p_val = st.number_input("إجمالي قيمة المحفظة ($):", value=50000.0, step=1000.0, key="r_port")
+        r_pct = st.slider("نسبة المخاطرة المقبولة (%):", 0.5, 5.0, 1.0, 0.5, key="r_slider")
+        st.success(f"إجمالي مبلغ المخاطرة المسموح به لهذه الصفقة: ${p_val * (r_pct / 100.0):,.2f}")
 
 if __name__ == "__main__":
     main()
