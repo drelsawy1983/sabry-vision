@@ -1,5 +1,5 @@
 # ==============================================================================
-# SABRY VISION - MASTER QUANT TERMINAL v34.0 (Fixed Metric Labels & Interactive TV Buttons)
+# SABRY VISION - MASTER QUANT TERMINAL v35.0 (Fully Dynamic State & Clickable TV Links)
 # ==============================================================================
 
 import logging
@@ -18,7 +18,7 @@ import requests
 # 1. PAGE CONFIGURATION & HIGH-CONTRAST CSS STYLING
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SABRY VISION - Master Quant Terminal v34.0",
+    page_title="SABRY VISION - Master Quant Terminal v35.0",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -67,7 +67,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("SabryVision34.0")
+logger = logging.getLogger("SabryVision35.0")
 
 # ------------------------------------------------------------------------------
 # 2. SESSION STATE & MARKET REPOSITORIES
@@ -312,6 +312,7 @@ class SabryVisionV12PureScanner:
         atr = float((df['high'] - df['low']).rolling(14).mean().iloc[-1])
         score = round(60.0 + min(35.0, rvol * 10), 1)
         
+        tv_url = get_tradingview_url(symbol, timeframe)
         return {
             "رمز السهم": symbol.split('.')[0],
             "اسم/رمز الأصل": symbol,
@@ -321,7 +322,7 @@ class SabryVisionV12PureScanner:
             "RVOL": f"{rvol}x",
             "وقف الخسارة (SL)": round(close - 1.5 * atr, 2),
             "الهدف (TP)": round(close + 3.0 * atr, 2),
-            "رابط TradingView": get_tradingview_url(symbol, timeframe),
+            "رابط TradingView": tv_url,
             "TV Box Symbol": get_tv_box_symbol(symbol),
             "Is Setup": (signal_type == "Setup")
         }
@@ -370,6 +371,7 @@ class SabryVisionV20UpdatedScanner:
         score = round(70.0 + min(29.5, rvol * 8), 1)
         atr = float((df['high'] - df['low']).rolling(14).mean().iloc[-1])
         
+        tv_url = get_tradingview_url(symbol, timeframe)
         return {
             "رمز السهم": symbol.split('.')[0],
             "اسم/رمز الأصل": symbol,
@@ -380,7 +382,7 @@ class SabryVisionV20UpdatedScanner:
             "وقف الخسارة": round(close - 1.5 * atr, 2),
             "الهدف الأول": round(close + 2.0 * atr, 2),
             "الهدف الثاني": round(close + 4.0 * atr, 2),
-            "رابط TradingView": get_tradingview_url(symbol, timeframe),
+            "رابط TradingView": tv_url,
             "TV Box Symbol": get_tv_box_symbol(symbol),
             "Is Setup": is_setup
         }
@@ -541,7 +543,7 @@ class GenomicAndValuationEngine:
 # ------------------------------------------------------------------------------
 def main():
     if not st.session_state["authenticated"]:
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v34.0 - Secure Login</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🛡️ SABRY VISION v35.0 - Secure Login</h1>", unsafe_allow_html=True)
         with st.form("login_form"):
             u = st.text_input("اسم المستخدم (Username):")
             p = st.text_input("كلمة المرور (Password):", type="password")
@@ -551,7 +553,7 @@ def main():
                 st.rerun()
         return
 
-    st.sidebar.title("🛡️ SABRY VISION v34.0")
+    st.sidebar.title("🛡️ SABRY VISION v35.0")
     if st.sidebar.button("تسجيل الخروج 🚪"):
         st.session_state["authenticated"] = False
         st.session_state["username"] = ""
@@ -574,7 +576,7 @@ def main():
     timeframe_options = ["1m", "5m", "15m", "1h", "4h", "1d", "1wk"]
     selected_tf = st.sidebar.selectbox("الإطار الزمني للفحص:", timeframe_options, index=5)
 
-    st.title("🛡️ SABRY VISION - Master Quant Terminal v34.0")
+    st.title("🛡️ SABRY VISION - Master Quant Terminal v35.0")
     st.markdown("---")
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -604,7 +606,11 @@ def main():
 
         st.markdown("### 🎯 جدول الفرص المؤكدة (V12)")
         if not df_c.empty:
-            st.dataframe(df_c.drop(columns=["Is Setup", "TV Box Symbol"], errors="ignore"), use_container_width=True)
+            st.dataframe(
+                df_c.drop(columns=["Is Setup", "TV Box Symbol"], errors="ignore"),
+                column_config={"رابط TradingView": st.column_config.LinkColumn("رابط TradingView المباشر", display_text="🔗 افتح في TradingView")},
+                use_container_width=True
+            )
             if st.button("📤 إرسال بطاقات V12 المنظمة إلى تليجرام", key="tg_v12_c"):
                 if tg_token and tg_chat:
                     if send_telegram_cards(tg_token, tg_chat, "SABRY VISION V12 - Confirmed Opportunities", df_c):
@@ -619,7 +625,12 @@ def main():
 
         st.markdown("---")
         st.markdown("### ⏳ جدول فرص الـ Setup النقية (V12)")
-        if not df_s.empty: st.dataframe(df_s.drop(columns=["Is Setup", "TV Box Symbol"], errors="ignore"), use_container_width=True)
+        if not df_s.empty:
+            st.dataframe(
+                df_s.drop(columns=["Is Setup", "TV Box Symbol"], errors="ignore"),
+                column_config={"رابط TradingView": st.column_config.LinkColumn("رابط TradingView المباشر", display_text="🔗 افتح في TradingView")},
+                use_container_width=True
+            )
         else: st.info("لا توجد فرص Setup في V12 حالياً.")
 
     # --- TAB 2: V20 HYBRID SCANNER ---
@@ -636,7 +647,11 @@ def main():
 
         st.markdown("### 🎯 الفرص المؤكدة والمتقدمة (V20)")
         if not df_c2.empty:
-            st.dataframe(df_c2.drop(columns=["Is Setup", "TV Box Symbol"], errors="ignore"), use_container_width=True)
+            st.dataframe(
+                df_c2.drop(columns=["Is Setup", "TV Box Symbol"], errors="ignore"),
+                column_config={"رابط TradingView": st.column_config.LinkColumn("رابط TradingView المباشر", display_text="🔗 افتح في TradingView")},
+                use_container_width=True
+            )
             if st.button("📤 إرسال بطاقات V20 المنظمة إلى تليجرام", key="tg_v20_c"):
                 if tg_token and tg_chat:
                     if send_telegram_cards(tg_token, tg_chat, "SABRY VISION V20 - Confirmed Opportunities", df_c2):
@@ -651,21 +666,34 @@ def main():
 
         st.markdown("---")
         st.markdown("### ⏳ فرص الـ Setup والتجميع (V20)")
-        if not df_s2.empty: st.dataframe(df_s2.drop(columns=["Is Setup", "TV Box Symbol"], errors="ignore"), use_container_width=True)
+        if not df_s2.empty:
+            st.dataframe(
+                df_s2.drop(columns=["Is Setup", "TV Box Symbol"], errors="ignore"),
+                column_config={"رابط TradingView": st.column_config.LinkColumn("رابط TradingView المباشر", display_text="🔗 افتح في TradingView")},
+                use_container_width=True
+            )
         else: st.info("لا توجد فرص Setup في V20 حالياً.")
 
     # --- TAB 3: GENOMIC LAB & SUPPORTS/RESISTANCES ---
     with tab3:
         st.subheader("🧬 المختبر الجيني والدعوم/المقومات الزمنية الفورية")
-        c_i1, c_i2 = st.columns([2, 1])
-        with c_i1: manual_sym = st.text_input("أدخل رمز السهم يدوياً للفحص الجيني:", value="AAPL", key="g_man")
-        with c_i2: imported_sym = st.selectbox("أو استورد من السكانر:", ["اختر..."] + all_scanned_opts, key="g_imp")
         
-        target_s = imported_sym if imported_sym != "اختر..." else manual_sym.strip().upper()
+        col_inp1, col_inp2 = st.columns(2)
+        with col_inp1:
+            manual_sym = st.text_input("أدخل رمز السهم يدوياً للفحص الجيني:", value="2190.SR", key="g_man")
+        with col_inp2:
+            imported_sym = st.selectbox("أو استورد من السكانر:", ["اختر..."] + all_scanned_opts, key="g_imp")
         
+        # تحديد السهم النشط بدقة تامة ومنع التضارب
+        target_s = manual_sym.strip().upper()
+        if imported_sym != "اختر...":
+            target_s = imported_sym
+
+        # جلب البيانات الحية فوراً للسهم المختار
         gen_data = GenomicAndValuationEngine.audit_genomics(target_s)
         sr_data = MultiTimeframeAnalyzer.analyze_supports_resistances(target_s)
 
+        st.markdown(f"### 🔍 النتائج الحية الخاصة بالأصل المختار: `{target_s}`")
         b1, b2, b3, b4 = st.columns(4)
         b1.metric(label="📅 أقدم تاريخ فحص للأصل", value=gen_data["Start Date"])
         b2.metric(label="📊 أيام التجميع المنقضية", value=f"{gen_data['Acc Spent']} شمعة")
@@ -673,7 +701,7 @@ def main():
         b4.metric(label="🚀 المتبقي التقريبي للانفجار", value=f"~{gen_data['Rem Bars']} شمعة")
 
         st.markdown("---")
-        st.info(f"🚀 **التوقع الزمني:** بناءً على سلوك أصل `{target_s}` الفعلي، **غالباً سيتحرك بعد {gen_data['Rem Bars']} شمعة تقريباً**.")
+        st.info(f"🚀 **التوقع الزمني:** بناءً على سلوك أصل `{target_s}` الفعلي على الفريم `{selected_tf}`، **غالباً سيتحرك بعد {gen_data['Rem Bars']} شمعة تقريباً**.")
         st.link_button(f"🔗 افتح رسم سهم {target_s} مباشرة على TradingView (فريم {selected_tf})", get_tradingview_url(target_s, selected_tf))
         
         st.markdown("---")
@@ -712,13 +740,17 @@ def main():
     # --- TAB 4: FINANCIAL VALUATION (12 MODELS) ---
     with tab4:
         st.subheader("📊 التحليل المالي الأساسي (12 نموذج إنفيستنج برو وجراهام)")
-        c_v1, c_v2 = st.columns([2, 1])
+        c_v1, c_v2 = st.columns(2)
         with c_v1: manual_val = st.text_input("أدخل رمز الأصل للتقييم المالي:", value="AAPL", key="val_man")
         with c_v2: imported_val = st.selectbox("أو استورد من السكانر:", ["اختر..."] + all_scanned_opts, key="val_imp")
         
-        val_sym = imported_val if imported_val != "اختر..." else manual_val.strip().upper()
+        val_sym = manual_val.strip().upper()
+        if imported_val != "اختر...":
+            val_sym = imported_val
+            
         v_data = GenomicAndValuationEngine.calculate_all_12_models(val_sym)
 
+        st.markdown(f"### 🏛️ التقييم المالي والأساسي للأصل: `{val_sym}`")
         m1, m2, m3, m4 = st.columns(4)
         m1.metric(label="💰 السعر الحالي بالسوق", value=f"${v_data['Current Price']}")
         m2.metric(label="🏛️ متوسط القيمة العادلة", value=f"${v_data['Fair Value']}")
@@ -762,11 +794,14 @@ def main():
     # --- TAB 5: RISK MATRIX & DYNAMIC PORTFOLIO ---
     with tab5:
         st.subheader("🛡️ مصفوفة المخاطر وإدارة المحافظ الديناميكية")
-        c_r1, c_r2 = st.columns([2, 1])
+        c_r1, c_r2 = st.columns(2)
         with c_r1: manual_risk = st.text_input("أدخل رمز الأصل لإدارة المخاطر:", value="AAPL", key="r_man")
         with c_r2: imported_risk = st.selectbox("أو استورد من السكانر:", ["اختر..."] + all_scanned_opts, key="r_imp")
         
-        risk_sym = imported_risk if imported_risk != "اختر..." else manual_risk.strip().upper()
+        risk_sym = manual_risk.strip().upper()
+        if imported_risk != "اختر...":
+            risk_sym = imported_risk
+            
         p_val = st.number_input("إجمالي قيمة المحفظة ($):", value=50000.0, step=1000.0, key="r_port")
         r_pct = st.slider("نسبة المخاطرة المقبولة (%):", 0.5, 5.0, 1.0, 0.5, key="r_slider")
         
@@ -795,4 +830,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
