@@ -142,6 +142,14 @@ if "market_lists_repo" not in st.session_state:
                 "EGOTH", "PMSC", "POCO", "EFAC", "EEP", "EGWA", "OCAP", "NMIN"
             ]
         ],
+               "صندوق البلاد هونج كونج (Albilad Hong Kong)": [
+            "3690.HK", "0669.HK", "1088.HK", "2020.HK", "6160.HK", "2057.HK", 
+            "6690.HK", "0006.HK", "2269.HK", "9633.HK", "9868.HK", "1093.HK", 
+            "2313.HK", "2688.HK", "1801.HK", "0066.HK", "9992.HK", "2331.HK", 
+            "1177.HK", "2382.HK", "6618.HK", "1308.HK", "3692.HK", "0322.HK", 
+            "0241.HK", "1209.HK", "3998.HK", "2367.HK", "1929.HK", "9896.HK"
+        ],
+ 
         "الذهب والفضة والسلع (Gold, Silver & Commodities)": [
             "GC=F", "GLD", "IAU", "9405.SR", "SI=F", "SLV", "PL=F", "PA=F", "HG=F", "CL=F", "BZ=F", "NG=F"
         ],
